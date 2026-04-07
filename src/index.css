@@ -1,0 +1,173 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 260 15% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 260 12% 7%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 260 12% 7%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 350 85% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 270 70% 60%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 260 10% 15%;
+    --muted-foreground: 260 5% 55%;
+
+    --accent: 270 70% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 260 10% 12%;
+    --input: 260 10% 15%;
+    --ring: 350 85% 50%;
+
+    --radius: 0.25rem;
+
+    --sidebar-background: 260 15% 6%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 350 85% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 260 10% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 260 10% 12%;
+    --sidebar-ring: 350 85% 50%;
+
+    --nether-glow: 0 0 20px hsla(350, 85%, 50%, 0.3);
+    --portal-glow: 0 0 40px hsla(270, 70%, 60%, 0.2);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.04em;
+    font-weight: 700;
+  }
+}
+
+@layer components {
+  .nether-glow {
+    box-shadow: var(--nether-glow);
+  }
+
+  .portal-glow {
+    box-shadow: var(--portal-glow);
+  }
+
+  .nether-border {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .nether-border-hover {
+    @apply transition-colors duration-200;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .nether-border-hover:hover {
+    border-color: hsl(350, 85%, 50%);
+  }
+
+  .glass-surface {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glow-text-primary {
+    text-shadow: 0 0 20px hsla(350, 85%, 50%, 0.5);
+  }
+
+  .glow-text-secondary {
+    text-shadow: 0 0 20px hsla(270, 70%, 60%, 0.5);
+  }
+
+  .gradient-portal {
+    background: radial-gradient(circle at center, hsla(270, 70%, 60%, 0.15), transparent 70%);
+  }
+
+  .gradient-nether {
+    background: radial-gradient(circle at center, hsla(350, 85%, 50%, 0.1), transparent 70%);
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* ── 3D / Immersive effects ─────────────────────────────────────────────────── */
+
+/* Floating animation for ambient elements */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.float-slow {
+  animation: float 9s ease-in-out infinite;
+}
+
+/* Depth shimmer on primary buttons */
+.nether-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.nether-glow::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -75%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 60%
+  );
+  transform: skewX(-15deg);
+  transition: left 0.5s ease;
+  pointer-events: none;
+}
+
+.nether-glow:hover::before {
+  left: 125%;
+}
+
+/* ── Sale banner animations ─────────────────────────────────────────────────── */
+@keyframes saleGradient {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes saleShimmer {
+  0%   { transform: translateX(-100%); }
+  60%  { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
