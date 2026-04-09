@@ -168,10 +168,23 @@ const Checkout = () => {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planName, currency, userEmail: email }),
+        body: JSON.stringify({
+          planName,
+          currency,
+          userEmail: email,
+          couponCode: couponStatus === "valid" ? couponInput.trim().toUpperCase() : undefined,
+        }),
       });
       const order = await res.json();
       if (!res.ok || order.error) throw new Error(order.error || "Order creation failed");
+
+      // Log for debugging — confirm backend applied discount
+      console.log("[Checkout] Order received:", {
+        originalPrice: order.originalPrice,
+        discountAmount: order.discountAmount,
+        finalPrice: order.finalPrice,
+        razorpayAmount: order.amount, // in paise
+      });
 
       if (order.mock) {
         runSetupOverlay(() => {
@@ -193,11 +206,12 @@ const Checkout = () => {
 
       const rzp = new window.Razorpay({
         key: order.keyId,
-        amount: order.amount,
+        order_id: order.orderId,
         currency: "INR",
         name: "NetherNodes",
-        description: `${planName} Plan — ${plan.ram} RAM`,
-        order_id: order.orderId,
+        description: order.discountAmount > 0
+          ? `${planName} Plan — ₹${order.originalPrice} - ₹${order.discountAmount} discount = ₹${order.finalPrice}`
+          : `${planName} Plan — ${plan.ram} RAM`,
         prefill: { email },
         theme: { color: "#e53935" },
         modal: { ondismiss: () => setLoading(false) },
