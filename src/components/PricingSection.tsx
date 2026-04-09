@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Rocket, Cpu, HardDrive, MemoryStick, Users, Globe, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import PromoCode, { type DiscountInfo } from "./PromoCode";
-import CurrencySelector from "./CurrencySelector";
 import CheckoutButton from "./CheckoutButton";
 import { useCurrency } from "@/hooks/useCurrency";
 
@@ -242,7 +241,7 @@ const PricingSection = () => {
   const highlightedPlan = isDone ? calcPlan(answers) : null;
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
   const [discount, setDiscount] = useState<DiscountInfo | null>(null);
-  const { currency, setCurrency, formatPrice } = useCurrency();
+  const { currency, formatPrice } = useCurrency();
 
   const closePlan = useCallback(() => setExpandedPlan(null), []);
   const toggleExpand = (name: string) =>
@@ -286,9 +285,6 @@ const PricingSection = () => {
           </p>
           <p className="text-xs text-secondary mt-3 mono">Most servers choose 4GB+ for smooth gameplay</p>
           <p className="text-xs text-primary/80 mt-2 mono font-medium">⚠️ Limited Slots Available — Early Access Phase</p>
-          <div className="flex justify-center mt-4">
-            <CurrencySelector currency={currency} onChange={setCurrency} />
-          </div>
         </motion.div>
 
         {/* Smart Plan Selector */}
