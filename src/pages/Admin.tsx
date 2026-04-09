@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { Ticket, Tag, Users, LogOut, ChevronRight, Lock } from "lucide-react";
+import { Ticket, Tag, Users, LogOut, ChevronRight, Lock, Star } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -47,6 +47,16 @@ const Admin = () => {
       glow: isOwner ? "hsl(38 90% 50% / 0.3)" : "transparent",
       allowed: true,
       ownerOnly: true,
+    },
+    {
+      to: "/admin/feedback",
+      icon: Star,
+      title: "Customer Feedback",
+      desc: "View star ratings and comments submitted after support tickets. Send follow-up questions.",
+      color: "hsl(38 90% 55%)",
+      border: "hsl(38 90% 30%)",
+      glow: "hsl(38 90% 50% / 0.3)",
+      allowed: hasPermission("tickets"),
     },
   ];
 

@@ -14,6 +14,7 @@ import AdminTickets from "./pages/AdminTickets.tsx";
 import SaleAdmin from "./pages/SaleAdmin.tsx";
 import AdminStaff from "./pages/AdminStaff.tsx";
 import AdminLogin from "./pages/AdminLogin.tsx";
+import AdminFeedback from "./pages/AdminFeedback.tsx";
 import Checkout from "./pages/Checkout.tsx";
 import PaymentSuccess from "./pages/PaymentSuccess.tsx";
 import Login from "./pages/Login.tsx";
@@ -55,6 +56,7 @@ const App = () => (
           <Route path="/admin/tickets" element={<AdminTickets />} />
           <Route path="/admin/sale" element={<SaleAdmin />} />
           <Route path="/admin/staff" element={<AdminStaff />} />
+          <Route path="/admin/feedback" element={<AdminFeedback />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/login" element={<Login />} />

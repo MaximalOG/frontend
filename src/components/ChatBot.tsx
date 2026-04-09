@@ -198,8 +198,18 @@ const ChatBot = () => {
   const submitFeedback = async () => {
     if (feedbackRating === 0) return;
     setFeedbackSubmitting(true);
-    // Fire-and-forget — no backend endpoint needed, just UX
-    await new Promise(r => setTimeout(r, 600));
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticketId: messages.find(m => m.isTicket)?.text.match(/ID: (NN-\d+)/)?.[1] ?? null,
+          email: pendingEmail || null,
+          rating: feedbackRating,
+          comment: feedbackComment.trim() || "",
+        }),
+      });
+    } catch { /* non-fatal */ }
     setFeedbackStep("submitted");
     setFeedbackSubmitting(false);
   };

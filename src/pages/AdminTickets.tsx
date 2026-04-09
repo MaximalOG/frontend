@@ -35,6 +35,7 @@ const AdminTickets = () => {
   const [replySending, setReplySending] = useState<Record<string, boolean>>({});
   const [replySent, setReplySent] = useState<Record<string, boolean>>({});
   const [polling, setPolling] = useState(false);
+  const [clearingClosed, setClearingClosed] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -97,6 +98,17 @@ const AdminTickets = () => {
     }
   };
 
+  const clearClosed = async () => {
+    if (!confirm(`Delete all ${tickets.filter(t => t.status === "closed").length} closed tickets? This cannot be undone.`)) return;
+    setClearingClosed(true);
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/admin/tickets/closed`, { method: "DELETE" });
+      await load();
+    } finally {
+      setClearingClosed(false);
+    }
+  };
+
   const filtered = tickets.filter(t => filter === "all" || t.status === filter);
   const openCount    = tickets.filter(t => t.status === "open").length;
   const pendingCount = tickets.filter(t => t.status === "pending").length;
@@ -138,6 +150,17 @@ const AdminTickets = () => {
                 <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
                 Refresh
               </button>
+              {tickets.filter(t => t.status === "closed").length > 0 && (
+                <button
+                  onClick={clearClosed}
+                  disabled={clearingClosed}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs transition-colors disabled:opacity-50"
+                  style={{ border: "1px solid hsl(350 85% 30%)", color: clearingClosed ? "hsl(350 85% 40%)" : "hsl(350 85% 60%)" }}
+                >
+                  <RefreshCw size={12} className={clearingClosed ? "animate-spin" : ""} />
+                  {clearingClosed ? "Clearing…" : `Clear Closed (${tickets.filter(t => t.status === "closed").length})`}
+                </button>
+              )}
             </div>
           </div>
 
