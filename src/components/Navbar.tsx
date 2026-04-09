@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, LogOut, Server, ChevronDown, Zap } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useCurrency, CURRENCY_FLAGS, CURRENCY_SYMBOLS, type Currency } from "@/hooks/useCurrency";
 
 const navLinks = [
   { label: "Home", to: "/" },
@@ -11,12 +12,17 @@ const navLinks = [
   { label: "Support", to: "/support" },
 ];
 
+const CURRENCIES: Currency[] = ["INR", "USD", "EUR", "GBP"];
+
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [currencyOpen, setCurrencyOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const currencyRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
+  const { currency, setCurrency } = useCurrency();
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -27,13 +33,13 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    if (!profileOpen) return;
-    const handler = (e: MouseEvent) => {
+    const close = (e: MouseEvent) => {
       if (!profileRef.current?.contains(e.target as Node)) setProfileOpen(false);
+      if (!currencyRef.current?.contains(e.target as Node)) setCurrencyOpen(false);
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [profileOpen]);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -44,37 +50,38 @@ const Navbar = () => {
   return (
     <>
       {/* ── DESKTOP NAV — floating pill ── */}
-      <div className="fixed top-0 left-0 right-0 z-50 hidden md:flex justify-center pt-4 px-4 pointer-events-none">
+      <div className="fixed top-0 left-0 right-0 z-50 hidden md:flex justify-center pt-5 px-4 pointer-events-none">
         <motion.nav
-          initial={{ opacity: 0, y: -12 }}
+          initial={{ opacity: 0, y: -14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="pointer-events-auto flex items-center gap-1 px-2 py-2 rounded-full"
+          className="pointer-events-auto flex items-center gap-0.5 px-3 py-2.5 rounded-full"
           style={{
-            background: scrolled
-              ? "hsl(0 0% 7% / 0.95)"
-              : "hsl(0 0% 7% / 0.75)",
-            backdropFilter: "blur(16px)",
+            background: scrolled ? "hsl(0 0% 7% / 0.97)" : "hsl(0 0% 7% / 0.8)",
+            backdropFilter: "blur(20px)",
             border: "1px solid hsl(0 0% 18%)",
             boxShadow: scrolled
-              ? "0 0 0 1px hsl(350 85% 40% / 0.15), 0 8px 32px rgba(0,0,0,0.5)"
-              : "0 0 0 1px hsl(0 0% 22% / 0.4), 0 4px 16px rgba(0,0,0,0.3)",
+              ? "0 0 0 1px hsl(350 85% 40% / 0.18), 0 12px 40px rgba(0,0,0,0.55)"
+              : "0 0 0 1px hsl(0 0% 22% / 0.4), 0 6px 20px rgba(0,0,0,0.35)",
             transition: "background 0.3s, box-shadow 0.3s",
           }}
         >
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full mr-1 transition-all hover:bg-white/5"
+            className="flex items-center gap-2.5 px-4 py-2 rounded-full mr-1 transition-all hover:bg-white/5"
           >
-            <div className="w-6 h-6 rounded-md overflow-hidden" style={{ boxShadow: "0 0 8px hsl(350 85% 50% / 0.5)" }}>
+            <div
+              className="w-7 h-7 rounded-md overflow-hidden shrink-0"
+              style={{ boxShadow: "0 0 10px hsl(350 85% 50% / 0.5)" }}
+            >
               <img src="/NetherNodes.jpg" alt="NetherNodes" className="w-full h-full object-cover" />
             </div>
-            <span className="font-bold text-sm text-white tracking-tight">NetherNodes</span>
+            <span className="font-bold text-base text-white tracking-tight">NetherNodes</span>
           </Link>
 
           {/* Divider */}
-          <div className="w-px h-5 mx-1" style={{ background: "hsl(0 0% 22%)" }} />
+          <div className="w-px h-5 mx-1.5 shrink-0" style={{ background: "hsl(0 0% 22%)" }} />
 
           {/* Nav links */}
           {navLinks.map((link) => {
@@ -83,40 +90,96 @@ const Navbar = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className="relative px-4 py-1.5 rounded-full text-sm font-medium transition-all"
-                style={{
-                  color: active ? "white" : "hsl(0 0% 55%)",
-                  background: active ? "hsl(0 0% 14%)" : "transparent",
-                }}
+                className="relative px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                style={{ color: active ? "white" : "hsl(0 0% 55%)" }}
                 onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.color = "white"; }}
                 onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.color = "hsl(0 0% 55%)"; }}
               >
-                {link.label}
                 {active && (
                   <motion.span
                     layoutId="nav-pill"
                     className="absolute inset-0 rounded-full"
-                    style={{ background: "hsl(0 0% 14%)", zIndex: -1 }}
+                    style={{ background: "hsl(0 0% 15%)", zIndex: -1 }}
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}
+                {link.label}
               </Link>
             );
           })}
 
           {/* Divider */}
-          <div className="w-px h-5 mx-1" style={{ background: "hsl(0 0% 22%)" }} />
+          <div className="w-px h-5 mx-1.5 shrink-0" style={{ background: "hsl(0 0% 22%)" }} />
+
+          {/* Currency picker */}
+          <div className="relative" ref={currencyRef}>
+            <button
+              onClick={() => setCurrencyOpen(v => !v)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition-all hover:bg-white/5"
+              style={{ color: "hsl(0 0% 60%)" }}
+            >
+              <span className="text-base leading-none">{CURRENCY_FLAGS[currency]}</span>
+              <span className="mono text-xs font-medium" style={{ color: "hsl(0 0% 75%)" }}>{currency}</span>
+              <ChevronDown
+                size={11}
+                style={{
+                  transform: currencyOpen ? "rotate(180deg)" : undefined,
+                  transition: "transform 0.2s",
+                  color: "hsl(0 0% 40%)",
+                }}
+              />
+            </button>
+
+            <AnimatePresence>
+              {currencyOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-2 rounded-sm overflow-hidden"
+                  style={{
+                    background: "hsl(0 0% 8%)",
+                    border: "1px solid hsl(0 0% 18%)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                    minWidth: 130,
+                    zIndex: 100,
+                  }}
+                >
+                  {CURRENCIES.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => { setCurrency(c); setCurrencyOpen(false); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-left transition-colors"
+                      style={{
+                        background: c === currency ? "hsl(350 85% 12%)" : "transparent",
+                        color: c === currency ? "hsl(350 85% 65%)" : "hsl(0 0% 65%)",
+                      }}
+                      onMouseEnter={e => { if (c !== currency) (e.currentTarget as HTMLElement).style.background = "hsl(0 0% 12%)"; }}
+                      onMouseLeave={e => { if (c !== currency) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                    >
+                      <span className="text-base leading-none">{CURRENCY_FLAGS[c]}</span>
+                      <span className="mono font-medium">{CURRENCY_SYMBOLS[c]}</span>
+                      <span>{c}</span>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Divider */}
+          <div className="w-px h-5 mx-1.5 shrink-0" style={{ background: "hsl(0 0% 22%)" }} />
 
           {/* Auth */}
           {user ? (
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setProfileOpen(v => !v)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-all hover:bg-white/5"
-                style={{ color: "hsl(0 0% 70%)" }}
+                className="flex items-center gap-2 px-3 py-2 rounded-full text-sm transition-all hover:bg-white/5"
               >
                 <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
                   style={{ background: "hsl(350 85% 45%)", color: "white" }}
                 >
                   {user.name.charAt(0).toUpperCase()}
@@ -142,7 +205,7 @@ const Navbar = () => {
                     className="absolute right-0 mt-2 w-44 rounded-sm overflow-hidden"
                     style={{ background: "hsl(0 0% 8%)", border: "1px solid hsl(0 0% 18%)", zIndex: 100 }}
                   >
-                    <div className="px-3 py-2 border-b" style={{ borderColor: "hsl(0 0% 14%)" }}>
+                    <div className="px-3 py-2.5 border-b" style={{ borderColor: "hsl(0 0% 14%)" }}>
                       <p className="text-xs font-semibold text-foreground truncate">{user.name}</p>
                       <p className="text-[10px] text-muted-foreground/50 truncate">{user.email}</p>
                     </div>
@@ -167,7 +230,7 @@ const Navbar = () => {
             <div className="flex items-center gap-1 ml-1">
               <Link
                 to="/login"
-                className="px-4 py-1.5 rounded-full text-sm transition-all hover:bg-white/5"
+                className="px-4 py-2 rounded-full text-sm transition-colors"
                 style={{ color: "hsl(0 0% 55%)" }}
                 onMouseEnter={e => (e.currentTarget.style.color = "white")}
                 onMouseLeave={e => (e.currentTarget.style.color = "hsl(0 0% 55%)")}
@@ -176,11 +239,11 @@ const Navbar = () => {
               </Link>
               <Link
                 to="/pricing"
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all hover:brightness-110"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-semibold transition-all hover:brightness-110"
                 style={{
                   background: "hsl(350 85% 45%)",
                   color: "white",
-                  boxShadow: "0 0 16px hsl(350 85% 45% / 0.4)",
+                  boxShadow: "0 0 18px hsl(350 85% 45% / 0.4)",
                 }}
               >
                 <Zap size={13} />
@@ -191,7 +254,7 @@ const Navbar = () => {
         </motion.nav>
       </div>
 
-      {/* ── MOBILE NAV — unchanged flat bar ── */}
+      {/* ── MOBILE NAV — unchanged ── */}
       <nav
         className="fixed top-0 left-0 right-0 z-50 md:hidden glass-surface transition-all duration-300"
         style={{
@@ -206,11 +269,7 @@ const Navbar = () => {
             </div>
             <span className="font-bold text-lg text-foreground tracking-tight">NetherNodes</span>
           </Link>
-          <button
-            className="text-foreground"
-            onClick={() => setOpen(!open)}
-            aria-label="Toggle menu"
-          >
+          <button className="text-foreground" onClick={() => setOpen(!open)} aria-label="Toggle menu">
             {open ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -236,34 +295,19 @@ const Navbar = () => {
                 ))}
                 {user ? (
                   <>
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setOpen(false)}
-                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
-                    >
+                    <Link to="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2">
                       <Server size={14} /> My Servers
                     </Link>
-                    <button
-                      onClick={() => { handleLogout(); setOpen(false); }}
-                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-red-400 transition-colors py-2 text-left"
-                    >
+                    <button onClick={() => { handleLogout(); setOpen(false); }} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-red-400 transition-colors py-2 text-left">
                       <LogOut size={14} /> Sign Out
                     </button>
                   </>
                 ) : (
                   <>
-                    <Link
-                      to="/login"
-                      onClick={() => setOpen(false)}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
-                    >
+                    <Link to="/login" onClick={() => setOpen(false)} className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2">
                       Sign In
                     </Link>
-                    <Link
-                      to="/pricing"
-                      onClick={() => setOpen(false)}
-                      className="h-10 px-6 bg-primary text-primary-foreground font-medium text-sm flex items-center justify-center rounded-sm nether-glow"
-                    >
+                    <Link to="/pricing" onClick={() => setOpen(false)} className="h-10 px-6 bg-primary text-primary-foreground font-medium text-sm flex items-center justify-center rounded-sm nether-glow">
                       Get Started
                     </Link>
                   </>
