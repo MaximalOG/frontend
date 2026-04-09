@@ -4,6 +4,7 @@ import { Users, Plus, Trash2, RefreshCw, Save, Eye, EyeOff } from "lucide-react"
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -33,6 +34,7 @@ const AdminStaff = () => {
   const [newPerms, setNewPerms] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<StaffMember | null>(null);
 
   useEffect(() => {
     if (!authLoading && (!user || !isOwner)) navigate("/admin");
@@ -69,8 +71,8 @@ const AdminStaff = () => {
   };
 
   const deleteStaff = async (id: string) => {
-    if (!confirm("Remove this staff member?")) return;
     await fetch(`${import.meta.env.VITE_API_URL}/api/admin/staff/${id}`, { method: "DELETE", headers: { "x-admin-token": token() } });
+    setDeleteTarget(null);
     load();
   };
 
@@ -88,6 +90,14 @@ const AdminStaff = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       <Navbar />
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Remove staff member"
+        message={`Remove "${deleteTarget?.username}"? They will lose all access immediately.`}
+        confirmLabel="Remove"
+        onConfirm={() => deleteTarget && deleteStaff(deleteTarget.id)}
+        onCancel={() => setDeleteTarget(null)}
+      />
       <div className="container mx-auto px-4 max-w-3xl pt-24">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
 
@@ -188,7 +198,7 @@ const AdminStaff = () => {
                         {new Date(s.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <button onClick={() => deleteStaff(s.id)}
+                    <button onClick={() => setDeleteTarget(s)}
                       className="text-muted-foreground/40 hover:text-red-400 transition-colors p-1">
                       <Trash2 size={14} />
                     </button>

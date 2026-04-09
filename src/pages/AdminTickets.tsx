@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Ticket, RefreshCw, CheckCircle, Circle, Clock, Mail, ChevronDown, ChevronUp, Send, AlertCircle } from "lucide-react";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface Reply {
   from: "support" | "customer";
@@ -36,6 +37,7 @@ const AdminTickets = () => {
   const [replySent, setReplySent] = useState<Record<string, boolean>>({});
   const [polling, setPolling] = useState(false);
   const [clearingClosed, setClearingClosed] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -99,8 +101,8 @@ const AdminTickets = () => {
   };
 
   const clearClosed = async () => {
-    if (!confirm(`Delete all ${tickets.filter(t => t.status === "closed").length} closed tickets? This cannot be undone.`)) return;
     setClearingClosed(true);
+    setShowClearConfirm(false);
     try {
       await fetch(`${import.meta.env.VITE_API_URL}/api/admin/tickets/closed`, { method: "DELETE" });
       await load();
@@ -116,6 +118,14 @@ const AdminTickets = () => {
 
   return (
     <div className="min-h-screen bg-background pt-16 pb-24">
+      <ConfirmDialog
+        open={showClearConfirm}
+        title="Clear closed tickets"
+        message={`This will permanently delete all ${tickets.filter(t => t.status === "closed").length} closed tickets. This cannot be undone.`}
+        confirmLabel="Delete All"
+        onConfirm={clearClosed}
+        onCancel={() => setShowClearConfirm(false)}
+      />
       <div className="container mx-auto px-4 max-w-4xl">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -152,7 +162,7 @@ const AdminTickets = () => {
               </button>
               {tickets.filter(t => t.status === "closed").length > 0 && (
                 <button
-                  onClick={clearClosed}
+                  onClick={() => setShowClearConfirm(true)}
                   disabled={clearingClosed}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs transition-colors disabled:opacity-50"
                   style={{ border: "1px solid hsl(350 85% 30%)", color: clearingClosed ? "hsl(350 85% 40%)" : "hsl(350 85% 60%)" }}
