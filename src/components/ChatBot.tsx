@@ -65,6 +65,39 @@ async function readFileAsText(file: File): Promise<string> {
   });
 }
 
+// Strip markdown and render **bold** as <strong>, clean up list markers
+function renderText(text: string) {
+  // Split into segments: bold vs plain
+  const parts: { bold: boolean; text: string }[] = [];
+  const regex = /\*\*(.+?)\*\*|\*(.+?)\*/g;
+  let last = 0;
+  let match;
+  // Also clean up leading markdown list markers (*, -, •) per line
+  const cleaned = text
+    .replace(/^[\*\-•]\s+/gm, "")   // remove bullet markers
+    .replace(/^#{1,3}\s+/gm, "")    // remove heading markers
+    .replace(/^---+$/gm, "");       // remove horizontal rules
+
+  while ((match = regex.exec(cleaned)) !== null) {
+    if (match.index > last) parts.push({ bold: false, text: cleaned.slice(last, match.index) });
+    parts.push({ bold: true, text: match[1] ?? match[2] });
+    last = match.index + match[0].length;
+  }
+  if (last < cleaned.length) parts.push({ bold: false, text: cleaned.slice(last) });
+
+  if (parts.length === 1 && !parts[0].bold) return <span>{cleaned}</span>;
+
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.bold
+          ? <strong key={i} style={{ color: "white", fontWeight: 600 }}>{p.text}</strong>
+          : <span key={i}>{p.text}</span>
+      )}
+    </>
+  );
+}
+
 const ChatBot = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -330,7 +363,7 @@ const ChatBot = () => {
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="max-w-[82%] px-3 py-2 rounded-sm text-xs leading-relaxed whitespace-pre-line"
+                    className={`max-w-[82%] px-3 py-2 rounded-sm text-xs leading-relaxed ${msg.role === "ai" ? "" : "whitespace-pre-line"}`}
                     style={
                       msg.role === "user"
                         ? { background: "hsl(350 85% 45%)", color: "white" }
@@ -347,7 +380,7 @@ const ChatBot = () => {
                         <span className="text-[10px]">{msg.fileName}</span>
                       </div>
                     )}
-                    {msg.text}
+                    {msg.role === "ai" ? renderText(msg.text) : msg.text}
                   </motion.div>
                   {msg.showButtons && msg.recommendedPlan && (
                     <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.2 }} className="flex gap-2 mt-2">
