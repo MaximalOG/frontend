@@ -49,13 +49,13 @@ const Navbar = () => {
 
   return (
     <>
-      {/* ── DESKTOP NAV — floating pill ── */}
-      <div className="fixed top-0 left-0 right-0 z-50 hidden md:flex justify-center pt-5 px-4 pointer-events-none">
+      {/* ── DESKTOP NAV — floating pill, sits below sale banner ── */}
+      <div className="fixed left-0 right-0 z-50 hidden md:flex justify-center px-4 pointer-events-none" style={{ top: 56 }}>
         <motion.nav
           initial={{ opacity: 0, y: -14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="pointer-events-auto flex items-center gap-0.5 px-3 py-2.5 rounded-full"
+          className="pointer-events-auto flex items-center gap-0.5 px-3 py-2.5 rounded-full mt-4"
           style={{
             background: scrolled ? "hsl(0 0% 7% / 0.97)" : "hsl(0 0% 7% / 0.8)",
             backdropFilter: "blur(20px)",
@@ -112,22 +112,24 @@ const Navbar = () => {
           <div className="w-px h-5 mx-1.5 shrink-0" style={{ background: "hsl(0 0% 22%)" }} />
 
           {/* Currency picker */}
-          <div className="relative" ref={currencyRef}>
+          <div
+            className="relative ml-4"
+            ref={currencyRef}
+            onMouseEnter={() => setCurrencyOpen(true)}
+            onMouseLeave={() => setCurrencyOpen(false)}
+          >
             <button
-              onClick={() => setCurrencyOpen(v => !v)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition-all hover:bg-white/5"
               style={{ color: "hsl(0 0% 60%)" }}
             >
               <span className="text-base leading-none">{CURRENCY_FLAGS[currency]}</span>
               <span className="mono text-xs font-medium" style={{ color: "hsl(0 0% 75%)" }}>{currency}</span>
-              <ChevronDown
-                size={11}
-                style={{
-                  transform: currencyOpen ? "rotate(180deg)" : undefined,
-                  transition: "transform 0.2s",
-                  color: "hsl(0 0% 40%)",
-                }}
-              />
+              <motion.div
+                animate={{ rotate: currencyOpen ? 180 : 0 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <ChevronDown size={11} style={{ color: "hsl(0 0% 40%)" }} />
+              </motion.div>
             </button>
 
             <AnimatePresence>

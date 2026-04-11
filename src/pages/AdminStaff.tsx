@@ -9,9 +9,10 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 const ease = [0.16, 1, 0.3, 1] as const;
 
 const ALL_PERMISSIONS = [
-  { key: "tickets",     label: "Support Tickets" },
-  { key: "banner_sale", label: "Banner Sale" },
-  { key: "promo_codes", label: "Promo Codes" },
+  { key: "tickets",         label: "Support Tickets" },
+  { key: "banner_sale",     label: "Banner Sale" },
+  { key: "promo_codes",     label: "Promo Codes" },
+  { key: "feedback",        label: "Customer Feedback" },
 ];
 
 interface StaffMember {

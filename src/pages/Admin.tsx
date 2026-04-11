@@ -56,7 +56,7 @@ const Admin = () => {
       color: "hsl(38 90% 55%)",
       border: "hsl(38 90% 30%)",
       glow: "hsl(38 90% 50% / 0.3)",
-      allowed: hasPermission("tickets"),
+      allowed: hasPermission("feedback"),
     },
   ];
 

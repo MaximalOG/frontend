@@ -61,10 +61,10 @@ const SaleBanner = () => {
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         style={{
           position: "fixed",
-          top: 64, // sits right below the 64px navbar
+          top: 0,
           left: 0,
           right: 0,
-          zIndex: 49, // just below navbar (z-50) so navbar stays on top
+          zIndex: 51,
           overflow: "hidden",
         }}
       >
@@ -157,7 +157,7 @@ const SaleBanner = () => {
         </div>
       </motion.div>
 
-      {/* Spacer so page content doesn't hide under the banner */}
+      {/* Spacer — only when banner is showing, accounts for banner + navbar pill */}
       <div key="sale-spacer" style={{ height: 56 }} />
     </AnimatePresence>
   );

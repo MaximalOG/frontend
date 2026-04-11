@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Star, RefreshCw, Send, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
+import { Star, RefreshCw, Send, ChevronDown, ChevronUp, MessageSquare, Trash2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface FeedbackReply {
   message: string;
@@ -41,12 +43,15 @@ function Stars({ rating }: { rating: number }) {
 }
 
 const AdminFeedback = () => {
+  const { isOwner, token } = useAdminAuth();
   const [feedback, setFeedback] = useState<FeedbackEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [replyText, setReplyText] = useState<Record<string, string>>({});
   const [replySending, setReplySending] = useState<Record<string, boolean>>({});
   const [replySent, setReplySent] = useState<Record<string, boolean>>({});
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -80,6 +85,20 @@ const AdminFeedback = () => {
     }
   };
 
+  const clearAll = async () => {
+    setClearing(true);
+    setShowClearConfirm(false);
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/admin/feedback`, {
+        method: "DELETE",
+        headers: { "x-admin-token": token() },
+      });
+      await load();
+    } finally {
+      setClearing(false);
+    }
+  };
+
   // Stats
   const avg = feedback.length
     ? (feedback.reduce((s, f) => s + f.rating, 0) / feedback.length).toFixed(1)
@@ -89,6 +108,14 @@ const AdminFeedback = () => {
   return (
     <div className="min-h-screen bg-background pt-16 pb-24">
       <Navbar />
+      <ConfirmDialog
+        open={showClearConfirm}
+        title="Clear all feedback"
+        message={`This will permanently delete all ${feedback.length} feedback entries. This cannot be undone.`}
+        confirmLabel="Delete All"
+        onConfirm={clearAll}
+        onCancel={() => setShowClearConfirm(false)}
+      />
       <div className="container mx-auto px-4 max-w-4xl pt-10">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }}>
 
@@ -101,6 +128,18 @@ const AdminFeedback = () => {
               </h1>
               <p className="text-sm text-muted-foreground mt-1">Ratings submitted after support tickets</p>
             </div>
+          <div className="flex items-center gap-2">
+              {isOwner && feedback.length > 0 && (
+                <button
+                  onClick={() => setShowClearConfirm(true)}
+                  disabled={clearing}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs transition-colors disabled:opacity-50"
+                  style={{ border: "1px solid hsl(350 85% 30%)", color: clearing ? "hsl(350 85% 40%)" : "hsl(350 85% 60%)" }}
+                >
+                  <Trash2 size={12} />
+                  {clearing ? "Clearing…" : `Clear All (${feedback.length})`}
+                </button>
+              )}
             <button
               onClick={load}
               className="flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs text-muted-foreground hover:text-white transition-colors"
@@ -108,6 +147,7 @@ const AdminFeedback = () => {
             >
               <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Refresh
             </button>
+          </div>
           </div>
 
           {/* Stats row */}
@@ -252,7 +292,7 @@ const AdminFeedback = () => {
                             style={{ borderTop: "1px solid hsl(0 0% 16%)", background: "hsl(0 0% 7%)" }}>
                             {replySent[fb.id]
                               ? <span className="text-[11px] text-green-400">✓ Reply saved</span>
-                              : <span className="text-[10px] text-muted-foreground/40">Stored internally for reference</span>
+                              : <span className="text-[10px] text-muted-foreground/40">Email will be sent to {fb.email || "user"}</span>
                             }
                             <button
                               onClick={() => sendReply(fb)}
