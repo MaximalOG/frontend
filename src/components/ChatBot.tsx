@@ -293,6 +293,28 @@ const ChatBot = () => {
         setTimeout(() => addAI("I'll need your email address so our support team can contact you."), 300);
         return;
       }
+
+      // Invoice resend — AI detected an order ID
+      if (data.message?.startsWith("RESEND_INVOICE:")) {
+        const orderId = data.message.replace("RESEND_INVOICE:", "").trim();
+        addAI(`Looking up invoice ${orderId}…`);
+        try {
+          const invRes = await fetch(`${import.meta.env.VITE_API_URL}/api/resend-invoice`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId }),
+          });
+          const invData = await invRes.json();
+          if (invRes.ok) {
+            addAI(`Done! Invoice ${orderId} has been resent to ${invData.email}. Check your inbox (and spam folder).`);
+          } else {
+            addAI(invData.error || "Couldn't find that invoice. Please double-check your Order ID — it should look like NN-INV-000001.");
+          }
+        } catch {
+          addAI("Something went wrong resending the invoice. Please try again or contact support.");
+        }
+        return;
+      }
       const delay = data.showButtons ? 600 : 0;
       setTimeout(() => addAI(data.message, {
         showButtons: data.showButtons,

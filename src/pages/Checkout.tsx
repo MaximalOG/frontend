@@ -50,6 +50,22 @@ const Checkout = () => {
   const [couponStatus, setCouponStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
   const [couponData, setCouponData] = useState<{ discount: number; type: "percent" | "fixed"; label: string } | null>(null);
 
+  // Auto-apply active public sale on load
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/sale`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data || !data.enabled) return;
+        if (data.mode === "public") {
+          // Public banner sale — auto-apply, no code needed
+          setCouponData({ discount: data.discount, type: data.discountType, label: data.label });
+          setCouponStatus("valid");
+        }
+        // secret/multi modes: user must type the code manually — leave coupon box empty
+      })
+      .catch(() => {});
+  }, []);
+
   // Setup overlay
   const [setupStep, setSetupStep] = useState(0);
   const [showSetup, setShowSetup] = useState(false);
@@ -224,14 +240,21 @@ const Checkout = () => {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                planName, userEmail: email,
+                planName,
+                userEmail: email,
+                originalPrice: plan.priceInr,
+                discountAmount: couponData ? (couponData.type === "percent"
+                  ? Math.round(plan.priceInr * couponData.discount / 100)
+                  : Math.min(couponData.discount, plan.priceInr)) : 0,
+                finalPrice: discountedInr,
+                couponLabel: couponData?.label || null,
               }),
             });
             const result = await verify.json();
             if (result.verified) {
               runSetupOverlay(() => {
                 setSuccess(true);
-                navigate(`/payment-success?plan=${planName}&email=${encodeURIComponent(email)}&payment_id=${response.razorpay_payment_id}`);
+                navigate(`/payment-success?plan=${planName}&email=${encodeURIComponent(email)}&payment_id=${response.razorpay_payment_id}&order_id=${result.orderId || ""}`);
               });
             } else {
               setError("Payment verification failed. Please contact support.");
@@ -429,7 +452,7 @@ const Checkout = () => {
 
             {/* Coupon */}
             <div>
-              <label className="text-[9px] text-muted-foreground/50 mono uppercase tracking-wider block mb-1.5">Coupon Code</label>
+              <label className="text-[9px] text-muted-foreground/50 mono uppercase tracking-wider block mb-1.5">Coupon / Discount</label>
               <AnimatePresence mode="wait">
                 {couponStatus === "valid" && couponData ? (
                   <motion.div key="applied" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
@@ -437,11 +460,19 @@ const Checkout = () => {
                     style={{ background: "hsl(142 60% 10%)", border: "1px solid hsl(142 60% 25%)", color: "hsl(142 70% 55%)" }}>
                     <div className="flex items-center gap-2">
                       <CheckCircle size={12} />
-                      <span>Coupon applied — <strong>{couponData.label}</strong></span>
+                      <span>
+                        {couponInput
+                          ? <>Coupon applied — <strong>{couponData.label}</strong></>
+                          : <><strong>{couponData.label}</strong> — auto-applied</>
+                        }
+                      </span>
                     </div>
-                    <button onClick={removeCoupon} className="text-muted-foreground/50 hover:text-white transition-colors">
-                      <X size={12} />
-                    </button>
+                    {/* Only allow removing manually-entered codes, not auto-applied sales */}
+                    {couponInput && (
+                      <button onClick={removeCoupon} className="text-muted-foreground/50 hover:text-white transition-colors">
+                        <X size={12} />
+                      </button>
+                    )}
                   </motion.div>
                 ) : (
                   <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -451,7 +482,7 @@ const Checkout = () => {
                     <input value={couponInput}
                       onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponStatus("idle"); }}
                       onKeyDown={e => e.key === "Enter" && applyCoupon()}
-                      placeholder="Enter coupon code"
+                      placeholder="Have a promo code?"
                       className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground/40 outline-none px-2 py-2.5 mono tracking-widest"
                     />
                     <button onClick={applyCoupon} disabled={!couponInput.trim() || couponStatus === "checking"}

@@ -20,6 +20,10 @@ import PaymentSuccess from "./pages/PaymentSuccess.tsx";
 import Login from "./pages/Login.tsx";
 import Signup from "./pages/Signup.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
+import VerifyEmail from "./pages/VerifyEmail.tsx";
+import ForgotPassword from "./pages/ForgotPassword.tsx";
+import ResetPassword from "./pages/ResetPassword.tsx";
+import OAuthCallback from "./pages/OAuthCallback.tsx";
 import ChatBot from "./components/ChatBot.tsx";
 import SaleBanner from "./components/SaleBanner.tsx";
 import { CurrencyProvider } from "@/context/CurrencyContext";
@@ -64,6 +68,10 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/oauth-callback" element={<OAuthCallback />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <ChatBotBoundary>

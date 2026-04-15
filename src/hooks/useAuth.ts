@@ -4,7 +4,9 @@ import { api, ApiError } from "@/lib/api";
 export interface User {
   id: string;
   name: string;
+  username: string;
   email: string;
+  emailVerified: boolean;
 }
 
 const TOKEN_KEY = "nn_user_token";
@@ -48,9 +50,9 @@ export function useAuth() {
     }
   };
 
-  const signup = async (name: string, email: string, password: string): Promise<string | null> => {
+  const signup = async (name: string, username: string, email: string, password: string): Promise<string | null> => {
     try {
-      const data = await api.post<{ token: string; user: User }>("/api/auth/signup", { name, email, password });
+      const data = await api.post<{ token: string; user: User }>("/api/auth/signup", { name, username, email, password });
       localStorage.setItem(TOKEN_KEY, data.token);
       localStorage.setItem(USER_KEY, JSON.stringify(data.user));
       setUser(data.user);
@@ -66,5 +68,11 @@ export function useAuth() {
     setUser(null);
   };
 
-  return { user, loading, login, signup, logout, token };
+  const setUserFromOAuth = (token: string, user: User) => {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    setUser(user);
+  };
+
+  return { user, loading, login, signup, logout, token, setUserFromOAuth };
 }
