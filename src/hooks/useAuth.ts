@@ -68,11 +68,5 @@ export function useAuth() {
     setUser(null);
   };
 
-  const setUserFromOAuth = (token: string, user: User) => {
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    setUser(user);
-  };
-
-  return { user, loading, login, signup, logout, token, setUserFromOAuth };
+  return { user, loading, login, signup, logout, token };
 }
