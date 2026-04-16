@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CheckCircle, Mail, Clock, MessageSquare, FileText, Shield } from "lucide-react";
+import { CheckCircle, Mail, Clock, MessageSquare, Copy, Check, Shield } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -16,17 +17,25 @@ const STEPS = [
 
 const PaymentSuccess = () => {
   const [params] = useSearchParams();
+  const [copied, setCopied] = useState(false);
   const plan     = params.get("plan")       || "your plan";
   const email    = params.get("email")      || "";
   const paymentId = params.get("payment_id") || "";
   const orderId  = params.get("order_id")   || "";
   const isMock   = params.get("mock") === "true";
 
+  const copyOrderId = () => {
+    navigator.clipboard.writeText(orderId).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
 
-      <div className="flex-1 flex items-center justify-center px-4 py-16">
+      <div className="flex-1 flex items-center justify-center px-4 pt-28 pb-16">
         <div className="w-full max-w-lg space-y-4">
 
           {/* ── Main success card ── */}
@@ -86,7 +95,19 @@ const PaymentSuccess = () => {
                     <p className="text-[9px] text-muted-foreground/40 mono uppercase tracking-wider mb-0.5">Order ID</p>
                     <p className="text-sm font-bold text-foreground mono">{orderId}</p>
                   </div>
-                  <FileText size={16} className="text-muted-foreground/30" />
+                  <button
+                    onClick={copyOrderId}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-[10px] font-medium transition-all hover:brightness-110"
+                    style={{
+                      background: copied ? "hsl(142 60% 15%)" : "hsl(0 0% 14%)",
+                      border: `1px solid ${copied ? "hsl(142 60% 30%)" : "hsl(0 0% 22%)"}`,
+                      color: copied ? "hsl(142 70% 55%)" : "hsl(0 0% 55%)",
+                    }}
+                    aria-label="Copy order ID"
+                  >
+                    {copied ? <Check size={11} /> : <Copy size={11} />}
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
                 </div>
               )}
 

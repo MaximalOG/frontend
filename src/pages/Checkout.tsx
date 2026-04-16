@@ -517,8 +517,15 @@ const Checkout = () => {
             {/* Pay button */}
             {!success && (
               <motion.button
-                onClick={handlePay}
-                disabled={loading || isFree}
+                onClick={isFree ? () => {
+                  if (!validateEmail(email)) { setEmailError("Please enter a valid email address."); return; }
+                  setEmailError("");
+                  runSetupOverlay(() => {
+                    setSuccess(true);
+                    navigate(`/payment-success?plan=${planName}&email=${encodeURIComponent(email)}&mock=true`);
+                  });
+                } : handlePay}
+                disabled={loading}
                 whileHover={{ scale: 1.02, boxShadow: "0 0 32px hsl(350 85% 50% / 0.6)" }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full h-12 rounded-sm font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
@@ -527,7 +534,7 @@ const Checkout = () => {
                 {loading ? (
                   <><Loader2 size={16} className="animate-spin" /> Setting up your server…</>
                 ) : (
-                  <><Zap size={14} /> {isFree ? "Free Plan" : `⚡ Launch My Server — ${displayPrice}`}</>
+                  <><Zap size={14} /> {isFree ? "⚡ Claim Free Server" : `⚡ Launch My Server — ${displayPrice}`}</>
                 )}
               </motion.button>
             )}
