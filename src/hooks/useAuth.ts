@@ -38,9 +38,9 @@ export function useAuth() {
 
   useEffect(() => { verify(); }, [verify]);
 
-  const login = async (email: string, password: string): Promise<string | null> => {
+  const login = async (identifier: string, password: string): Promise<string | null> => {
     try {
-      const data = await api.post<{ token: string; user: User }>("/api/auth/login", { email, password });
+      const data = await api.post<{ token: string; user: User }>("/api/auth/login", { identifier, password });
       localStorage.setItem(TOKEN_KEY, data.token);
       localStorage.setItem(USER_KEY, JSON.stringify(data.user));
       setUser(data.user);

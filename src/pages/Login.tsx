@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 const ease = [0.16, 1, 0.3, 1] as const;
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,10 +19,10 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) { setError("Please fill in all fields."); return; }
+    if (!identifier || !password) { setError("Please fill in all fields."); return; }
     setLoading(true);
     setError("");
-    const err = await login(email, password);
+    const err = await login(identifier, password);
     if (err) { setError(err); setLoading(false); }
     else navigate(from, { replace: true });
   };
@@ -42,8 +42,8 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="glass-surface rounded-sm p-6 space-y-4" style={{ border: "1px solid hsl(0 0% 16%)" }}>
             <div>
-              <label className="text-[9px] text-muted-foreground/50 mono uppercase tracking-wider block mb-1.5">Email Address</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email"
+              <label className="text-[9px] text-muted-foreground/50 mono uppercase tracking-wider block mb-1.5">Email or Username</label>
+              <input type="text" value={identifier} onChange={e => setIdentifier(e.target.value)} placeholder="you@example.com or steve_mc" autoComplete="username"
                 className="w-full rounded-sm px-3 py-2.5 text-sm text-foreground bg-transparent outline-none transition-all"
                 style={{ border: "1px solid hsl(0 0% 22%)" }}
                 onFocus={e => (e.currentTarget.style.borderColor = "hsl(350 85% 45%)")}

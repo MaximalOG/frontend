@@ -23,6 +23,7 @@ const PaymentSuccess = () => {
   const paymentId = params.get("payment_id") || "";
   const orderId  = params.get("order_id")   || "";
   const isMock   = params.get("mock") === "true";
+  const isFree   = params.get("free") === "true";
 
   const copyOrderId = () => {
     navigator.clipboard.writeText(orderId).then(() => {
@@ -65,7 +66,7 @@ const PaymentSuccess = () => {
                   transition={{ delay: 0.25, ease }}
                   className="text-xl font-bold text-foreground tracking-tight mb-0.5"
                 >
-                  Payment Successful
+                  {isFree ? "Free Server Claimed" : "Payment Successful"}
                 </motion.h1>
                 <motion.p
                   initial={{ opacity: 0 }}
@@ -125,10 +126,17 @@ const PaymentSuccess = () => {
               )}
             </motion.div>
 
-            {isMock && (
+            {isMock && !isFree && (
               <div className="mt-4 rounded-sm px-3 py-2 text-xs"
                 style={{ background: "hsl(38 90% 8%)", border: "1px solid hsl(38 90% 22%)", color: "hsl(38 90% 55%)" }}>
                 Dev mode — mock payment
+              </div>
+            )}
+
+            {isFree && (
+              <div className="mt-4 rounded-sm px-3 py-2 text-xs"
+                style={{ background: "hsl(142 60% 8%)", border: "1px solid hsl(142 60% 22%)", color: "hsl(142 70% 55%)" }}>
+                Free plan — no payment required
               </div>
             )}
           </motion.div>

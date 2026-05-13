@@ -514,7 +514,6 @@ const Checkout = () => {
               </motion.div>
             )}
 
-            {/* Pay button */}
             {!success && (
               <motion.button
                 onClick={isFree ? () => {
@@ -522,7 +521,7 @@ const Checkout = () => {
                   setEmailError("");
                   runSetupOverlay(() => {
                     setSuccess(true);
-                    navigate(`/payment-success?plan=${planName}&email=${encodeURIComponent(email)}&mock=true`);
+                    navigate(`/payment-success?plan=${planName}&email=${encodeURIComponent(email)}&free=true`);
                   });
                 } : handlePay}
                 disabled={loading}
