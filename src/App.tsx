@@ -40,6 +40,13 @@ const ScrollToTop = () => {
   return null;
 };
 
+// Hide sale banner and chatbot on admin routes
+const AdminGuard = ({ children }: { children: ReactNode }) => {
+  const { pathname } = useLocation();
+  const isAdmin = pathname.startsWith("/admin");
+  return isAdmin ? null : <>{children}</>;
+};
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -50,7 +57,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <ScrollToTop />
-        <SaleBanner />
+        <AdminGuard><SaleBanner /></AdminGuard>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/pricing" element={<Pricing />} />
@@ -73,7 +80,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
         <ChatBotBoundary>
-          <ChatBot />
+          <AdminGuard><ChatBot /></AdminGuard>
         </ChatBotBoundary>
       </BrowserRouter>
     </TooltipProvider>
