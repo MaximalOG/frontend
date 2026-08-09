@@ -49,13 +49,13 @@ const Navbar = () => {
 
   return (
     <>
-      {/* ── DESKTOP NAV — floating pill, sits below sale banner ── */}
-      <div className="fixed left-0 right-0 z-50 hidden md:flex justify-center px-4 pointer-events-none" style={{ top: 56 }}>
+      {/* ── DESKTOP NAV — floating pill ── */}
+      <div className="fixed left-0 right-0 z-50 hidden md:flex justify-center px-4 pointer-events-none" style={{ top: 8 }}>
         <motion.nav
           initial={{ opacity: 0, y: -14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="pointer-events-auto flex items-center gap-0.5 px-3 py-2.5 rounded-full mt-4"
+          className="pointer-events-auto flex items-center gap-0.5 px-3 py-2.5 rounded-full"
           style={{
             background: scrolled ? "hsl(0 0% 7% / 0.97)" : "hsl(0 0% 7% / 0.8)",
             backdropFilter: "blur(20px)",

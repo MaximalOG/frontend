@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tag, Save, ToggleLeft, ToggleRight, RefreshCw, Plus, Trash2 } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 const PLANS = ["Nano", "Basic", "Plus", "Starter", "Pro", "Elite", "Ultra", "Max", "Titan"];
@@ -120,8 +119,7 @@ const SaleAdmin = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <Navbar />
-      <div className="container mx-auto px-4 max-w-7xl pt-24">
+      <div className="container mx-auto px-4 max-w-7xl pt-10">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
 
           <div className="mb-8">

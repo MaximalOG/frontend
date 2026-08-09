@@ -2,6 +2,7 @@ import { useRef, useCallback } from "react";
 import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
 import { Link } from "react-router-dom";
 import { NetherParticles } from "./NetherParticles";
+import PingTester from "./PingTester";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 

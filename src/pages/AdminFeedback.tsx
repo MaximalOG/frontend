@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Star, RefreshCw, Send, ChevronDown, ChevronUp, MessageSquare, Trash2 } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
