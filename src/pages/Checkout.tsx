@@ -205,7 +205,7 @@ const Checkout = () => {
       if (order.mock) {
         runSetupOverlay(() => {
           setSuccess(true);
-          navigate(`/payment-success?plan=${planName}&email=${encodeURIComponent(email)}&mock=true`);
+          navigate(`/setup-server?order=${order.orderId || ""}&plan=${planName}&email=${encodeURIComponent(email)}`);
         });
         return;
       }
@@ -254,7 +254,7 @@ const Checkout = () => {
             if (result.verified) {
               runSetupOverlay(() => {
                 setSuccess(true);
-                navigate(`/payment-success?plan=${planName}&email=${encodeURIComponent(email)}&payment_id=${response.razorpay_payment_id}&order_id=${result.orderId || ""}`);
+                navigate(`/setup-server?order=${result.orderId || ""}&plan=${planName}&email=${encodeURIComponent(email)}`);
               });
             } else {
               setError("Payment verification failed. Please contact support.");
@@ -532,7 +532,7 @@ const Checkout = () => {
                     if (!res.ok) { setError(data.error || "Failed to claim free server."); setLoading(false); return; }
                     runSetupOverlay(() => {
                       setSuccess(true);
-                      navigate(`/payment-success?plan=${planName}&email=${encodeURIComponent(email)}&free=true&order_id=${data.invoiceOrderId || ""}`);
+                      navigate(`/setup-server?order=${data.invoiceOrderId || ""}&plan=${planName}&email=${encodeURIComponent(email)}`);
                     });
                   } catch {
                     setError("Network error. Please try again.");

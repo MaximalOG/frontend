@@ -52,50 +52,77 @@ const SetupServer = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const serverId = params.get("server");
+  const orderId  = params.get("order");   // invoice order ID from payment redirect
+  const planParam = params.get("plan");
 
-  const [serverTypes, setServerTypes]   = useState<ServerType[]>([]);
-  const [pendingServer, setPendingServer] = useState<ServerRecord | null>(null);
-  const [loadingInit, setLoadingInit]   = useState(true);
-  const [initError, setInitError]       = useState("");
+  const [serverTypes,    setServerTypes]    = useState<ServerType[]>([]);
+  const [pendingServer,  setPendingServer]  = useState<ServerRecord | null>(null);
+  const [loadingInit,    setLoadingInit]    = useState(true);
+  const [initError,      setInitError]      = useState("");
 
   // Form state
-  const [serverName,   setServerName]   = useState("");
-  const [serverType,   setServerType]   = useState("");
-  const [mcVersion,    setMcVersion]    = useState("latest");
-  const [javaVersion,  setJavaVersion]  = useState("Java 21");
+  const [serverName,  setServerName]  = useState("");
+  const [serverType,  setServerType]  = useState("");
+  const [mcVersion,   setMcVersion]   = useState("latest");
+  const [javaVersion, setJavaVersion] = useState("Java 21");
 
-  const [step,         setStep]         = useState<1 | 2 | 3>(1);
-  const [submitting,   setSubmitting]   = useState(false);
-  const [submitError,  setSubmitError]  = useState("");
-  const [done,         setDone]         = useState(false);
+  const [step,        setStep]        = useState<1 | 2 | 3>(1);
+  const [submitting,  setSubmitting]  = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [done,        setDone]        = useState(false);
 
-  // Redirect if not logged in
+  // Redirect to login if not authenticated, preserving the full URL
   useEffect(() => {
-    if (!authLoading && !user) navigate("/login", { state: { from: `/setup-server?server=${serverId}` } });
-  }, [authLoading, user, navigate, serverId]);
+    if (!authLoading && !user) {
+      const returnTo = `/setup-server?order=${orderId || ""}&plan=${planParam || ""}&server=${serverId || ""}`;
+      navigate("/login", { state: { from: returnTo } });
+    }
+  }, [authLoading, user, navigate, orderId, planParam, serverId]);
 
-  // Load server types + find the pending server
+  // Load server types + find the pending server using orderId or serverId
   useEffect(() => {
     if (!user) return;
     (async () => {
+      setLoadingInit(true);
+      setInitError("");
       try {
-        const [typesRes, serversRes] = await Promise.all([
-          apiFetch("/api/server-types"),
-          apiFetch("/api/servers", { headers: { Authorization: `Bearer ${token()}` } }),
-        ]);
-        if (typesRes.ok)   setServerTypes(await typesRes.json());
-        if (serversRes.ok) {
-          const servers: ServerRecord[] = await serversRes.json();
-          // Find the specific server or the first pending one
-          const target = serverId
-            ? servers.find(s => s.id === serverId && s.pendingSetup)
-            : servers.find(s => s.pendingSetup);
-          if (target) {
-            setPendingServer(target);
-            setServerName(target.name || `${target.plan} Server`);
-          } else {
-            setInitError("No server pending setup found. You may have already completed setup.");
+        // Fetch server types
+        const typesRes = await apiFetch("/api/server-types");
+        if (typesRes.ok) setServerTypes(await typesRes.json());
+
+        // Look up pending server — prefer orderId lookup (works even if userId wasn't set at payment time)
+        let foundServer: ServerRecord | null = null;
+
+        if (orderId) {
+          // Use the dedicated pending endpoint that matches by invoiceOrderId and claims the server
+          const pendingRes = await apiFetch(
+            `/api/servers/pending?orderId=${encodeURIComponent(orderId)}`,
+            { headers: { Authorization: `Bearer ${token()}` } }
+          );
+          if (pendingRes.ok) {
+            const list: ServerRecord[] = await pendingRes.json();
+            foundServer = list[0] ?? null;
           }
+        }
+
+        // Fall back: look through all servers by serverId or find first pending
+        if (!foundServer) {
+          const serversRes = await apiFetch("/api/servers", {
+            headers: { Authorization: `Bearer ${token()}` },
+          });
+          if (serversRes.ok) {
+            const all: ServerRecord[] = await serversRes.json();
+            foundServer = serverId
+              ? (all.find(s => s.id === serverId && s.pendingSetup) ?? null)
+              : (all.find(s => s.pendingSetup) ?? null);
+          }
+        }
+
+        if (foundServer) {
+          setPendingServer(foundServer);
+          setServerName(foundServer.name || `${foundServer.plan || planParam || ""} Server`);
+        } else {
+          setInitError("No server pending setup found. You may have already completed setup, or the payment is still processing — check your dashboard in a moment.");
         }
       } catch {
         setInitError("Failed to load server info. Please try again.");
@@ -103,7 +130,7 @@ const SetupServer = () => {
         setLoadingInit(false);
       }
     })();
-  }, [user, serverId, token]);
+  }, [user, orderId, serverId, planParam, token]);
 
   const handleSubmit = async () => {
     if (!pendingServer) return;
