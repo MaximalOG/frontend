@@ -22,6 +22,7 @@ const PaymentSuccess = () => {
   const email    = params.get("email")      || "";
   const paymentId = params.get("payment_id") || "";
   const orderId  = params.get("order_id")   || "";
+  const serverId = params.get("server") || "";
   const isMock   = params.get("mock") === "true";
   const isFree   = params.get("free") === "true";
 
@@ -254,7 +255,7 @@ const PaymentSuccess = () => {
             className="flex gap-3 flex-col sm:flex-row"
           >
             <Link
-              to="/setup-server"
+              to={`/setup-server?${new URLSearchParams({ ...(orderId ? { order: orderId } : {}), ...(serverId ? { server: serverId } : {}) }).toString()}`}
               className="flex-1 h-11 flex items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110"
               style={{ background: "hsl(350 85% 45%)", color: "white" }}
             >

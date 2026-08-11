@@ -5,6 +5,7 @@ import { Lock, Globe, Shield, Loader2, CheckCircle, ArrowLeft, Tag, X, Zap, Aler
 import Navbar from "@/components/Navbar";
 import { useCurrency } from "@/hooks/useCurrency";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -31,6 +32,7 @@ const Checkout = () => {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { currency, formatPrice } = useCurrency();
+  const { user, loading: authLoading, token } = useAuth();
 
   const planName = params.get("plan") || "Starter";
 
@@ -45,6 +47,11 @@ const Checkout = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    if (!authLoading && !user) navigate("/login", { state: { from: `/checkout?plan=${encodeURIComponent(planName)}` } });
+    if (user) setEmail(user.email);
+  }, [authLoading, user, navigate, planName]);
+
   // Coupon state
   const [couponInput, setCouponInput] = useState("");
   const [couponStatus, setCouponStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
@@ -52,7 +59,7 @@ const Checkout = () => {
 
   // Auto-apply active public sale on load
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/sale`)
+    apiFetch("/api/sale")
       .then(r => r.json())
       .then(data => {
         if (!data || !data.enabled) return;
@@ -135,7 +142,7 @@ const Checkout = () => {
     if (!code) return;
     setCouponStatus("checking");
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/sale/validate-code`, {
+      const res = await apiFetch("/api/sale/validate-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),
@@ -177,17 +184,17 @@ const Checkout = () => {
   };
 
   const handlePay = async () => {
+    if (!user) return;
     if (!validateEmail(email)) { setEmailError("Please enter a valid email address."); return; }
     setEmailError(""); setError(""); setLoading(true);
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/create-order`, {
+      const res = await apiFetch("/api/create-order", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
         body: JSON.stringify({
           planName,
           currency,
-          userEmail: email,
           couponCode: couponStatus === "valid" ? couponInput.trim().toUpperCase() : undefined,
         }),
       });
@@ -203,10 +210,14 @@ const Checkout = () => {
       });
 
       if (order.mock) {
-        runSetupOverlay(() => {
-          setSuccess(true);
-          navigate(`/setup-server?order=${order.orderId || ""}&plan=${planName}&email=${encodeURIComponent(email)}`);
+        const verify = await apiFetch("/api/verify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+          body: JSON.stringify({ razorpay_order_id: order.orderId, razorpay_payment_id: `mock_payment_${Date.now()}` }),
         });
+        const result = await verify.json();
+        if (!verify.ok || !result.verified) throw new Error(result.error || "Mock payment verification failed");
+        runSetupOverlay(() => navigate(`/payment-success?plan=${encodeURIComponent(planName)}&order_id=${encodeURIComponent(result.orderId)}&server=${encodeURIComponent(result.serverId)}&mock=true`));
         return;
       }
 
@@ -233,28 +244,20 @@ const Checkout = () => {
         modal: { ondismiss: () => setLoading(false) },
         handler: async (response: any) => {
           try {
-            const verify = await fetch(`${import.meta.env.VITE_API_URL}/api/verify-payment`, {
+            const verify = await apiFetch("/api/verify-payment", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
               body: JSON.stringify({
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                planName,
-                userEmail: email,
-                originalPrice: plan.priceInr,
-                discountAmount: couponData ? (couponData.type === "percent"
-                  ? Math.round(plan.priceInr * couponData.discount / 100)
-                  : Math.min(couponData.discount, plan.priceInr)) : 0,
-                finalPrice: discountedInr,
-                couponLabel: couponData?.label || null,
               }),
             });
             const result = await verify.json();
             if (result.verified) {
               runSetupOverlay(() => {
                 setSuccess(true);
-                navigate(`/setup-server?order=${result.orderId || ""}&plan=${planName}&email=${encodeURIComponent(email)}`);
+                navigate(`/payment-success?plan=${encodeURIComponent(planName)}&order_id=${encodeURIComponent(result.orderId)}&server=${encodeURIComponent(result.serverId)}`);
               });
             } else {
               setError("Payment verification failed. Please contact support.");
@@ -440,8 +443,8 @@ const Checkout = () => {
             <div>
               <label className="text-[9px] text-muted-foreground/50 mono uppercase tracking-wider block mb-1.5">Email Address</label>
               <input type="email" value={email}
-                onChange={e => { setEmail(e.target.value); setEmailError(""); }}
-                placeholder="you@example.com"
+                readOnly
+                placeholder="your account email"
                 className="w-full rounded-sm px-3 py-2.5 text-sm text-foreground bg-transparent outline-none transition-all"
                 style={{ border: emailError ? "1px solid hsl(350 85% 50%)" : "1px solid hsl(0 0% 22%)" }}
                 onFocus={e => (e.currentTarget.style.borderColor = "hsl(350 85% 45%)")}
@@ -523,16 +526,16 @@ const Checkout = () => {
                   setError("");
                   try {
                     // Register the free claim on the backend so Pterodactyl gets provisioned
-                    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/claim-free`, {
+                    const res = await apiFetch("/api/claim-free", {
                       method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ planName, userEmail: email }),
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+                      body: JSON.stringify({ planName }),
                     });
                     const data = await res.json();
                     if (!res.ok) { setError(data.error || "Failed to claim free server."); setLoading(false); return; }
                     runSetupOverlay(() => {
                       setSuccess(true);
-                      navigate(`/setup-server?order=${data.invoiceOrderId || ""}&plan=${planName}&email=${encodeURIComponent(email)}`);
+                      navigate(`/payment-success?plan=${encodeURIComponent(planName)}&order_id=${encodeURIComponent(data.invoiceOrderId)}&server=${encodeURIComponent(data.serverId)}&free=true`);
                     });
                   } catch {
                     setError("Network error. Please try again.");

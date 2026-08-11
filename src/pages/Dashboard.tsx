@@ -11,7 +11,7 @@ const ease = [0.16, 1, 0.3, 1] as const;
 interface ServerData {
   id: string;
   name: string;
-  status: "running" | "stopped" | "starting" | "stopping" | "installing" | "suspended" | "pending_setup";
+  status: "running" | "stopped" | "starting" | "stopping" | "installing" | "suspended" | "pending_setup" | "provisioning" | "unknown";
   ram: string;
   cpu: string;
   ssd?: string;
@@ -31,6 +31,8 @@ const STATUS_COLOR: Record<string, string> = {
   installing:   "hsl(200 80% 55%)",
   suspended:    "hsl(350 85% 55%)",
   pending_setup: "hsl(270 70% 65%)",
+  provisioning: "hsl(200 80% 55%)",
+  unknown:      "hsl(38 90% 60%)",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -41,6 +43,8 @@ const STATUS_LABEL: Record<string, string> = {
   installing:   "Installing",
   suspended:    "Suspended",
   pending_setup: "Setup Required",
+  provisioning: "Creating Server",
+  unknown:      "Status Unavailable",
 };
 
 const Dashboard = () => {
@@ -233,14 +237,14 @@ const Dashboard = () => {
                           <Settings size={11} /> Setup
                         </Link>
                       )}
-                      {srv.status === "stopped" && (
+                      {false && srv.status === "stopped" && (
                         <button onClick={() => serverAction(srv.id, "start")} disabled={actionLoading[srv.id]}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110 disabled:opacity-50"
                           style={{ background: "hsl(142 60% 15%)", color: "hsl(142 70% 55%)", border: "1px solid hsl(142 60% 25%)" }}>
                           {actionLoading[srv.id] ? <RefreshCw size={11} className="animate-spin" /> : <Play size={11} />} Start
                         </button>
                       )}
-                      {srv.status === "running" && (
+                      {false && srv.status === "running" && (
                         <button onClick={() => serverAction(srv.id, "stop")} disabled={actionLoading[srv.id]}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110 disabled:opacity-50"
                           style={{ background: "hsl(350 85% 15%)", color: "hsl(350 85% 65%)", border: "1px solid hsl(350 85% 30%)" }}>

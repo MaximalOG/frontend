@@ -12,7 +12,6 @@ interface ServerType {
   id: string;
   label: string;
   description: string;
-  eggId: number;
 }
 
 interface ServerRecord {
