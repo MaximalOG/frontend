@@ -516,13 +516,28 @@ const Checkout = () => {
 
             {!success && (
               <motion.button
-                onClick={isFree ? () => {
+                onClick={isFree ? async () => {
                   if (!validateEmail(email)) { setEmailError("Please enter a valid email address."); return; }
                   setEmailError("");
-                  runSetupOverlay(() => {
-                    setSuccess(true);
-                    navigate(`/payment-success?plan=${planName}&email=${encodeURIComponent(email)}&free=true`);
-                  });
+                  setLoading(true);
+                  setError("");
+                  try {
+                    // Register the free claim on the backend so Pterodactyl gets provisioned
+                    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/claim-free`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ planName, userEmail: email }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) { setError(data.error || "Failed to claim free server."); setLoading(false); return; }
+                    runSetupOverlay(() => {
+                      setSuccess(true);
+                      navigate(`/payment-success?plan=${planName}&email=${encodeURIComponent(email)}&free=true&order_id=${data.invoiceOrderId || ""}`);
+                    });
+                  } catch {
+                    setError("Network error. Please try again.");
+                    setLoading(false);
+                  }
                 } : handlePay}
                 disabled={loading}
                 whileHover={{ scale: 1.02, boxShadow: "0 0 32px hsl(350 85% 50% / 0.6)" }}

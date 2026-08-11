@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CheckCircle, Mail, Clock, MessageSquare, Copy, Check, Shield } from "lucide-react";
+import { CheckCircle, Mail, Clock, MessageSquare, Copy, Check, Shield, Server } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -251,22 +251,22 @@ const PaymentSuccess = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.75 }}
-            className="flex gap-3"
+            className="flex gap-3 flex-col sm:flex-row"
           >
+            <Link
+              to="/setup-server"
+              className="flex-1 h-11 flex items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110"
+              style={{ background: "hsl(350 85% 45%)", color: "white" }}
+            >
+              <Server size={14} /> Set Up My Server
+            </Link>
             <button
               onClick={() => window.dispatchEvent(new CustomEvent("open-chatbot"))}
-              className="flex-1 h-10 flex items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110"
-              style={{ background: "hsl(350 85% 45%)", color: "white" }}
+              className="flex-1 h-11 flex items-center justify-center gap-2 rounded-sm text-sm font-medium text-muted-foreground hover:text-white transition-colors"
+              style={{ border: "1px solid hsl(0 0% 20%)" }}
             >
               <MessageSquare size={14} /> Chat with Support
             </button>
-            <a
-              href="/"
-              className="flex-1 h-10 flex items-center justify-center rounded-sm text-sm text-muted-foreground hover:text-foreground transition-colors"
-              style={{ border: "1px solid hsl(0 0% 20%)" }}
-            >
-              Back to Home
-            </a>
           </motion.div>
 
         </div>

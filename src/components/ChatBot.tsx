@@ -65,35 +65,48 @@ async function readFileAsText(file: File): Promise<string> {
   });
 }
 
-// Strip markdown and render **bold** as <strong>, clean up list markers
-function renderText(text: string) {
-  // Split into segments: bold vs plain
+// Render a single line — handles **bold** and *italic* inline markers
+function renderLine(line: string, key: number) {
   const parts: { bold: boolean; text: string }[] = [];
   const regex = /\*\*(.+?)\*\*|\*(.+?)\*/g;
   let last = 0;
   let match;
-  // Also clean up leading markdown list markers (*, -, •) per line
-  const cleaned = text
-    .replace(/^[\*\-•]\s+/gm, "")   // remove bullet markers
-    .replace(/^#{1,3}\s+/gm, "")    // remove heading markers
-    .replace(/^---+$/gm, "");       // remove horizontal rules
-
-  while ((match = regex.exec(cleaned)) !== null) {
-    if (match.index > last) parts.push({ bold: false, text: cleaned.slice(last, match.index) });
+  while ((match = regex.exec(line)) !== null) {
+    if (match.index > last) parts.push({ bold: false, text: line.slice(last, match.index) });
     parts.push({ bold: true, text: match[1] ?? match[2] });
     last = match.index + match[0].length;
   }
-  if (last < cleaned.length) parts.push({ bold: false, text: cleaned.slice(last) });
-
-  if (parts.length === 1 && !parts[0].bold) return <span>{cleaned}</span>;
+  if (last < line.length) parts.push({ bold: false, text: line.slice(last) });
 
   return (
-    <>
+    <span key={key}>
       {parts.map((p, i) =>
         p.bold
           ? <strong key={i} style={{ color: "white", fontWeight: 600 }}>{p.text}</strong>
           : <span key={i}>{p.text}</span>
       )}
+    </span>
+  );
+}
+
+// Strip markdown noise, split on newlines, render each line with a <br> between
+function renderText(text: string) {
+  const cleaned = text
+    .replace(/^#{1,3}\s+/gm, "")   // remove heading markers
+    .replace(/^---+$/gm, "")       // remove horizontal rules
+    .replace(/\n{3,}/g, "\n\n")    // collapse 3+ blank lines to 2
+    .trim();
+
+  const lines = cleaned.split("\n");
+
+  return (
+    <>
+      {lines.map((line, i) => (
+        <span key={i}>
+          {renderLine(line, i)}
+          {i < lines.length - 1 && <br />}
+        </span>
+      ))}
     </>
   );
 }

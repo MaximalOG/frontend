@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Server, Play, Square, RefreshCw, AlertCircle, Cpu, MemoryStick } from "lucide-react";
+import { Server, Play, Square, RefreshCw, AlertCircle, Cpu, MemoryStick, HardDrive, Settings, ExternalLink } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
@@ -11,18 +11,36 @@ const ease = [0.16, 1, 0.3, 1] as const;
 interface ServerData {
   id: string;
   name: string;
-  status: "running" | "stopped" | "starting" | "stopping";
+  status: "running" | "stopped" | "starting" | "stopping" | "installing" | "suspended" | "pending_setup";
   ram: string;
   cpu: string;
+  ssd?: string;
   plan: string;
   subdomain?: string;
+  serverType?: string;
+  mcVersion?: string;
+  pendingSetup?: boolean;
+  host?: string;
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  running:  "hsl(142 70% 55%)",
-  stopped:  "hsl(0 0% 45%)",
-  starting: "hsl(38 90% 60%)",
-  stopping: "hsl(38 90% 60%)",
+  running:      "hsl(142 70% 55%)",
+  stopped:      "hsl(0 0% 45%)",
+  starting:     "hsl(38 90% 60%)",
+  stopping:     "hsl(38 90% 60%)",
+  installing:   "hsl(200 80% 55%)",
+  suspended:    "hsl(350 85% 55%)",
+  pending_setup: "hsl(270 70% 65%)",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  running:      "Running",
+  stopped:      "Stopped",
+  starting:     "Starting",
+  stopping:     "Stopping",
+  installing:   "Installing",
+  suspended:    "Suspended",
+  pending_setup: "Setup Required",
 };
 
 const Dashboard = () => {
@@ -106,73 +124,90 @@ const Dashboard = () => {
               Loading your servers…
             </div>
           ) : error ? (
-            <div
-              className="rounded-sm p-6 text-center"
-              style={{ background: "hsl(350 85% 8%)", border: "1px solid hsl(350 85% 25%)" }}
-            >
+            <div className="rounded-sm p-6 text-center" style={{ background: "hsl(350 85% 8%)", border: "1px solid hsl(350 85% 25%)" }}>
               <AlertCircle className="w-8 h-8 text-primary mx-auto mb-3" />
               <p className="text-sm text-foreground mb-1">Service unavailable</p>
               <p className="text-xs text-muted-foreground mb-4">{error}</p>
-              <button
-                onClick={loadServers}
+              <button onClick={loadServers}
                 className="px-4 py-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110"
-                style={{ background: "hsl(350 85% 45%)", color: "white" }}
-              >
+                style={{ background: "hsl(350 85% 45%)", color: "white" }}>
                 Retry
               </button>
             </div>
           ) : servers.length === 0 ? (
-            <div
-              className="rounded-sm p-10 text-center"
-              style={{ border: "1px solid hsl(0 0% 16%)" }}
-            >
+            <div className="rounded-sm p-10 text-center" style={{ border: "1px solid hsl(0 0% 16%)" }}>
               <Server className="w-10 h-10 text-muted-foreground/30 mx-auto mb-4" />
               <p className="text-sm text-foreground mb-1">No servers yet</p>
               <p className="text-xs text-muted-foreground mb-5">Purchase a plan to get your first server.</p>
-              <a
-                href="/pricing"
+              <a href="/pricing"
                 className="inline-flex items-center gap-2 px-5 py-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110"
-                style={{ background: "hsl(350 85% 45%)", color: "white" }}
-              >
+                style={{ background: "hsl(350 85% 45%)", color: "white" }}>
                 View Plans
               </a>
             </div>
           ) : (
             <div className="space-y-4">
               {servers.map((srv, i) => (
-                <motion.div
-                  key={srv.id}
+                <motion.div key={srv.id}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.06, ease }}
                   className="glass-surface rounded-sm p-5"
-                  style={{ border: "1px solid hsl(0 0% 16%)" }}
+                  style={{
+                    border: srv.pendingSetup
+                      ? "1px solid hsl(270 70% 35%)"
+                      : "1px solid hsl(0 0% 16%)",
+                    boxShadow: srv.pendingSetup ? "0 0 20px hsl(270 70% 20% / 0.3)" : undefined,
+                  }}
                 >
+                  {/* Setup required banner */}
+                  {srv.pendingSetup && (
+                    <div className="rounded-sm px-3 py-2 mb-4 flex items-center justify-between gap-3"
+                      style={{ background: "hsl(270 70% 8%)", border: "1px solid hsl(270 70% 25%)" }}>
+                      <div className="flex items-center gap-2">
+                        <Settings size={13} className="text-purple-400 shrink-0" />
+                        <span className="text-xs text-purple-300 font-medium">Setup required — configure your server to get started</span>
+                      </div>
+                      <Link to={`/setup-server?server=${srv.id}`}
+                        className="shrink-0 px-3 py-1 rounded-sm text-[11px] font-semibold transition-all hover:brightness-110"
+                        style={{ background: "hsl(270 70% 40%)", color: "white" }}>
+                        Set Up Now
+                      </Link>
+                    </div>
+                  )}
+
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="w-2 h-2 rounded-full shrink-0"
                           style={{
                             background: STATUS_COLOR[srv.status] ?? "hsl(0 0% 45%)",
                             boxShadow: srv.status === "running" ? `0 0 6px ${STATUS_COLOR.running}` : undefined,
                           }}
                         />
                         <h3 className="text-sm font-bold text-foreground truncate">{srv.name}</h3>
-                        <span
-                          className="px-1.5 py-0.5 rounded-sm text-[9px] mono uppercase font-semibold shrink-0"
+                        <span className="px-1.5 py-0.5 rounded-sm text-[9px] mono uppercase font-semibold shrink-0"
                           style={{
                             background: "hsl(0 0% 10%)",
-                            color: STATUS_COLOR[srv.status] ?? "hsl(0 0% 45%)",
-                            border: `1px solid ${STATUS_COLOR[srv.status] ?? "hsl(0 0% 20%)"}`,
-                          }}
-                        >
-                          {srv.status}
+                            color:  STATUS_COLOR[srv.status] ?? "hsl(0 0% 45%)",
+                            border: `1px solid ${STATUS_COLOR[srv.status] ?? "hsl(0 0% 20%)"}40`,
+                          }}>
+                          {STATUS_LABEL[srv.status] ?? srv.status}
                         </span>
                       </div>
-                      {srv.subdomain && (
-                        <p className="text-[10px] text-muted-foreground/50 mono mb-2">{srv.subdomain}</p>
+
+                      {/* Connection info */}
+                      {srv.host && srv.subdomain && !srv.pendingSetup && (
+                        <p className="text-[10px] text-muted-foreground/50 mono mb-2">
+                          {srv.host}
+                        </p>
                       )}
+                      {srv.serverType && (
+                        <p className="text-[10px] text-muted-foreground/40 mono mb-2">
+                          {srv.serverType} {srv.mcVersion && srv.mcVersion !== "latest" ? `· ${srv.mcVersion}` : ""}
+                        </p>
+                      )}
+
                       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <MemoryStick size={11} className="text-primary" /> {srv.ram}
@@ -180,44 +215,43 @@ const Dashboard = () => {
                         <span className="flex items-center gap-1">
                           <Cpu size={11} className="text-primary" /> {srv.cpu}
                         </span>
-                        <span className="text-muted-foreground/50">{srv.plan} plan</span>
+                        {srv.ssd && (
+                          <span className="flex items-center gap-1">
+                            <HardDrive size={11} className="text-primary" /> {srv.ssd}
+                          </span>
+                        )}
+                        <span className="text-muted-foreground/40">{srv.plan} plan</span>
                       </div>
                     </div>
 
+                    {/* Actions */}
                     <div className="flex gap-2 shrink-0">
+                      {srv.status === "pending_setup" && (
+                        <Link to={`/setup-server?server=${srv.id}`}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110"
+                          style={{ background: "hsl(270 70% 20%)", color: "hsl(270 70% 70%)", border: "1px solid hsl(270 70% 35%)" }}>
+                          <Settings size={11} /> Setup
+                        </Link>
+                      )}
                       {srv.status === "stopped" && (
-                        <button
-                          onClick={() => serverAction(srv.id, "start")}
-                          disabled={actionLoading[srv.id]}
+                        <button onClick={() => serverAction(srv.id, "start")} disabled={actionLoading[srv.id]}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110 disabled:opacity-50"
-                          style={{ background: "hsl(142 60% 15%)", color: "hsl(142 70% 55%)", border: "1px solid hsl(142 60% 25%)" }}
-                        >
-                          {actionLoading[srv.id]
-                            ? <RefreshCw size={11} className="animate-spin" />
-                            : <Play size={11} />
-                          }
-                          Start
+                          style={{ background: "hsl(142 60% 15%)", color: "hsl(142 70% 55%)", border: "1px solid hsl(142 60% 25%)" }}>
+                          {actionLoading[srv.id] ? <RefreshCw size={11} className="animate-spin" /> : <Play size={11} />} Start
                         </button>
                       )}
                       {srv.status === "running" && (
-                        <button
-                          onClick={() => serverAction(srv.id, "stop")}
-                          disabled={actionLoading[srv.id]}
+                        <button onClick={() => serverAction(srv.id, "stop")} disabled={actionLoading[srv.id]}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110 disabled:opacity-50"
-                          style={{ background: "hsl(350 85% 15%)", color: "hsl(350 85% 65%)", border: "1px solid hsl(350 85% 30%)" }}
-                        >
-                          {actionLoading[srv.id]
-                            ? <RefreshCw size={11} className="animate-spin" />
-                            : <Square size={11} />
-                          }
-                          Stop
+                          style={{ background: "hsl(350 85% 15%)", color: "hsl(350 85% 65%)", border: "1px solid hsl(350 85% 30%)" }}>
+                          {actionLoading[srv.id] ? <RefreshCw size={11} className="animate-spin" /> : <Square size={11} />} Stop
                         </button>
                       )}
-                      {(srv.status === "starting" || srv.status === "stopping") && (
+                      {(srv.status === "starting" || srv.status === "stopping" || srv.status === "installing") && (
                         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs text-muted-foreground"
                           style={{ border: "1px solid hsl(0 0% 20%)" }}>
                           <RefreshCw size={11} className="animate-spin" />
-                          {srv.status === "starting" ? "Starting…" : "Stopping…"}
+                          {srv.status === "starting" ? "Starting…" : srv.status === "installing" ? "Installing…" : "Stopping…"}
                         </div>
                       )}
                     </div>
