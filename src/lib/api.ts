@@ -15,7 +15,16 @@ export class ApiError extends Error {
 
 /** Low-level fetch wrapper — returns raw Response */
 export async function apiFetch(path: string, options?: RequestInit): Promise<Response> {
-  return fetch(`${API_URL}${path}`, options);
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 15000);
+  const abortParent = () => controller.abort();
+  options?.signal?.addEventListener("abort", abortParent, { once: true });
+  try {
+    return await fetch(`${API_URL}${path}`, { ...options, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timer);
+    options?.signal?.removeEventListener("abort", abortParent);
+  }
 }
 
 /** High-level wrapper — throws ApiError on non-ok, returns parsed JSON */
