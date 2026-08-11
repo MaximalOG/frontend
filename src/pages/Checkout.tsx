@@ -184,7 +184,10 @@ const Checkout = () => {
   };
 
   const handlePay = async () => {
-    if (!user) return;
+    if (!user || !token()) {
+      navigate("/login", { state: { from: `/checkout?plan=${encodeURIComponent(planName)}` } });
+      return;
+    }
     if (!validateEmail(email)) { setEmailError("Please enter a valid email address."); return; }
     setEmailError(""); setError(""); setLoading(true);
 
@@ -520,6 +523,10 @@ const Checkout = () => {
             {!success && (
               <motion.button
                 onClick={isFree ? async () => {
+                  if (!user || !token()) {
+                    navigate("/login", { state: { from: `/checkout?plan=${encodeURIComponent(planName)}` } });
+                    return;
+                  }
                   if (!validateEmail(email)) { setEmailError("Please enter a valid email address."); return; }
                   setEmailError("");
                   setLoading(true);

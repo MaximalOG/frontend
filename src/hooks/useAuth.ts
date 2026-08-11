@@ -22,7 +22,13 @@ export function useAuth() {
 
   const verify = useCallback(async () => {
     const t = token();
-    if (!t) { setLoading(false); return; }
+    if (!t) {
+      // A cached user without its JWT is not an authenticated session.
+      localStorage.removeItem(USER_KEY);
+      setUser(null);
+      setLoading(false);
+      return;
+    }
     try {
       const data = await api.get<User>("/api/auth/me", { Authorization: `Bearer ${t}` });
       setUser(data);
