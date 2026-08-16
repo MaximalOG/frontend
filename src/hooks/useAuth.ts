@@ -44,7 +44,7 @@ export function useAuth() {
 
   useEffect(() => { verify(); }, [verify]);
 
-  const login = async (identifier: string, password: string): Promise<string | null> => {
+  const login = useCallback(async (identifier: string, password: string): Promise<string | null> => {
     try {
       const data = await api.post<{ token: string; user: User }>("/api/auth/login", { identifier, password });
       localStorage.setItem(TOKEN_KEY, data.token);
@@ -54,9 +54,9 @@ export function useAuth() {
     } catch (err) {
       return err instanceof ApiError ? err.message : "Login failed";
     }
-  };
+  }, []);
 
-  const signup = async (name: string, username: string, email: string, password: string): Promise<string | null> => {
+  const signup = useCallback(async (name: string, username: string, email: string, password: string): Promise<string | null> => {
     try {
       const data = await api.post<{ token: string; user: User }>("/api/auth/signup", { name, username, email, password });
       localStorage.setItem(TOKEN_KEY, data.token);
@@ -66,13 +66,13 @@ export function useAuth() {
     } catch (err) {
       return err instanceof ApiError ? err.message : "Signup failed";
     }
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     setUser(null);
-  };
+  }, []);
 
   return { user, loading, login, signup, logout, token };
 }
