@@ -26,24 +26,87 @@ interface ServerRecord {
 }
 
 const MC_VERSIONS = [
-  { value: "latest",  label: "Latest (recommended)" },
-  { value: "1.21.4",  label: "1.21.4" },
-  { value: "1.21.1",  label: "1.21.1" },
-  { value: "1.20.6",  label: "1.20.6" },
-  { value: "1.20.4",  label: "1.20.4" },
-  { value: "1.20.1",  label: "1.20.1" },
-  { value: "1.19.4",  label: "1.19.4" },
-  { value: "1.18.2",  label: "1.18.2" },
-  { value: "1.16.5",  label: "1.16.5" },
-  { value: "1.12.2",  label: "1.12.2" },
-  { value: "1.8.9",   label: "1.8.9" },
+  // ── 26.x — Java 25 (calendar versioning, 2026+) ─────────────────────────────
+  { value: "26.2",    label: "26.2 (June 2026)",       java: "Java 25" },
+  { value: "26.1",    label: "26.1 (May 2026)",        java: "Java 25" },
+  // ── 1.21.x — Java 21 ────────────────────────────────────────────────────────
+  { value: "1.21.11", label: "1.21.11 — Mounts of Mayhem",  java: "Java 21" },
+  { value: "1.21.10", label: "1.21.10 — The Copper Age",    java: "Java 21" },
+  { value: "1.21.9",  label: "1.21.9  — The Copper Age",   java: "Java 21" },
+  { value: "1.21.8",  label: "1.21.8  — Chase the Skies",  java: "Java 21" },
+  { value: "1.21.7",  label: "1.21.7  — Chase the Skies",  java: "Java 21" },
+  { value: "1.21.6",  label: "1.21.6  — Chase the Skies",  java: "Java 21" },
+  { value: "1.21.5",  label: "1.21.5  — Spring to Life",   java: "Java 21" },
+  { value: "1.21.4",  label: "1.21.4 (recommended)",        java: "Java 21" },
+  { value: "1.21.3",  label: "1.21.3  — Bundles of Bravery", java: "Java 21" },
+  { value: "1.21.2",  label: "1.21.2  — Bundles of Bravery", java: "Java 21" },
+  { value: "1.21.1",  label: "1.21.1  — Tricky Trials",    java: "Java 21" },
+  { value: "1.21",    label: "1.21    — Tricky Trials",     java: "Java 21" },
+  // ── 1.20.x — Java 21 (1.20.5+) · Java 17 (1.20–1.20.4) ────────────────────
+  { value: "1.20.6",  label: "1.20.6",                 java: "Java 21" },
+  { value: "1.20.5",  label: "1.20.5",                 java: "Java 21" },
+  { value: "1.20.4",  label: "1.20.4",                 java: "Java 17" },
+  { value: "1.20.2",  label: "1.20.2",                 java: "Java 17" },
+  { value: "1.20.1",  label: "1.20.1",                 java: "Java 17" },
+  { value: "1.20",    label: "1.20",                   java: "Java 17" },
+  // ── 1.19.x — Java 17 ────────────────────────────────────────────────────────
+  { value: "1.19.4",  label: "1.19.4",                 java: "Java 17" },
+  { value: "1.19.3",  label: "1.19.3",                 java: "Java 17" },
+  { value: "1.19.2",  label: "1.19.2",                 java: "Java 17" },
+  { value: "1.19.1",  label: "1.19.1",                 java: "Java 17" },
+  { value: "1.19",    label: "1.19",                   java: "Java 17" },
+  // ── 1.18.x — Java 17 ────────────────────────────────────────────────────────
+  { value: "1.18.2",  label: "1.18.2",                 java: "Java 17" },
+  { value: "1.18.1",  label: "1.18.1",                 java: "Java 17" },
+  { value: "1.18",    label: "1.18",                   java: "Java 17" },
+  // ── 1.17.x — Java 16 ────────────────────────────────────────────────────────
+  { value: "1.17.1",  label: "1.17.1",                 java: "Java 16" },
+  { value: "1.17",    label: "1.17",                   java: "Java 16" },
+  // ── 1.16.x — Java 11 ────────────────────────────────────────────────────────
+  { value: "1.16.5",  label: "1.16.5",                 java: "Java 11" },
+  { value: "1.16.4",  label: "1.16.4",                 java: "Java 11" },
+  { value: "1.16.3",  label: "1.16.3",                 java: "Java 11" },
+  { value: "1.16.2",  label: "1.16.2",                 java: "Java 11" },
+  { value: "1.16.1",  label: "1.16.1",                 java: "Java 11" },
+  // ── 1.15.x — Java 8 ─────────────────────────────────────────────────────────
+  { value: "1.15.2",  label: "1.15.2",                 java: "Java 8"  },
+  { value: "1.15.1",  label: "1.15.1",                 java: "Java 8"  },
+  { value: "1.15",    label: "1.15",                   java: "Java 8"  },
+  // ── 1.14.x — Java 8 ─────────────────────────────────────────────────────────
+  { value: "1.14.4",  label: "1.14.4",                 java: "Java 8"  },
+  { value: "1.14.3",  label: "1.14.3",                 java: "Java 8"  },
+  { value: "1.14.2",  label: "1.14.2",                 java: "Java 8"  },
+  { value: "1.14.1",  label: "1.14.1",                 java: "Java 8"  },
+  { value: "1.14",    label: "1.14",                   java: "Java 8"  },
+  // ── 1.13.x — Java 8 ─────────────────────────────────────────────────────────
+  { value: "1.13.2",  label: "1.13.2",                 java: "Java 8"  },
+  { value: "1.13.1",  label: "1.13.1",                 java: "Java 8"  },
+  { value: "1.13",    label: "1.13",                   java: "Java 8"  },
+  // ── 1.12.x — Java 8 ─────────────────────────────────────────────────────────
+  { value: "1.12.2",  label: "1.12.2",                 java: "Java 8"  },
+  { value: "1.12.1",  label: "1.12.1",                 java: "Java 8"  },
+  { value: "1.12",    label: "1.12",                   java: "Java 8"  },
+  // ── 1.11.x — Java 8 ─────────────────────────────────────────────────────────
+  { value: "1.11.2",  label: "1.11.2",                 java: "Java 8"  },
+  { value: "1.11",    label: "1.11",                   java: "Java 8"  },
+  // ── 1.10.x — Java 8 ─────────────────────────────────────────────────────────
+  { value: "1.10.2",  label: "1.10.2",                 java: "Java 8"  },
+  // ── 1.9.x — Java 8 ──────────────────────────────────────────────────────────
+  { value: "1.9.4",   label: "1.9.4",                  java: "Java 8"  },
+  { value: "1.9",     label: "1.9",                    java: "Java 8"  },
+  // ── 1.8.x — Java 8 ──────────────────────────────────────────────────────────
+  { value: "1.8.9",   label: "1.8.9",                  java: "Java 8"  },
+  { value: "1.8.8",   label: "1.8.8",                  java: "Java 8"  },
+  { value: "1.8",     label: "1.8",                    java: "Java 8"  },
 ];
 
 const JAVA_VERSIONS = [
-  { value: "Java 21", label: "Java 21 (recommended for 1.20+)" },
-  { value: "Java 17", label: "Java 17 (1.17 – 1.19)" },
-  { value: "Java 11", label: "Java 11 (1.16 and below)" },
-  { value: "Java 8",  label: "Java 8 (1.12 and below)" },
+  { value: "Java 25", label: "Java 25 (26.1+)" },
+  { value: "Java 21", label: "Java 21 (1.20.5 – 1.21.x)" },
+  { value: "Java 17", label: "Java 17 (1.18 – 1.20.4)" },
+  { value: "Java 16", label: "Java 16 (1.17.x)" },
+  { value: "Java 11", label: "Java 11 (1.16.x)" },
+  { value: "Java 8",  label: "Java 8  (1.8 – 1.15)" },
 ];
 
 const SetupServer = () => {
@@ -62,7 +125,7 @@ const SetupServer = () => {
   // Form state
   const [serverName,  setServerName]  = useState("");
   const [serverType,  setServerType]  = useState("");
-  const [mcVersion,   setMcVersion]   = useState("latest");
+  const [mcVersion,   setMcVersion]   = useState("1.21.4");
   const [javaVersion, setJavaVersion] = useState("Java 21");
 
   const [step,        setStep]        = useState<1 | 2 | 3>(1);
@@ -334,7 +397,13 @@ const SetupServer = () => {
                     <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider block mb-2">Minecraft Version</label>
                     <select
                       value={mcVersion}
-                      onChange={e => setMcVersion(e.target.value)}
+                      onChange={e => {
+                        const v = e.target.value;
+                        setMcVersion(v);
+                        // Auto-select the correct Java version for this MC version
+                        const match = MC_VERSIONS.find(m => m.value === v);
+                        if (match) setJavaVersion(match.java);
+                      }}
                       className="w-full rounded-sm px-4 py-3 text-sm text-white outline-none appearance-none"
                       style={{ background: "hsl(0 0% 7%)", border: "1px solid hsl(0 0% 20%)" }}
                     >
@@ -357,8 +426,7 @@ const SetupServer = () => {
                         <option key={v.value} value={v.value}>{v.label}</option>
                       ))}
                     </select>
-                    <p className="text-[10px] text-muted-foreground/40 mt-1.5">Use Java 21 for 1.20+, Java 17 for 1.17–1.19, Java 8 for 1.12 and below.</p>
-                  </div>
+                    <p className="text-[10px] text-muted-foreground/40 mt-1.5">Auto-selected based on your Minecraft version. Change only if needed.</p>                  </div>
                 </div>
 
                 <div className="flex gap-3 mt-6">
@@ -387,7 +455,7 @@ const SetupServer = () => {
                   {[
                     { label: "Server Name",    value: serverName },
                     { label: "Type",           value: serverTypes.find(t => t.id === serverType)?.label ?? serverType },
-                    { label: "Minecraft",      value: mcVersion === "latest" ? "Latest" : mcVersion },
+                    { label: "Minecraft",      value: mcVersion },
                     { label: "Java",           value: javaVersion },
                     { label: "Plan",           value: pendingServer?.plan },
                     { label: "RAM",            value: pendingServer?.ram },
