@@ -40,7 +40,7 @@ export function useAuth() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => { verify(); }, [verify]);
 

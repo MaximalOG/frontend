@@ -15,8 +15,10 @@ export class ApiError extends Error {
 
 /** Low-level fetch wrapper — returns raw Response */
 export async function apiFetch(path: string, options?: RequestInit): Promise<Response> {
+  // Use a longer timeout for provisioning endpoints that make serial external calls.
+  const isProvision = path.includes("/setup");
   const controller = new AbortController();
-  const timer = window.setTimeout(() => controller.abort(), 15000);
+  const timer = window.setTimeout(() => controller.abort(), isProvision ? 45000 : 15000);
   const abortParent = () => controller.abort();
   options?.signal?.addEventListener("abort", abortParent, { once: true });
   try {
