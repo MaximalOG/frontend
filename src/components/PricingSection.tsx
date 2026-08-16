@@ -243,6 +243,38 @@ const PricingSection = () => {
   const [discount, setDiscount] = useState<DiscountInfo | null>(null);
   const { currency, formatPrice } = useCurrency();
 
+  // Live prices from the backend — owner can update these via admin panel
+  const [livePrices, setLivePrices] = useState<Record<string, { priceInr: number; popular?: boolean }>>({});
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/api/plans`)
+      .then(r => r.json())
+      .then((data: { name: string; priceInr: number; popular?: boolean }[]) => {
+        const map: Record<string, { priceInr: number; popular?: boolean }> = {};
+        data.forEach(p => { map[p.name] = { priceInr: p.priceInr, popular: p.popular }; });
+        setLivePrices(map);
+      })
+      .catch(() => {}); // silently fall back to hardcoded values
+  }, []);
+
+  // Merge live prices into the static plans array
+  const livePlans = plans.map(p => {
+    const live = livePrices[p.name];
+    if (!live) return p;
+    const newPriceInr = live.priceInr;
+    const newPrice = newPriceInr === 0 ? "Free" : `₹${newPriceInr.toLocaleString("en-IN")}`;
+    const newPriceNote = newPriceInr === 0 ? "limited time" : "/month";
+    const newBtnLabel = newPriceInr === 0 ? `Start Free ${p.name} Server` : p.btnLabel;
+    return {
+      ...p,
+      priceInr: newPriceInr,
+      price: newPrice,
+      priceNote: newPriceNote,
+      btnLabel: newBtnLabel,
+      popular: live.popular ?? p.popular,
+      popularLabel: (live.popular ?? p.popular) ? (p.popularLabel ?? "Most Chosen") : null,
+    };
+  });
+
   const closePlan = useCallback(() => setExpandedPlan(null), []);
   const toggleExpand = (name: string) =>
     setExpandedPlan((prev) => (prev === name ? null : name));
@@ -360,7 +392,7 @@ const PricingSection = () => {
                 <p className="text-sm font-semibold text-foreground">
                   Best plan for your setup:{" "}
                   <span className="text-primary">
-                    {highlightedPlan} ({plans.find((p) => p.name === highlightedPlan)?.specs.ram})
+                    {highlightedPlan} ({livePlans.find((p) => p.name === highlightedPlan)?.specs.ram})
                   </span>
                 </p>
                 <button
@@ -403,7 +435,7 @@ const PricingSection = () => {
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto"
           style={{ alignItems: "start", overflow: "visible" }}
         >
-          {plans.map((plan, i) => {
+          {livePlans.map((plan, i) => {
             const isHighlighted = highlightedPlan === plan.name;
             const isPopular = plan.popular;
             const isExpanded = expandedPlan === plan.name;
