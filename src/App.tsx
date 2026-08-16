@@ -24,6 +24,7 @@ import VerifyEmail from "./pages/VerifyEmail.tsx";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import SetupServer from "./pages/SetupServer.tsx";
+import ServerConsole from "./pages/ServerConsole.tsx";
 import ChatBot from "./components/ChatBot.tsx";
 import SaleBanner from "./components/SaleBanner.tsx";
 import { CurrencyProvider } from "@/context/CurrencyContext";
@@ -79,6 +80,7 @@ const App = () => (
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/setup-server" element={<SetupServer />} />
+          <Route path="/server/:id/console" element={<ServerConsole />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <ChatBotBoundary>

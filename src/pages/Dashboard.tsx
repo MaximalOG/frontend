@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Server, Play, Square, RefreshCw, AlertCircle, Cpu, MemoryStick, HardDrive, Settings, ExternalLink } from "lucide-react";
+import { Server, Play, Square, RefreshCw, AlertCircle, Cpu, MemoryStick, HardDrive, Settings, ExternalLink, Terminal } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
@@ -235,6 +235,13 @@ const Dashboard = () => {
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110"
                           style={{ background: "hsl(270 70% 20%)", color: "hsl(270 70% 70%)", border: "1px solid hsl(270 70% 35%)" }}>
                           <Settings size={11} /> Setup
+                        </Link>
+                      )}
+                      {!srv.pendingSetup && (
+                        <Link to={`/server/${srv.id}/console`}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110"
+                          style={{ background: "hsl(0 0% 10%)", color: "hsl(0 0% 70%)", border: "1px solid hsl(0 0% 22%)" }}>
+                          <Terminal size={11} /> Console
                         </Link>
                       )}
                       {false && srv.status === "stopped" && (
