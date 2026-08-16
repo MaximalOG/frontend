@@ -18,7 +18,7 @@ export function useAuth() {
   });
   const [loading, setLoading] = useState(true);
 
-  const token = () => localStorage.getItem(TOKEN_KEY) || "";
+  const token = useCallback(() => localStorage.getItem(TOKEN_KEY) || "", []);
 
   const verify = useCallback(async () => {
     const t = token();

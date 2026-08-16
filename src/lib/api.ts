@@ -20,7 +20,13 @@ export async function apiFetch(path: string, options?: RequestInit): Promise<Res
   const abortParent = () => controller.abort();
   options?.signal?.addEventListener("abort", abortParent, { once: true });
   try {
-    return await fetch(`${API_URL}${path}`, { ...options, signal: controller.signal });
+    const res = await fetch(`${API_URL}${path}`, { ...options, signal: controller.signal });
+    // Treat 304 Not Modified as a failed request — our API responses are
+    // always dynamic and should never be served from browser cache.
+    if (res.status === 304) {
+      return new Response(null, { status: 204, statusText: "Not Modified — cache miss" });
+    }
+    return res;
   } finally {
     window.clearTimeout(timer);
     options?.signal?.removeEventListener("abort", abortParent);

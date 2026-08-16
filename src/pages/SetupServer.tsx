@@ -129,7 +129,7 @@ const SetupServer = () => {
         setLoadingInit(false);
       }
     })();
-  }, [user, orderId, serverId, planParam, token]);
+  }, [user, orderId, serverId, planParam]);
 
   const handleSubmit = async () => {
     if (!pendingServer) return;
