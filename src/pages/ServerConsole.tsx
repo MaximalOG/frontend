@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Terminal, Play, Square, RotateCcw, Zap, ArrowLeft,
   Loader2, AlertCircle, Wifi, WifiOff,
-  MemoryStick, Cpu, HardDrive, Copy, Check, FolderOpen, Users,
+  MemoryStick, Cpu, HardDrive, Copy, Check, FolderOpen, Users, Trash2,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
@@ -102,6 +102,9 @@ const ServerConsole = () => {
   const [powerLoading, setPowerLoading]   = useState<string | null>(null);
   const [copied, setCopied]               = useState(false);
   const [autoScroll, setAutoScroll]       = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteInput, setDeleteInput]     = useState("");
+  const [deleting, setDeleting]           = useState(false);
 
   const wsRef    = useRef<WebSocket | null>(null);
   const logsRef  = useRef<HTMLDivElement>(null);
@@ -263,8 +266,31 @@ const ServerConsole = () => {
     }
   };
 
-  const sendPower = async (signal: "start" | "stop" | "restart" | "kill") => {
-    setPowerLoading(signal);
+  const deleteServer = async () => {
+    if (deleteInput !== server?.name) return;
+    setDeleting(true);
+    try {
+      const res = await apiFetch(`/api/servers/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      if (res.ok) {
+        wsRef.current?.close(1000);
+        navigate("/dashboard");
+      } else {
+        const d = await res.json();
+        addLog(`[${now()}] Delete failed: ${d.error}`, "error");
+        setShowDeleteConfirm(false);
+      }
+    } catch {
+      addLog(`[${now()}] Network error during delete.`, "error");
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const sendPower = async (signal: "start" | "stop" | "restart" | "kill") => {    setPowerLoading(signal);
     try {
       const res = await apiFetch(`/api/servers/${id}/power`, {
         method: "POST",
@@ -568,11 +594,88 @@ const ServerConsole = () => {
               <p className="text-[9px] text-muted-foreground/25 text-center leading-relaxed px-1">
                 ↑↓ arrow keys for command history
               </p>
-            </div>
 
+              {/* Delete server */}
+              <button
+                onClick={() => { setShowDeleteConfirm(true); setDeleteInput(""); }}
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-sm text-xs font-medium transition-all hover:brightness-110 mt-1"
+                style={{ background: "hsl(350 85% 8%)", color: "hsl(350 85% 50%)", border: "1px solid hsl(350 85% 20%)" }}
+              >
+                <Trash2 size={11} /> Delete Server
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }}
+          onClick={() => !deleting && setShowDeleteConfirm(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="rounded-sm p-6 max-w-sm w-full"
+            style={{ background: "hsl(0 0% 8%)", border: "1px solid hsl(350 85% 35%)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-sm flex items-center justify-center shrink-0"
+                style={{ background: "hsl(350 85% 12%)", border: "1px solid hsl(350 85% 30%)" }}>
+                <Trash2 size={18} className="text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">Delete server?</p>
+                <p className="text-[10px] text-muted-foreground/50 mt-0.5">This will permanently destroy <span className="text-foreground font-medium">{server?.name}</span> and all its data.</p>
+              </div>
+            </div>
+
+            <div className="rounded-sm px-3 py-2.5 mb-4 text-xs"
+              style={{ background: "hsl(350 85% 6%)", border: "1px solid hsl(350 85% 18%)", color: "hsl(350 85% 60%)" }}>
+              ⚠ This cannot be undone. All files, databases, and backups will be lost.
+            </div>
+
+            <label className="text-[9px] mono uppercase tracking-wider text-muted-foreground/50 block mb-1.5">
+              Type <span className="text-foreground font-bold">{server?.name}</span> to confirm
+            </label>
+            <input
+              type="text"
+              value={deleteInput}
+              onChange={e => setDeleteInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && deleteInput === server?.name && deleteServer()}
+              placeholder={server?.name}
+              autoFocus
+              className="w-full rounded-sm px-3 py-2 text-sm text-foreground bg-transparent outline-none mb-4 mono"
+              style={{ border: "1px solid hsl(0 0% 22%)" }}
+              onFocus={e => (e.currentTarget.style.borderColor = "hsl(350 85% 45%)")}
+              onBlur={e => (e.currentTarget.style.borderColor = "hsl(0 0% 22%)")}
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="flex-1 h-9 rounded-sm text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+                style={{ border: "1px solid hsl(0 0% 20%)" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteServer}
+                disabled={deleting || deleteInput !== server?.name}
+                className="flex-1 h-9 flex items-center justify-center gap-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-30"
+                style={{ background: "hsl(350 85% 40%)", color: "white" }}
+              >
+                {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                {deleting ? "Deleting…" : "Delete Forever"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

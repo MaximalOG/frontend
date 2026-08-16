@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { Ticket, Tag, Users, LogOut, ChevronRight, Lock, Star } from "lucide-react";
+import { Ticket, Tag, Users, LogOut, ChevronRight, Lock, Star, DollarSign } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -57,6 +57,17 @@ const Admin = () => {
       border: "hsl(38 90% 30%)",
       glow: "hsl(38 90% 50% / 0.3)",
       allowed: hasPermission("feedback"),
+    },
+    {
+      to: isOwner ? "/admin/pricing" : "#",
+      icon: DollarSign,
+      title: "Plan Pricing",
+      desc: isOwner ? "Set and update prices for all server plans in real-time. Changes apply instantly." : "Only the owner can edit plan prices.",
+      color: isOwner ? "hsl(142 60% 50%)" : "hsl(0 0% 35%)",
+      border: isOwner ? "hsl(142 60% 28%)" : "hsl(0 0% 20%)",
+      glow: isOwner ? "hsl(142 60% 45% / 0.3)" : "transparent",
+      allowed: true,
+      ownerOnly: true,
     },
   ];
 
