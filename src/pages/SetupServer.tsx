@@ -37,7 +37,7 @@ const MC_VERSIONS = [
   { value: "1.21.7",  label: "1.21.7  — Chase the Skies",  java: "Java 21" },
   { value: "1.21.6",  label: "1.21.6  — Chase the Skies",  java: "Java 21" },
   { value: "1.21.5",  label: "1.21.5  — Spring to Life",   java: "Java 21" },
-  { value: "1.21.4",  label: "1.21.4 (recommended)",        java: "Java 21" },
+  { value: "1.21.4",  label: "1.21.4  — The Garden Awakens", java: "Java 21" },
   { value: "1.21.3",  label: "1.21.3  — Bundles of Bravery", java: "Java 21" },
   { value: "1.21.2",  label: "1.21.2  — Bundles of Bravery", java: "Java 21" },
   { value: "1.21.1",  label: "1.21.1  — Tricky Trials",    java: "Java 21" },

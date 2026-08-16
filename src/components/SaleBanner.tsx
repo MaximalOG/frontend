@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tag, X, Clock, Sparkles } from "lucide-react";
+import { useBanner } from "@/context/BannerContext";
 
 interface SaleData {
   enabled: boolean;
@@ -33,10 +34,21 @@ function useCountdown(endDate: string | null) {
   return timeLeft;
 }
 
+const BANNER_HEIGHT = 56;
+
 const SaleBanner = () => {
   const [sale, setSale] = useState<SaleData | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const { setBannerHeight } = useBanner();
   const countdown = useCountdown(sale?.endDate ?? null);
+
+  const isVisible = !!(sale && sale.mode === "public" && !dismissed);
+
+  // Tell Navbar how tall the banner is so it can shift down
+  useEffect(() => {
+    setBannerHeight(isVisible ? BANNER_HEIGHT : 0);
+    return () => setBannerHeight(0);
+  }, [isVisible, setBannerHeight]);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/sale`)

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Terminal, Play, Square, RotateCcw, Zap, ArrowLeft,
   Loader2, AlertCircle, Wifi, WifiOff, Server,
-  MemoryStick, Cpu, HardDrive, Copy, Check,
+  MemoryStick, Cpu, HardDrive, Copy, Check, FolderOpen, Users,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
@@ -314,6 +314,22 @@ const ServerConsole = () => {
                 style={{ background: "hsl(0 0% 10%)", color: statusColor, border: `1px solid ${statusColor}40` }}>
                 {STATUS_LABEL[server?.status ?? "unknown"] ?? server?.status}
               </span>
+            </div>
+
+            {/* Tab switcher */}
+            <div className="ml-auto flex items-center gap-1 rounded-sm p-0.5" style={{ background: "hsl(0 0% 8%)", border: "1px solid hsl(0 0% 16%)" }}>
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium"
+                style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+                <Terminal size={11} /> Console
+              </span>
+              <Link to={`/server/${id}/files`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <FolderOpen size={11} /> Files
+              </Link>
+              <Link to={`/server/${id}/users`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <Users size={11} /> Users
+              </Link>
             </div>
           </div>
 

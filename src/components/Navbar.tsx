@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, LogOut, Server, ChevronDown, Zap } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrency, CURRENCY_FLAGS, CURRENCY_SYMBOLS, type Currency } from "@/hooks/useCurrency";
+import { useBanner } from "@/context/BannerContext";
 
 const navLinks = [
   { label: "Home", to: "/" },
@@ -23,6 +24,7 @@ const Navbar = () => {
   const currencyRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
   const { currency, setCurrency } = useCurrency();
+  const { bannerHeight } = useBanner();
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -50,7 +52,8 @@ const Navbar = () => {
   return (
     <>
       {/* ── DESKTOP NAV — floating pill ── */}
-      <div className="fixed left-0 right-0 z-50 hidden md:flex justify-center px-4 pointer-events-none" style={{ top: 8 }}>
+      <div className="fixed left-0 right-0 z-50 hidden md:flex justify-center px-4 pointer-events-none"
+        style={{ top: bannerHeight + 8, transition: "top 0.3s ease" }}>
         <motion.nav
           initial={{ opacity: 0, y: -14 }}
           animate={{ opacity: 1, y: 0 }}
@@ -258,8 +261,10 @@ const Navbar = () => {
 
       {/* ── MOBILE NAV — unchanged ── */}
       <nav
-        className="fixed top-0 left-0 right-0 z-50 md:hidden glass-surface transition-all duration-300"
+        className="fixed left-0 right-0 z-50 md:hidden glass-surface transition-all duration-300"
         style={{
+          top: bannerHeight,
+          transition: "top 0.3s ease, box-shadow 0.3s, border-color 0.3s",
           boxShadow: scrolled ? "0 4px 32px hsl(350 85% 30% / 0.25)" : undefined,
           borderBottom: scrolled ? "1px solid hsl(350 85% 30% / 0.2)" : undefined,
         }}

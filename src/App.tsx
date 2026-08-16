@@ -25,9 +25,12 @@ import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import SetupServer from "./pages/SetupServer.tsx";
 import ServerConsole from "./pages/ServerConsole.tsx";
+import ServerFiles from "./pages/ServerFiles.tsx";
+import ServerUsers from "./pages/ServerUsers.tsx";
 import ChatBot from "./components/ChatBot.tsx";
 import SaleBanner from "./components/SaleBanner.tsx";
 import { CurrencyProvider } from "@/context/CurrencyContext";
+import { BannerProvider } from "@/context/BannerContext";
 
 class ChatBotBoundary extends Component<{ children: ReactNode }, { crashed: boolean }> {
   state = { crashed: false };
@@ -54,6 +57,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <CurrencyProvider>
+    <BannerProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -81,6 +85,8 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/setup-server" element={<SetupServer />} />
           <Route path="/server/:id/console" element={<ServerConsole />} />
+          <Route path="/server/:id/files" element={<ServerFiles />} />
+          <Route path="/server/:id/users" element={<ServerUsers />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <ChatBotBoundary>
@@ -88,6 +94,7 @@ const App = () => (
         </ChatBotBoundary>
       </BrowserRouter>
     </TooltipProvider>
+    </BannerProvider>
     </CurrencyProvider>
   </QueryClientProvider>
 );
