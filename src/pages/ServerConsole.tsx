@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Terminal, Play, Square, RotateCcw, Zap, ArrowLeft,
-  Loader2, AlertCircle, Wifi, WifiOff, Server,
+  Loader2, AlertCircle, Wifi, WifiOff,
   MemoryStick, Cpu, HardDrive, Copy, Check, FolderOpen, Users,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -13,23 +13,16 @@ import { apiFetch } from "@/lib/api";
 const ease = [0.16, 1, 0.3, 1] as const;
 
 interface ServerData {
-  id: string;
-  name: string;
-  status: string;
-  ram: string;
-  cpu: string;
-  ssd?: string;
-  plan: string;
-  host?: string;
-  serverType?: string;
-  mcVersion?: string;
+  id: string; name: string; status: string;
+  ram: string; cpu: string; ssd?: string;
+  plan: string; host?: string;
+  serverType?: string; mcVersion?: string;
   pendingSetup?: boolean;
 }
 
 interface LogLine {
-  id: number;
-  text: string;
-  type: "info" | "warn" | "error" | "success" | "input";
+  id: number; text: string;
+  type: "info" | "warn" | "error" | "success" | "input" | "system";
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -43,26 +36,54 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  running:    "Running",
-  stopped:    "Stopped",
-  starting:   "Starting",
-  stopping:   "Stopping",
-  installing: "Installing",
-  suspended:  "Suspended",
-  unknown:    "Unknown",
+  running: "Running", stopped: "Stopped", starting: "Starting",
+  stopping: "Stopping", installing: "Installing",
+  suspended: "Suspended", unknown: "Unknown",
 };
 
-let _lineId = 0;
-function mkLine(text: string, type: LogLine["type"] = "info"): LogLine {
-  return { id: ++_lineId, text, type };
+let _lid = 0;
+const mkLine = (text: string, type: LogLine["type"] = "info"): LogLine => ({ id: ++_lid, text, type });
+
+// Strip all ANSI escape sequences (color codes, cursor movement, etc.)
+function stripAnsi(str: string): string {
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, "")
+            .replace(/\x1B\[[0-9;]*m/g, "")
+            .replace(/\x1B\[[\d;]*[A-Za-z]/g, "")
+            .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, "");
+}
+
+// Replace Pterodactyl branding with NetherNodes
+function rebrand(str: string): string {
+  return str
+    .replace(/\[Pterodactyl Daemon\]/gi, "[NetherNodes]")
+    .replace(/Pterodactyl Daemon/gi, "NetherNodes")
+    .replace(/container@pterodactyl~/gi, "server@nethernodes ~")
+    .replace(/Pterodactyl/gi, "NetherNodes");
+}
+
+function processLine(raw: string): string {
+  return rebrand(stripAnsi(raw)).trim();
 }
 
 function classifyLine(text: string): LogLine["type"] {
   const t = text.toLowerCase();
-  if (t.includes("error") || t.includes("exception") || t.includes("fatal")) return "error";
+  if (t.startsWith(">")) return "input";
+  if (t.startsWith("[nethernodes]")) return "system";
+  if (t.startsWith("server@nethernodes")) return "system";
+  if (t.includes("error") || t.includes("exception") || t.includes("fatal") || t.includes("crash")) return "error";
   if (t.includes("warn")) return "warn";
-  if (t.includes("done") || t.includes("started") || t.includes("ready") || t.includes("success")) return "success";
+  if (
+    t.includes("done") || t.includes("started") || t.includes("ready") ||
+    t.includes("running") || t.includes("loaded") || t.includes("finished") ||
+    t.includes("connected to console")
+  ) return "success";
   return "info";
+}
+
+// Timestamp prefix for system messages
+function now(): string {
+  return new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
 const ServerConsole = () => {
@@ -70,27 +91,28 @@ const ServerConsole = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, token, logout } = useAuth();
 
-  const [server, setServer]         = useState<ServerData | null>(null);
+  const [server, setServer]               = useState<ServerData | null>(null);
   const [loadingServer, setLoadingServer] = useState(true);
-  const [serverError, setServerError]   = useState("");
-
-  const [logs, setLogs]             = useState<LogLine[]>([]);
-  const [input, setInput]           = useState("");
-  const [wsStatus, setWsStatus]     = useState<"disconnected" | "connecting" | "connected" | "error">("disconnected");
-  const [powerLoading, setPowerLoading] = useState<string | null>(null);
-  const [copied, setCopied]         = useState(false);
+  const [serverError, setServerError]     = useState("");
+  const [logs, setLogs]                   = useState<LogLine[]>([]);
+  const [input, setInput]                 = useState("");
+  const [history, setHistory]             = useState<string[]>([]);
+  const [histIdx, setHistIdx]             = useState(-1);
+  const [wsStatus, setWsStatus]           = useState<"disconnected" | "connecting" | "connected" | "error">("disconnected");
+  const [powerLoading, setPowerLoading]   = useState<string | null>(null);
+  const [copied, setCopied]               = useState(false);
+  const [autoScroll, setAutoScroll]       = useState(true);
 
   const wsRef    = useRef<WebSocket | null>(null);
+  const logsRef  = useRef<HTMLDivElement>(null);
   const logsEnd  = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const tokenRef = useRef<string>("");   // stores current ws jwt for re-auth
+  const tokenRef = useRef<string>("");
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) navigate("/login", { state: { from: `/server/${id}/console` } });
   }, [authLoading, user, navigate, id]);
 
-  // Load server info
   useEffect(() => {
     if (!user || !id) return;
     (async () => {
@@ -102,28 +124,32 @@ const ServerConsole = () => {
         const srv = all.find(s => s.id === id);
         if (!srv) { setServerError("Server not found."); return; }
         setServer(srv);
-      } catch {
-        setServerError("Could not load server info.");
-      } finally {
-        setLoadingServer(false);
-      }
+      } catch { setServerError("Could not load server info."); }
+      finally { setLoadingServer(false); }
     })();
   }, [user, id, token, logout, navigate]);
 
   const addLog = useCallback((text: string, type: LogLine["type"] = "info") => {
-    setLogs(prev => [...prev.slice(-800), mkLine(text, type)]);
+    setLogs(prev => [...prev.slice(-1200), mkLine(text, type)]);
   }, []);
 
-  // Scroll to bottom when logs update
+  // Auto-scroll
   useEffect(() => {
-    logsEnd.current?.scrollIntoView({ behavior: "smooth" });
-  }, [logs]);
+    if (autoScroll) logsEnd.current?.scrollIntoView({ behavior: "auto" });
+  }, [logs, autoScroll]);
 
-  // Connect WebSocket
+  // Detect manual scroll up to pause auto-scroll
+  const handleScroll = () => {
+    const el = logsRef.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+    setAutoScroll(atBottom);
+  };
+
   const connect = useCallback(async () => {
     if (!id || wsRef.current?.readyState === WebSocket.OPEN) return;
     setWsStatus("connecting");
-    addLog("Connecting to console…", "info");
+    addLog(`[${now()}] Connecting to NetherNodes console…`, "system");
 
     try {
       const res = await apiFetch(`/api/servers/${id}/console-token`, {
@@ -131,25 +157,20 @@ const ServerConsole = () => {
       });
       if (!res.ok) {
         const err = await res.json();
-        addLog(`Failed to get console token: ${err.error}`, "error");
-        setWsStatus("error");
-        return;
+        addLog(`[${now()}] Failed to connect: ${err.error}`, "error");
+        setWsStatus("error"); return;
       }
       const { token: wsToken, socket: wsUrl } = await res.json();
       if (!wsToken || !wsUrl) {
-        addLog("Console not available — make sure PTERODACTYL_CLIENT_KEY is set.", "error");
-        setWsStatus("error");
-        return;
+        addLog(`[${now()}] Console unavailable — contact support.`, "error");
+        setWsStatus("error"); return;
       }
 
       tokenRef.current = wsToken;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
-      ws.onopen = () => {
-        // Pterodactyl requires auth immediately on connect
-        ws.send(JSON.stringify({ event: "auth", args: [wsToken] }));
-      };
+      ws.onopen = () => ws.send(JSON.stringify({ event: "auth", args: [wsToken] }));
 
       ws.onmessage = (evt) => {
         try {
@@ -157,73 +178,62 @@ const ServerConsole = () => {
           switch (msg.event) {
             case "auth success":
               setWsStatus("connected");
-              addLog("Connected to console.", "success");
+              addLog(`[${now()}] ✓ Connected to NetherNodes console`, "success");
               break;
             case "token expiring":
-              // Refresh token before it expires
               (async () => {
                 try {
                   const r = await apiFetch(`/api/servers/${id}/console-token`, {
                     headers: { Authorization: `Bearer ${token()}` },
                   });
                   if (r.ok) {
-                    const { token: newToken } = await r.json();
-                    tokenRef.current = newToken;
-                    ws.send(JSON.stringify({ event: "auth", args: [newToken] }));
+                    const { token: t } = await r.json();
+                    tokenRef.current = t;
+                    ws.send(JSON.stringify({ event: "auth", args: [t] }));
                   }
                 } catch { /* non-fatal */ }
               })();
               break;
             case "token expired":
-              addLog("Console session expired. Reconnecting…", "warn");
+              addLog(`[${now()}] Session expired — reconnecting…`, "warn");
               ws.close();
               setTimeout(connect, 1500);
               break;
             case "console output":
               if (Array.isArray(msg.args)) {
-                msg.args.forEach((line: string) => {
-                  if (line?.trim()) addLog(line.trim(), classifyLine(line));
+                msg.args.forEach((raw: string) => {
+                  const line = processLine(raw);
+                  if (line) addLog(line, classifyLine(line));
                 });
               }
               break;
             case "status":
-              if (msg.args?.[0]) {
-                setServer(prev => prev ? { ...prev, status: msg.args[0] } : prev);
-              }
-              break;
-            default:
+              if (msg.args?.[0]) setServer(p => p ? { ...p, status: msg.args[0] } : p);
               break;
           }
-        } catch { /* ignore parse errors */ }
+        } catch { /* parse error */ }
       };
 
       ws.onerror = () => {
         setWsStatus("error");
-        addLog("WebSocket error. Check panel connectivity.", "error");
+        addLog(`[${now()}] Connection error. Click Reconnect.`, "error");
       };
 
       ws.onclose = (evt) => {
         setWsStatus("disconnected");
-        if (evt.code !== 1000) {
-          addLog(`Disconnected (code ${evt.code}). Click Reconnect to try again.`, "warn");
-        }
+        if (evt.code !== 1000)
+          addLog(`[${now()}] Disconnected (${evt.code}). Click Reconnect.`, "warn");
       };
-
     } catch (err: any) {
-      addLog(`Connection failed: ${err?.message}`, "error");
+      addLog(`[${now()}] Connection failed: ${err?.message}`, "error");
       setWsStatus("error");
     }
   }, [id, token, addLog]);
 
-  // Auto-connect once server is loaded and provisioned
   useEffect(() => {
-    if (server && !server.pendingSetup && server.status !== "pending_setup") {
-      connect();
-    }
-    return () => {
-      wsRef.current?.close(1000);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (server && !server.pendingSetup && server.status !== "pending_setup") connect();
+    return () => { wsRef.current?.close(1000); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [server?.id]);
 
   const sendCommand = () => {
@@ -231,7 +241,26 @@ const ServerConsole = () => {
     if (!cmd || wsRef.current?.readyState !== WebSocket.OPEN) return;
     wsRef.current.send(JSON.stringify({ event: "send command", args: [cmd] }));
     addLog(`> ${cmd}`, "input");
+    setHistory(h => [cmd, ...h.slice(0, 49)]);
+    setHistIdx(-1);
     setInput("");
+    setAutoScroll(true);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") { sendCommand(); return; }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const next = Math.min(histIdx + 1, history.length - 1);
+      setHistIdx(next);
+      setInput(history[next] ?? "");
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = Math.max(histIdx - 1, -1);
+      setHistIdx(next);
+      setInput(next === -1 ? "" : history[next] ?? "");
+    }
   };
 
   const sendPower = async (signal: "start" | "stop" | "restart" | "kill") => {
@@ -243,50 +272,35 @@ const ServerConsole = () => {
         body: JSON.stringify({ signal }),
       });
       const data = await res.json();
-      if (res.ok) {
-        addLog(`Power signal "${signal}" sent.`, "success");
-      } else {
-        addLog(`Power error: ${data.error}`, "error");
-      }
-    } catch {
-      addLog("Network error sending power signal.", "error");
-    } finally {
-      setPowerLoading(null);
-    }
+      if (res.ok) addLog(`[${now()}] Power signal "${signal}" sent.`, "success");
+      else addLog(`[${now()}] Power error: ${data.error}`, "error");
+    } catch { addLog(`[${now()}] Network error.`, "error"); }
+    finally { setPowerLoading(null); }
   };
 
   const copyAddress = () => {
     if (!server?.host) return;
-    navigator.clipboard.writeText(server.host).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    navigator.clipboard.writeText(server.host).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   };
 
-  if (authLoading || loadingServer) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (authLoading || loadingServer) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+    </div>
+  );
 
-  if (serverError) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 max-w-lg pt-32 text-center">
-          <AlertCircle className="w-10 h-10 text-primary mx-auto mb-4" />
-          <p className="text-foreground font-semibold mb-2">Console unavailable</p>
-          <p className="text-sm text-muted-foreground mb-6">{serverError}</p>
-          <Link to="/dashboard" className="inline-flex items-center gap-2 px-5 py-2 rounded-sm text-sm font-semibold"
-            style={{ background: "hsl(350 85% 45%)", color: "white" }}>
-            Back to Dashboard
-          </Link>
-        </div>
+  if (serverError) return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="container mx-auto px-4 max-w-lg pt-32 text-center">
+        <AlertCircle className="w-10 h-10 text-primary mx-auto mb-4" />
+        <p className="text-foreground font-semibold mb-2">Console unavailable</p>
+        <p className="text-sm text-muted-foreground mb-6">{serverError}</p>
+        <Link to="/dashboard" className="inline-flex items-center gap-2 px-5 py-2 rounded-sm text-sm font-semibold"
+          style={{ background: "hsl(350 85% 45%)", color: "white" }}>Back to Dashboard</Link>
       </div>
-    );
-  }
+    </div>
+  );
 
   const statusColor = STATUS_COLOR[server?.status ?? "unknown"] ?? STATUS_COLOR.unknown;
   const isRunning   = server?.status === "running";
@@ -297,227 +311,265 @@ const ServerConsole = () => {
     <div className="min-h-screen bg-background pb-8">
       <Navbar />
 
-      <div className="container mx-auto px-4 max-w-5xl pt-20">
+      {/* Subtle glow */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[900px] h-[300px] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse, hsl(350 85% 30% / 0.06) 0%, transparent 70%)" }} />
+
+      <div className="container mx-auto px-4 max-w-6xl pt-20">
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease }}>
 
-          {/* Back + header */}
-          <div className="flex items-center gap-3 mb-5 flex-wrap">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
             <Link to="/dashboard" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft size={13} /> Dashboard
+              <ArrowLeft size={12} /> Dashboard
             </Link>
-            <span className="text-muted-foreground/30">/</span>
+            <span className="text-muted-foreground/20">/</span>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full shrink-0 transition-colors duration-500"
-                style={{ background: statusColor, boxShadow: isRunning ? `0 0 6px ${statusColor}` : undefined }} />
+              <span className="relative flex h-2 w-2">
+                {isRunning && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
+                  style={{ background: statusColor }} />}
+                <span className="relative inline-flex rounded-full h-2 w-2"
+                  style={{ background: statusColor, boxShadow: isRunning ? `0 0 8px ${statusColor}` : undefined }} />
+              </span>
               <h1 className="text-sm font-bold text-foreground">{server?.name}</h1>
-              <span className="px-1.5 py-0.5 rounded-sm text-[9px] mono uppercase font-semibold"
-                style={{ background: "hsl(0 0% 10%)", color: statusColor, border: `1px solid ${statusColor}40` }}>
+              <span className="px-2 py-0.5 rounded-full text-[9px] mono uppercase font-semibold tracking-wide"
+                style={{ background: `${statusColor}18`, color: statusColor, border: `1px solid ${statusColor}40` }}>
                 {STATUS_LABEL[server?.status ?? "unknown"] ?? server?.status}
               </span>
             </div>
 
-            {/* Tab switcher */}
-            <div className="ml-auto flex items-center gap-1 rounded-sm p-0.5" style={{ background: "hsl(0 0% 8%)", border: "1px solid hsl(0 0% 16%)" }}>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium"
-                style={{ background: "hsl(350 85% 45%)", color: "white" }}>
-                <Terminal size={11} /> Console
-              </span>
-              <Link to={`/server/${id}/files`}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                <FolderOpen size={11} /> Files
-              </Link>
-              <Link to={`/server/${id}/users`}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                <Users size={11} /> Users
-              </Link>
+            {/* Tabs */}
+            <div className="ml-auto flex items-center gap-1 rounded-sm p-0.5"
+              style={{ background: "hsl(0 0% 7%)", border: "1px solid hsl(0 0% 15%)" }}>
+              {[
+                { to: `/server/${id}/console`, icon: Terminal, label: "Console", active: true },
+                { to: `/server/${id}/files`,   icon: FolderOpen, label: "Files",   active: false },
+                { to: `/server/${id}/users`,   icon: Users,      label: "Users",   active: false },
+              ].map(tab => (
+                tab.active
+                  ? <span key={tab.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold"
+                      style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+                      <tab.icon size={11} /> {tab.label}
+                    </span>
+                  : <Link key={tab.label} to={tab.to}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                      <tab.icon size={11} /> {tab.label}
+                    </Link>
+              ))}
             </div>
           </div>
 
-          {/* Info bar */}
-          <div className="rounded-sm px-4 py-3 mb-4 flex flex-wrap gap-x-6 gap-y-2 items-center"
-            style={{ background: "hsl(0 0% 6%)", border: "1px solid hsl(0 0% 14%)" }}>
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <MemoryStick size={11} className="text-primary" /> {server?.ram}
+          {/* Stats bar */}
+          <div className="rounded-sm px-5 py-3 mb-4 flex flex-wrap gap-x-8 gap-y-2 items-center"
+            style={{ background: "hsl(0 0% 5%)", border: "1px solid hsl(0 0% 12%)" }}>
+            <span className="flex items-center gap-2 text-xs text-muted-foreground">
+              <MemoryStick size={12} className="text-primary" />
+              <span className="text-muted-foreground/50 text-[10px] uppercase tracking-wider">RAM</span>
+              <span className="font-semibold text-foreground">{server?.ram}</span>
             </span>
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Cpu size={11} className="text-primary" /> {server?.cpu}
+            <span className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Cpu size={12} className="text-primary" />
+              <span className="text-muted-foreground/50 text-[10px] uppercase tracking-wider">CPU</span>
+              <span className="font-semibold text-foreground">{server?.cpu}</span>
             </span>
             {server?.ssd && (
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <HardDrive size={11} className="text-primary" /> {server.ssd}
+              <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                <HardDrive size={12} className="text-primary" />
+                <span className="text-muted-foreground/50 text-[10px] uppercase tracking-wider">Disk</span>
+                <span className="font-semibold text-foreground">{server.ssd}</span>
               </span>
             )}
             {server?.serverType && (
-              <span className="text-xs text-muted-foreground/50 mono">
-                {server.serverType}{server.mcVersion ? ` · ${server.mcVersion}` : ""}
+              <span className="text-[10px] text-muted-foreground/40 mono px-2 py-0.5 rounded"
+                style={{ background: "hsl(0 0% 9%)" }}>
+                {server.serverType}{server.mcVersion ? ` ${server.mcVersion}` : ""}
               </span>
             )}
             {server?.host && (
               <button onClick={copyAddress}
-                className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-foreground transition-colors mono">
-                {server.host}
-                {copied ? <Check size={10} className="text-green-400" /> : <Copy size={10} />}
+                className="ml-auto flex items-center gap-2 text-xs mono transition-colors group"
+                style={{ color: "hsl(0 0% 50%)" }}>
+                <span className="group-hover:text-foreground transition-colors">{server.host}</span>
+                {copied
+                  ? <Check size={11} className="text-green-400" />
+                  : <Copy size={11} className="opacity-40 group-hover:opacity-100 transition-opacity" />}
               </button>
             )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
 
-            {/* ── Console ── */}
-            <div className="lg:col-span-3 flex flex-col gap-2">
-              {/* Connection status bar */}
-              <div className="flex items-center justify-between px-3 py-1.5 rounded-sm"
-                style={{ background: "hsl(0 0% 5%)", border: "1px solid hsl(0 0% 12%)" }}>
+            {/* ── Console panel ── */}
+            <div className="lg:col-span-3 flex flex-col gap-0 rounded-sm overflow-hidden"
+              style={{ border: "1px solid hsl(0 0% 14%)" }}>
+
+              {/* Console top bar */}
+              <div className="flex items-center justify-between px-4 py-2.5"
+                style={{ background: "hsl(0 0% 7%)", borderBottom: "1px solid hsl(0 0% 12%)" }}>
+                <div className="flex items-center gap-3">
+                  {/* Traffic light dots */}
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(0 70% 50%)" }} />
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(38 90% 55%)" }} />
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ background: "hsl(142 60% 45%)" }} />
+                  </div>
+                  <span className="text-[11px] text-muted-foreground/40 mono">{server?.name} — console</span>
+                </div>
                 <div className="flex items-center gap-2">
                   {wsStatus === "connected"
-                    ? <Wifi size={11} className="text-green-400" />
+                    ? <span className="flex items-center gap-1.5 text-[10px] text-green-400">
+                        <Wifi size={10} /> Live
+                      </span>
                     : wsStatus === "connecting"
-                    ? <Loader2 size={11} className="animate-spin text-yellow-400" />
-                    : <WifiOff size={11} className="text-muted-foreground/40" />
+                    ? <span className="flex items-center gap-1.5 text-[10px] text-yellow-400">
+                        <Loader2 size={10} className="animate-spin" /> Connecting…
+                      </span>
+                    : <button onClick={connect}
+                        className="flex items-center gap-1.5 text-[10px] text-muted-foreground/50 hover:text-primary transition-colors">
+                        <WifiOff size={10} /> Reconnect
+                      </button>
                   }
-                  <span className="text-[10px] mono text-muted-foreground/50">
-                    {wsStatus === "connected" ? "Live console" : wsStatus === "connecting" ? "Connecting…" : "Disconnected"}
-                  </span>
+                  {!autoScroll && (
+                    <button onClick={() => { setAutoScroll(true); logsEnd.current?.scrollIntoView({ behavior: "smooth" }); }}
+                      className="text-[10px] text-primary/60 hover:text-primary transition-colors mono">
+                      ↓ scroll to bottom
+                    </button>
+                  )}
                 </div>
-                {wsStatus !== "connected" && wsStatus !== "connecting" && (
-                  <button onClick={connect}
-                    className="text-[10px] text-primary hover:brightness-110 transition-all">
-                    Reconnect
-                  </button>
-                )}
               </div>
 
               {/* Log output */}
               <div
-                className="rounded-sm font-mono text-[11px] leading-relaxed overflow-y-auto"
-                style={{
-                  background: "hsl(0 0% 4%)",
-                  border: "1px solid hsl(0 0% 12%)",
-                  height: "420px",
-                  padding: "12px 14px",
-                }}
+                ref={logsRef}
+                onScroll={handleScroll}
                 onClick={() => inputRef.current?.focus()}
+                className="font-mono text-[11.5px] leading-[1.7] overflow-y-auto cursor-text"
+                style={{
+                  background: "hsl(0 0% 3.5%)",
+                  height: "460px",
+                  padding: "14px 16px",
+                }}
               >
-                {logs.length === 0 ? (
-                  <span className="text-muted-foreground/30">Console output will appear here…</span>
-                ) : (
-                  logs.map(line => (
-                    <div key={line.id} className="whitespace-pre-wrap break-all" style={{
-                      color: line.type === "error"   ? "hsl(350 85% 65%)"
-                           : line.type === "warn"    ? "hsl(38 90% 60%)"
-                           : line.type === "success" ? "hsl(142 70% 55%)"
-                           : line.type === "input"   ? "hsl(200 80% 65%)"
-                           : "hsl(0 0% 72%)",
-                    }}>
-                      {line.text}
-                    </div>
-                  ))
-                )}
+                {/* Boot banner */}
+                <div className="mb-3 pb-3 select-none" style={{ borderBottom: "1px solid hsl(0 0% 10%)" }}>
+                  <span style={{ color: "hsl(350 85% 50%)" }} className="font-bold">NetherNodes</span>
+                  <span className="text-muted-foreground/30"> — Minecraft Server Console</span>
+                  <br />
+                  <span className="text-muted-foreground/20 text-[10px]">nethernodes.online · {server?.plan} plan · {server?.ram}</span>
+                </div>
+
+                {logs.length === 0
+                  ? <span className="text-muted-foreground/20 select-none">Waiting for output…</span>
+                  : logs.map(line => {
+                      const color =
+                        line.type === "error"   ? "hsl(350 85% 60%)" :
+                        line.type === "warn"    ? "hsl(38 90% 58%)" :
+                        line.type === "success" ? "hsl(142 65% 50%)" :
+                        line.type === "input"   ? "hsl(210 80% 65%)" :
+                        line.type === "system"  ? "hsl(270 60% 65%)" :
+                        "hsl(0 0% 75%)";
+                      return (
+                        <div key={line.id} className="whitespace-pre-wrap break-all leading-relaxed" style={{ color }}>
+                          {line.text}
+                        </div>
+                      );
+                    })
+                }
                 <div ref={logsEnd} />
               </div>
 
               {/* Command input */}
-              <div className="flex gap-2">
-                <div className="flex-1 flex items-center gap-2 rounded-sm px-3"
-                  style={{ background: "hsl(0 0% 6%)", border: "1px solid hsl(0 0% 18%)" }}>
-                  <span className="text-primary text-sm font-bold shrink-0">&gt;</span>
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    onKeyDown={e => e.key === "Enter" && sendCommand()}
-                    placeholder={wsStatus === "connected" ? "Type a command…" : "Connect to send commands"}
-                    disabled={wsStatus !== "connected"}
-                    className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground/30 outline-none py-2.5 mono"
-                  />
-                </div>
+              <div className="flex items-center gap-0"
+                style={{ borderTop: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 5%)" }}>
+                <span className="px-4 text-primary font-bold text-sm mono select-none">›</span>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={wsStatus === "connected" ? "Type a command and press Enter…" : "Not connected"}
+                  disabled={wsStatus !== "connected"}
+                  className="flex-1 bg-transparent text-[12px] text-foreground placeholder:text-muted-foreground/20 outline-none py-3 mono"
+                />
                 <button
                   onClick={sendCommand}
                   disabled={!input.trim() || wsStatus !== "connected"}
-                  className="px-4 rounded-sm text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-40"
-                  style={{ background: "hsl(350 85% 45%)", color: "white" }}
+                  className="px-5 py-3 text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-30"
+                  style={{ background: "hsl(350 85% 42%)", color: "white", borderLeft: "1px solid hsl(350 85% 30%)" }}
                 >
                   Send
                 </button>
               </div>
             </div>
 
-            {/* ── Power controls ── */}
+            {/* ── Side panel ── */}
             <div className="flex flex-col gap-3">
-              <p className="text-[9px] text-muted-foreground/40 mono uppercase tracking-wider">Power Controls</p>
 
-              {/* Start */}
-              <button
-                onClick={() => sendPower("start")}
-                disabled={!!powerLoading || isRunning || isBusy}
-                className="w-full h-10 flex items-center justify-center gap-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-40"
-                style={{ background: "hsl(142 60% 15%)", color: "hsl(142 70% 55%)", border: "1px solid hsl(142 60% 25%)" }}
-              >
-                {powerLoading === "start"
-                  ? <Loader2 size={12} className="animate-spin" />
-                  : <Play size={12} />
-                }
-                Start
-              </button>
-
-              {/* Restart */}
-              <button
-                onClick={() => sendPower("restart")}
-                disabled={!!powerLoading || !isRunning}
-                className="w-full h-10 flex items-center justify-center gap-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-40"
-                style={{ background: "hsl(38 90% 10%)", color: "hsl(38 90% 60%)", border: "1px solid hsl(38 90% 25%)" }}
-              >
-                {powerLoading === "restart"
-                  ? <Loader2 size={12} className="animate-spin" />
-                  : <RotateCcw size={12} />
-                }
-                Restart
-              </button>
-
-              {/* Stop */}
-              <button
-                onClick={() => sendPower("stop")}
-                disabled={!!powerLoading || isStopped || isBusy}
-                className="w-full h-10 flex items-center justify-center gap-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-40"
-                style={{ background: "hsl(350 85% 10%)", color: "hsl(350 85% 60%)", border: "1px solid hsl(350 85% 25%)" }}
-              >
-                {powerLoading === "stop"
-                  ? <Loader2 size={12} className="animate-spin" />
-                  : <Square size={12} />
-                }
-                Stop
-              </button>
-
-              {/* Kill */}
-              <button
-                onClick={() => sendPower("kill")}
-                disabled={!!powerLoading || isStopped}
-                className="w-full h-10 flex items-center justify-center gap-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-40"
-                style={{ background: "hsl(0 0% 8%)", color: "hsl(0 0% 50%)", border: "1px solid hsl(0 0% 18%)" }}
-              >
-                {powerLoading === "kill"
-                  ? <Loader2 size={12} className="animate-spin" />
-                  : <Zap size={12} />
-                }
-                Kill
-              </button>
-
-              <div className="mt-2 rounded-sm px-3 py-2.5 text-[10px] text-muted-foreground/40 leading-relaxed"
-                style={{ background: "hsl(0 0% 6%)", border: "1px solid hsl(0 0% 12%)" }}>
-                <p className="font-semibold text-muted-foreground/60 mb-1">Connection Info</p>
-                {server?.host
-                  ? <span className="mono text-muted-foreground/70 break-all">{server.host}</span>
-                  : <span>Not yet assigned</span>
-                }
+              {/* Power */}
+              <div className="rounded-sm overflow-hidden" style={{ border: "1px solid hsl(0 0% 14%)" }}>
+                <div className="px-4 py-2.5 text-[9px] mono uppercase tracking-widest text-muted-foreground/40 font-semibold"
+                  style={{ background: "hsl(0 0% 7%)", borderBottom: "1px solid hsl(0 0% 12%)" }}>
+                  Power
+                </div>
+                <div className="p-3 space-y-2" style={{ background: "hsl(0 0% 5%)" }}>
+                  {[
+                    { signal: "start",   label: "Start",   icon: Play,      bg: "hsl(142 60% 14%)", color: "hsl(142 65% 52%)", border: "hsl(142 60% 22%)", disabled: isRunning || isBusy },
+                    { signal: "restart", label: "Restart", icon: RotateCcw, bg: "hsl(38 90% 9%)",   color: "hsl(38 90% 58%)",  border: "hsl(38 90% 22%)",  disabled: !isRunning },
+                    { signal: "stop",    label: "Stop",    icon: Square,    bg: "hsl(350 85% 9%)",  color: "hsl(350 85% 58%)", border: "hsl(350 85% 22%)", disabled: isStopped || isBusy },
+                    { signal: "kill",    label: "Kill",    icon: Zap,       bg: "hsl(0 0% 8%)",     color: "hsl(0 0% 48%)",    border: "hsl(0 0% 18%)",    disabled: isStopped },
+                  ].map(({ signal, label, icon: Icon, bg, color, border, disabled }) => (
+                    <button key={signal}
+                      onClick={() => sendPower(signal as any)}
+                      disabled={!!powerLoading || disabled}
+                      className="w-full h-9 flex items-center justify-center gap-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-30"
+                      style={{ background: bg, color, border: `1px solid ${border}` }}>
+                      {powerLoading === signal
+                        ? <Loader2 size={12} className="animate-spin" />
+                        : <Icon size={12} />}
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="rounded-sm px-3 py-2.5 text-[10px] text-muted-foreground/40 leading-relaxed"
-                style={{ background: "hsl(0 0% 6%)", border: "1px solid hsl(0 0% 12%)" }}>
-                <p className="font-semibold text-muted-foreground/60 mb-1">Plan</p>
-                <span className="text-muted-foreground/70">{server?.plan}</span>
+              {/* Server info */}
+              <div className="rounded-sm overflow-hidden" style={{ border: "1px solid hsl(0 0% 14%)" }}>
+                <div className="px-4 py-2.5 text-[9px] mono uppercase tracking-widest text-muted-foreground/40 font-semibold"
+                  style={{ background: "hsl(0 0% 7%)", borderBottom: "1px solid hsl(0 0% 12%)" }}>
+                  Server Info
+                </div>
+                <div className="p-3 space-y-2.5" style={{ background: "hsl(0 0% 5%)" }}>
+                  {[
+                    { label: "Plan",    value: server?.plan },
+                    { label: "Type",    value: server?.serverType },
+                    { label: "Version", value: server?.mcVersion },
+                  ].filter(r => r.value).map(({ label, value }) => (
+                    <div key={label} className="flex items-center justify-between text-[11px]">
+                      <span className="text-muted-foreground/40">{label}</span>
+                      <span className="text-foreground/80 mono">{value}</span>
+                    </div>
+                  ))}
+                  {server?.host && (
+                    <div>
+                      <p className="text-[9px] text-muted-foreground/40 uppercase tracking-wider mb-1">Connect</p>
+                      <button onClick={copyAddress}
+                        className="w-full text-left flex items-center justify-between gap-1 px-2.5 py-1.5 rounded-sm text-[10px] mono transition-all hover:brightness-110"
+                        style={{ background: "hsl(0 0% 9%)", color: "hsl(0 0% 60%)", border: "1px solid hsl(0 0% 15%)" }}>
+                        <span className="truncate">{server.host}</span>
+                        {copied ? <Check size={10} className="text-green-400 shrink-0" /> : <Copy size={10} className="shrink-0 opacity-50" />}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Hint */}
+              <p className="text-[9px] text-muted-foreground/25 text-center leading-relaxed px-1">
+                ↑↓ arrow keys for command history
+              </p>
             </div>
+
           </div>
         </motion.div>
       </div>
