@@ -220,7 +220,7 @@ const Checkout = () => {
         });
         const result = await verify.json();
         if (!verify.ok || !result.verified) throw new Error(result.error || "Mock payment verification failed");
-        runSetupOverlay(() => navigate(`/payment-success?plan=${encodeURIComponent(planName)}&order_id=${encodeURIComponent(result.orderId)}&server=${encodeURIComponent(result.serverId)}&mock=true`));
+        runSetupOverlay(() => navigate(`/setup-server?order=${encodeURIComponent(result.orderId)}&server=${encodeURIComponent(result.serverId)}&plan=${encodeURIComponent(planName)}`));
         return;
       }
 
@@ -260,7 +260,7 @@ const Checkout = () => {
             if (result.verified) {
               runSetupOverlay(() => {
                 setSuccess(true);
-                navigate(`/payment-success?plan=${encodeURIComponent(planName)}&order_id=${encodeURIComponent(result.orderId)}&server=${encodeURIComponent(result.serverId)}`);
+                navigate(`/setup-server?order=${encodeURIComponent(result.orderId)}&server=${encodeURIComponent(result.serverId)}&plan=${encodeURIComponent(planName)}`);
               });
             } else {
               setError("Payment verification failed. Please contact support.");
@@ -542,7 +542,7 @@ const Checkout = () => {
                     if (!res.ok) { setError(data.error || "Failed to claim free server."); setLoading(false); return; }
                     runSetupOverlay(() => {
                       setSuccess(true);
-                      navigate(`/payment-success?plan=${encodeURIComponent(planName)}&order_id=${encodeURIComponent(data.invoiceOrderId)}&server=${encodeURIComponent(data.serverId)}&free=true`);
+                      navigate(`/setup-server?order=${encodeURIComponent(data.invoiceOrderId)}&server=${encodeURIComponent(data.serverId)}&plan=${encodeURIComponent(planName)}`);
                     });
                   } catch {
                     setError("Network error. Please try again.");
