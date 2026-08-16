@@ -338,17 +338,36 @@ const AdminTickets = () => {
 
                         {/* Reply box */}
                         <div>
-                          <p className="text-[9px] text-muted-foreground/50 mono uppercase tracking-wider mb-1.5">
-                            Reply to {ticket.email}
-                          </p>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <p className="text-[9px] text-muted-foreground/50 mono uppercase tracking-wider">
+                              Reply to {ticket.email}
+                            </p>
+                            <span className="text-[9px] text-muted-foreground/40 mono">
+                              <span className="text-muted-foreground/60">**bold**</span> → <strong className="text-muted-foreground/60">bold</strong> in email
+                            </span>
+                          </div>
                           <div className="rounded-sm overflow-hidden" style={{ border: "1px solid hsl(0 0% 20%)" }}>
                             <textarea
                               rows={3}
                               value={replyText[ticket.id] ?? ""}
                               onChange={e => setReplyText(prev => ({ ...prev, [ticket.id]: e.target.value }))}
-                              placeholder="Type your reply…"
+                              placeholder="Type your reply… Use **text** to bold in the email."
                               className="w-full bg-transparent text-xs text-foreground placeholder:text-muted-foreground/40 outline-none resize-none px-3 py-2"
                             />
+                            {/* Live bold preview */}
+                            {/\*\*.+?\*\*/.test(replyText[ticket.id] ?? "") && (
+                              <div
+                                className="px-3 py-2 text-xs text-muted-foreground/70 whitespace-pre-wrap leading-relaxed"
+                                style={{ borderTop: "1px solid hsl(0 0% 14%)", background: "hsl(0 0% 5%)" }}
+                              >
+                                <span className="text-[9px] mono uppercase tracking-wider text-muted-foreground/30 block mb-1">Email preview</span>
+                                {(replyText[ticket.id] ?? "").split(/(\*\*.+?\*\*)/).map((part, idx) =>
+                                  /^\*\*.+\*\*$/.test(part)
+                                    ? <strong key={idx} className="text-foreground/90">{part.slice(2, -2)}</strong>
+                                    : <span key={idx}>{part}</span>
+                                )}
+                              </div>
+                            )}
                             <div className="flex items-center justify-between px-3 py-2"
                               style={{ borderTop: "1px solid hsl(0 0% 16%)", background: "hsl(0 0% 7%)" }}>
                               {replySent[ticket.id]
