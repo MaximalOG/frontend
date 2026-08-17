@@ -423,11 +423,24 @@ const ServerConsole = () => {
                 {server.serverType}{server.mcVersion ? ` ${server.mcVersion}` : ""}
               </span>
             )}
-            {server?.host && (
+            {/* Only show raw host if no custom address is active */}
+            {server?.host && !server?.customAddress && (
               <button onClick={copyAddress}
                 className="ml-auto flex items-center gap-2 text-xs mono transition-colors group"
                 style={{ color: "hsl(0 0% 50%)" }}>
                 <span className="group-hover:text-foreground transition-colors">{server.host}</span>
+                {copied
+                  ? <Check size={11} className="text-green-400" />
+                  : <Copy size={11} className="opacity-40 group-hover:opacity-100 transition-opacity" />}
+              </button>
+            )}
+            {/* Show custom address in stats bar if available */}
+            {server?.customAddress && (
+              <button onClick={() => navigator.clipboard.writeText(server.customAddress!)}
+                className="ml-auto flex items-center gap-2 text-xs mono transition-colors group">
+                <span className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ background: server.hostnameStatus === "active" ? "hsl(142 70% 55%)" : "hsl(38 90% 60%)" }} />
+                <span className="text-green-300/80 group-hover:text-green-300 transition-colors">{server.customAddress}</span>
                 {copied
                   ? <Check size={11} className="text-green-400" />
                   : <Copy size={11} className="opacity-40 group-hover:opacity-100 transition-opacity" />}
@@ -588,7 +601,7 @@ const ServerConsole = () => {
                       <span className="text-foreground/80 mono">{value}</span>
                     </div>
                   ))}
-                  {server?.host && (
+                  {server?.host && !server?.customAddress && (
                     <div>
                       <p className="text-[9px] text-muted-foreground/40 uppercase tracking-wider mb-1">Connect</p>
                       <button onClick={copyAddress}
