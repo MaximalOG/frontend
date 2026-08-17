@@ -128,10 +128,18 @@ const SetupServer = () => {
   const [mcVersion,   setMcVersion]   = useState("1.21.4");
   const [javaVersion, setJavaVersion] = useState("Java 21");
 
-  const [step,        setStep]        = useState<1 | 2 | 3>(1);
+  const [step,        setStep]        = useState<1 | 2 | 3 | 4>(1);
   const [submitting,  setSubmitting]  = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [done,        setDone]        = useState(false);
+
+  // Hostname step state
+  const [hostname,        setHostname]        = useState("");
+  const [hostnameChecking, setHostnameChecking] = useState(false);
+  const [hostnameAvail,   setHostnameAvail]   = useState<null | boolean>(null);
+  const [hostnameReason,  setHostnameReason]  = useState("");
+  const [hostnameSubmitting, setHostnameSubmitting] = useState(false);
+  const [hostnameError,   setHostnameError]   = useState("");
 
   // Redirect to login if not authenticated, preserving the full URL
   useEffect(() => {
@@ -214,12 +222,54 @@ const SetupServer = () => {
       const data = await res.json();
       if (!res.ok) { setSubmitError(data.error || "Setup failed. Please try again."); setSubmitting(false); return; }
 
-      setDone(true);
-      setTimeout(() => navigate("/dashboard"), 3500);
+      // Move to hostname step
+      setStep(4);
+      setSubmitting(false);
     } catch {
       setSubmitError("Network error. Please try again.");
       setSubmitting(false);
     }
+  };
+
+  const checkHostname = async (name: string) => {
+    if (!name || name.length < 3) { setHostnameAvail(null); setHostnameReason(""); return; }
+    setHostnameChecking(true);
+    try {
+      const res = await apiFetch(`/api/hostnames/check?name=${encodeURIComponent(name)}`);
+      const data = await res.json();
+      setHostnameAvail(data.available);
+      setHostnameReason(data.reason || "");
+    } catch { setHostnameAvail(null); }
+    finally { setHostnameChecking(false); }
+  };
+
+  const submitHostname = async () => {
+    if (!pendingServer || !hostname.trim()) return;
+    setHostnameSubmitting(true);
+    setHostnameError("");
+    try {
+      const res = await apiFetch(`/api/servers/${pendingServer.id}/hostname`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+        body: JSON.stringify({ name: hostname.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setHostnameError(data.error || "Failed. Please try again."); setHostnameSubmitting(false); return; }
+      setDone(true);
+      setTimeout(() => navigate("/dashboard"), 3500);
+    } catch { setHostnameError("Network error."); setHostnameSubmitting(false); }
+  };
+
+  const skipHostname = async () => {
+    if (!pendingServer) return;
+    try {
+      await apiFetch(`/api/servers/${pendingServer.id}/hostname/decline`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+    } catch { /* non-fatal */ }
+    setDone(true);
+    setTimeout(() => navigate("/dashboard"), 3500);
   };
 
   if (authLoading || loadingInit) {
@@ -306,7 +356,7 @@ const SetupServer = () => {
 
           {/* Step indicators */}
           <div className="flex items-center gap-2 mb-8">
-            {([1, 2, 3] as const).map((s, i) => (
+            {([1, 2, 3, 4] as const).map((s, i) => (
               <div key={s} className="flex items-center gap-2">
                 <div
                   className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-300"
@@ -318,11 +368,11 @@ const SetupServer = () => {
                 >
                   {step > s ? <Check size={10} /> : s}
                 </div>
-                {i < 2 && <div className="flex-1 h-px w-8" style={{ background: step > s ? "hsl(142 60% 30%)" : "hsl(0 0% 16%)" }} />}
+                {i < 3 && <div className="flex-1 h-px w-8" style={{ background: step > s ? "hsl(142 60% 30%)" : "hsl(0 0% 16%)" }} />}
               </div>
             ))}
             <span className="ml-3 text-xs text-muted-foreground">
-              {step === 1 ? "Server type" : step === 2 ? "Version & name" : "Review"}
+              {step === 1 ? "Server type" : step === 2 ? "Version & name" : step === 3 ? "Review" : "Custom address"}
             </span>
           </div>
 
@@ -497,6 +547,85 @@ const SetupServer = () => {
                     {submitting
                       ? <><Loader2 size={14} className="animate-spin" /> Creating server…</>
                       : <><Server size={14} /> Create My Server</>
+                    }
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── Step 4: Custom hostname ── */}
+            {step === 4 && (
+              <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.22, ease }}>
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                    style={{ background: "hsl(142 60% 10%)", border: "2px solid hsl(142 60% 30%)" }}>
+                    <Check size={22} className="text-green-400" />
+                  </div>
+                  <h2 className="text-base font-bold text-foreground mb-1">Server created!</h2>
+                  <p className="text-xs text-muted-foreground">Give your server a custom address so players can connect easily.</p>
+                </div>
+
+                <div className="rounded-sm p-4 mb-5"
+                  style={{ background: "hsl(0 0% 6%)", border: "1px solid hsl(0 0% 14%)" }}>
+                  <label className="text-xs font-semibold text-foreground/70 uppercase tracking-wider block mb-2">Custom Server Address</label>
+                  <div className="flex items-center gap-0 rounded-sm overflow-hidden"
+                    style={{ border: "1px solid hsl(0 0% 22%)" }}>
+                    <input
+                      type="text"
+                      value={hostname}
+                      onChange={e => {
+                        const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 32);
+                        setHostname(v);
+                        setHostnameAvail(null);
+                        setHostnameReason("");
+                        if (v.length >= 3) {
+                          clearTimeout((window as any)._hnTimer);
+                          (window as any)._hnTimer = setTimeout(() => checkHostname(v), 500);
+                        }
+                      }}
+                      placeholder="survival"
+                      className="flex-1 bg-transparent text-sm text-foreground outline-none px-3 py-2.5 mono"
+                    />
+                    <span className="px-3 py-2.5 text-xs text-muted-foreground/50 mono shrink-0"
+                      style={{ borderLeft: "1px solid hsl(0 0% 18%)", background: "hsl(0 0% 9%)" }}>
+                      .nethernodes.online
+                    </span>
+                  </div>
+
+                  {/* Availability indicator */}
+                  <div className="mt-2 h-4 flex items-center gap-1.5">
+                    {hostnameChecking && <Loader2 size={11} className="animate-spin text-muted-foreground/50" />}
+                    {!hostnameChecking && hostnameAvail === true && hostname.length >= 3 && (
+                      <><Check size={11} className="text-green-400" /><span className="text-[10px] text-green-400">{hostname}.nethernodes.online is available</span></>
+                    )}
+                    {!hostnameChecking && hostnameAvail === false && (
+                      <><AlertCircle size={11} className="text-primary" /><span className="text-[10px] text-primary">{hostnameReason || "Not available"}</span></>
+                    )}
+                  </div>
+
+                  {hostnameError && (
+                    <p className="text-[10px] mt-1" style={{ color: "hsl(350 85% 60%)" }}>{hostnameError}</p>
+                  )}
+
+                  <p className="text-[10px] text-muted-foreground/40 mt-2">
+                    Players can connect using just <span className="text-foreground/60 mono">{hostname || "yourname"}.nethernodes.online</span> — no port needed.
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button onClick={skipHostname}
+                    className="h-11 px-5 rounded-sm text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    style={{ border: "1px solid hsl(0 0% 20%)" }}>
+                    Skip for now
+                  </button>
+                  <button
+                    onClick={submitHostname}
+                    disabled={hostnameSubmitting || !hostnameAvail || hostname.length < 3}
+                    className="flex-1 h-11 flex items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-40"
+                    style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+                    {hostnameSubmitting
+                      ? <><Loader2 size={14} className="animate-spin" /> Setting up…</>
+                      : <><Check size={14} /> Claim Address</>
                     }
                   </button>
                 </div>

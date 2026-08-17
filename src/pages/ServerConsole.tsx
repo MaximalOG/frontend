@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Terminal, Play, Square, RotateCcw, Zap, ArrowLeft,
   Loader2, AlertCircle, Wifi, WifiOff,
-  MemoryStick, Cpu, HardDrive, Copy, Check, FolderOpen, Users, Trash2,
+  MemoryStick, Cpu, HardDrive, Copy, Check, FolderOpen, Users, Trash2, Globe, Edit3, X,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +18,10 @@ interface ServerData {
   plan: string; host?: string;
   serverType?: string; mcVersion?: string;
   pendingSetup?: boolean;
+  hostname?: string | null;
+  hostnameStatus?: string | null;
+  hostnameDeclined?: boolean;
+  customAddress?: string | null;
 }
 
 interface LogLine {
@@ -105,6 +109,14 @@ const ServerConsole = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput]     = useState("");
   const [deleting, setDeleting]           = useState(false);
+
+  // Hostname state
+  const [hostnameEdit, setHostnameEdit]     = useState("");
+  const [hostnameChecking, setHostnameChecking] = useState(false);
+  const [hostnameAvail, setHostnameAvail]   = useState<null|boolean>(null);
+  const [hostnameSubmitting, setHostnameSubmitting] = useState(false);
+  const [hostnameError, setHostnameError]   = useState("");
+  const [showHostnameForm, setShowHostnameForm] = useState(false);
 
   const wsRef    = useRef<WebSocket | null>(null);
   const logsRef  = useRef<HTMLDivElement>(null);
@@ -594,6 +606,107 @@ const ServerConsole = () => {
               <p className="text-[9px] text-muted-foreground/25 text-center leading-relaxed px-1">
                 ↑↓ arrow keys for command history
               </p>
+
+              {/* Custom address */}
+              <div className="rounded-sm overflow-hidden" style={{ border: "1px solid hsl(0 0% 14%)" }}>
+                <div className="px-4 py-2.5 flex items-center justify-between"
+                  style={{ background: "hsl(0 0% 7%)", borderBottom: "1px solid hsl(0 0% 12%)" }}>
+                  <span className="text-[9px] mono uppercase tracking-widest text-muted-foreground/40 font-semibold flex items-center gap-1.5">
+                    <Globe size={9} /> Custom Address
+                  </span>
+                  {server?.hostname && !showHostnameForm && (
+                    <button onClick={() => { setShowHostnameForm(true); setHostnameEdit(server.hostname ?? ""); setHostnameAvail(null); setHostnameError(""); }}
+                      className="text-[9px] text-muted-foreground/40 hover:text-primary transition-colors">
+                      <Edit3 size={11} />
+                    </button>
+                  )}
+                </div>
+                <div className="p-3" style={{ background: "hsl(0 0% 5%)" }}>
+                  {server?.hostname && !showHostnameForm ? (
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${server.hostnameStatus === "active" ? "bg-green-400" : "bg-yellow-400"}`} />
+                        <span className="text-[9px] text-muted-foreground/40 uppercase tracking-wide">
+                          {server.hostnameStatus === "active" ? "Active" : "Activating…"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] mono text-foreground/80 break-all">{server.customAddress}</p>
+                      <p className="text-[9px] text-muted-foreground/30 mt-1">Players connect with just this address — no port needed.</p>
+                    </div>
+                  ) : showHostnameForm ? (
+                    <div className="space-y-2">
+                      <div className="flex rounded-sm overflow-hidden" style={{ border: "1px solid hsl(0 0% 20%)" }}>
+                        <input
+                          type="text"
+                          value={hostnameEdit}
+                          onChange={e => {
+                            const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 32);
+                            setHostnameEdit(v);
+                            setHostnameAvail(null);
+                            if (v.length >= 3) {
+                              clearTimeout((window as any)._hn2);
+                              (window as any)._hn2 = setTimeout(async () => {
+                                setHostnameChecking(true);
+                                try {
+                                  const r = await apiFetch(`/api/hostnames/check?name=${encodeURIComponent(v)}`);
+                                  const d = await r.json();
+                                  setHostnameAvail(d.available);
+                                  setHostnameError(d.available ? "" : (d.reason || "Not available"));
+                                } catch { setHostnameAvail(null); }
+                                finally { setHostnameChecking(false); }
+                              }, 500);
+                            }
+                          }}
+                          placeholder="yourname"
+                          className="flex-1 bg-transparent text-[11px] text-foreground outline-none px-2 py-1.5 mono min-w-0"
+                        />
+                        <span className="text-[9px] text-muted-foreground/30 px-1.5 self-center shrink-0">.nn</span>
+                      </div>
+                      {hostnameError && <p className="text-[9px]" style={{ color: "hsl(350 85% 60%)" }}>{hostnameError}</p>}
+                      {hostnameAvail && !hostnameError && <p className="text-[9px] text-green-400">✓ Available</p>}
+                      <div className="flex gap-2">
+                        <button onClick={() => { setShowHostnameForm(false); setHostnameError(""); }}
+                          className="flex-1 h-7 rounded-sm text-[10px] text-muted-foreground transition-colors"
+                          style={{ border: "1px solid hsl(0 0% 18%)" }}>
+                          Cancel
+                        </button>
+                        <button
+                          disabled={hostnameSubmitting || !hostnameAvail || hostnameEdit.length < 3}
+                          onClick={async () => {
+                            setHostnameSubmitting(true);
+                            setHostnameError("");
+                            try {
+                              const method = server?.hostname ? "PUT" : "POST";
+                              const r = await apiFetch(`/api/servers/${id}/hostname`, {
+                                method,
+                                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+                                body: JSON.stringify({ name: hostnameEdit }),
+                              });
+                              const d = await r.json();
+                              if (!r.ok) { setHostnameError(d.error || "Failed."); return; }
+                              setServer(p => p ? { ...p, hostname: d.hostname, hostnameStatus: d.hostnameStatus, customAddress: d.customAddress } : p);
+                              setShowHostnameForm(false);
+                            } catch { setHostnameError("Network error."); }
+                            finally { setHostnameSubmitting(false); }
+                          }}
+                          className="flex-1 h-7 rounded-sm text-[10px] font-semibold transition-all hover:brightness-110 disabled:opacity-30"
+                          style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+                          {hostnameSubmitting ? <Loader2 size={10} className="animate-spin mx-auto" /> : "Save"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-[10px] text-muted-foreground/40 mb-2">Set a custom address so players can connect without a port number.</p>
+                      <button onClick={() => { setShowHostnameForm(true); setHostnameEdit(""); setHostnameAvail(null); setHostnameError(""); }}
+                        className="w-full h-7 flex items-center justify-center gap-1.5 rounded-sm text-[11px] font-medium transition-all hover:brightness-110"
+                        style={{ background: "hsl(350 85% 12%)", color: "hsl(350 85% 60%)", border: "1px solid hsl(350 85% 25%)" }}>
+                        <Globe size={10} /> Set Custom Address
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Delete server */}
               <button

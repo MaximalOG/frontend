@@ -21,6 +21,9 @@ interface ServerData {
   mcVersion?: string;
   pendingSetup?: boolean;
   host?: string;
+  hostname?: string | null;
+  hostnameStatus?: string | null;
+  customAddress?: string | null;
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -200,10 +203,17 @@ const Dashboard = () => {
                         </span>
                       </div>
 
-                      {/* Connection info */}
-                      {srv.host && srv.subdomain && !srv.pendingSetup && (
-                        <p className="text-[10px] text-muted-foreground/50 mono mb-2">
-                          {srv.host}
+                      {/* Connection info — custom address takes priority over raw host */}
+                      {!srv.pendingSetup && (srv.customAddress || srv.host) && (
+                        <p className="text-[10px] mono mb-2 flex items-center gap-1.5">
+                          {srv.customAddress ? (
+                            <>
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${srv.hostnameStatus === "active" ? "bg-green-400" : "bg-yellow-400"}`} />
+                              <span className="text-green-300/70">{srv.customAddress}</span>
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground/50">{srv.host}</span>
+                          )}
                         </p>
                       )}
                       {srv.serverType && (
