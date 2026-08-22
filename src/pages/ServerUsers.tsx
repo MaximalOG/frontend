@@ -2,11 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, Users, UserPlus, Trash2, Shield, Terminal,
-  FolderOpen, Loader2, AlertCircle, X, Check, ChevronDown,
+  Users, UserPlus, Trash2, Shield,
+  Loader2, AlertCircle, X, Check,
   UserCheck, UserX,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import ServerSidebar from "@/components/ServerSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
 
@@ -114,6 +115,9 @@ const ServerUsers = () => {
   const [deleteTarget, setDeleteTarget] = useState<Subuser | null>(null);
   const [deleting, setDeleting]         = useState(false);
 
+  // Server data for sidebar
+  const [serverData, setServerData] = useState<any>(null);
+
   useEffect(() => {
     if (!authLoading && !user) navigate("/login", { state: { from: `/server/${id}/users` } });
   }, [authLoading, user, navigate, id]);
@@ -126,7 +130,7 @@ const ServerUsers = () => {
         if (res.status === 401) { logout(); navigate("/login"); return; }
         const all = await res.json();
         const srv = all.find((s: any) => s.id === id);
-        if (srv) setServerName(srv.name);
+        if (srv) { setServerName(srv.name); setServerData(srv); }
       } catch {}
       finally { setLoadingServer(false); }
     })();
@@ -226,33 +230,20 @@ const ServerUsers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-8">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
 
-      <div className="container mx-auto px-4 max-w-4xl pt-20">
-        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease }}>
+      <div className="flex flex-1 overflow-hidden" style={{ paddingTop: 64 }}>
 
-          {/* Header + tabs */}
-          <div className="flex items-center gap-3 mb-5 flex-wrap">
-            <Link to="/dashboard" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft size={13} /> Dashboard
-            </Link>
-            <span className="text-muted-foreground/30">/</span>
-            <span className="text-xs text-foreground font-medium">{serverName}</span>
+        {/* Sidebar */}
+        <div className="hidden md:flex flex-col h-[calc(100vh-64px)] sticky top-16 px-4 py-5 overflow-y-auto"
+          style={{ width: 236, borderRight: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 4.5%)" }}>
+          {serverData && <ServerSidebar server={serverData} onPower={async () => {}} powerLoading={null} />}
+        </div>
 
-            {/* Tab switcher */}
-            <div className="ml-auto flex items-center gap-1 rounded-sm p-0.5" style={{ background: "hsl(0 0% 8%)", border: "1px solid hsl(0 0% 16%)" }}>
-              <Link to={`/server/${id}/console`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                <Terminal size={11} /> Console
-              </Link>
-              <Link to={`/server/${id}/files`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                <FolderOpen size={11} /> Files
-              </Link>
-              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium" style={{ background: "hsl(350 85% 45%)", color: "white" }}>
-                <Users size={11} /> Users
-              </span>
-            </div>
-          </div>
+        {/* Main content */}
+        <div className="flex-1 overflow-y-auto p-6">
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease }} className="max-w-3xl mx-auto">
 
           {/* Error */}
           {error && (
@@ -264,7 +255,7 @@ const ServerUsers = () => {
           )}
 
           {/* Header bar */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
                 <Shield size={14} className="text-primary" /> Server Users
@@ -409,8 +400,8 @@ const ServerUsers = () => {
                           {u.nnAccount?.name || u.username}
                         </p>
                         {u.nnAccount
-                          ? <UserCheck size={10} className="text-green-400 shrink-0" title="Has NetherNodes account" />
-                          : <UserX size={10} className="text-yellow-400 shrink-0" title="No NetherNodes account" />
+                          ? <UserCheck size={10} className="text-green-400 shrink-0" />
+                          : <UserX size={10} className="text-yellow-400 shrink-0" />
                         }
                       </div>
                       <p className="text-[10px] text-muted-foreground/50 truncate">{u.email}</p>
@@ -455,6 +446,7 @@ const ServerUsers = () => {
             )}
           </div>
         </motion.div>
+      </div>
       </div>
 
       {/* Edit permissions modal */}

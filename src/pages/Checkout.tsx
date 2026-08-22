@@ -204,6 +204,12 @@ const Checkout = () => {
       const order = await res.json();
       if (!res.ok || order.error) throw new Error(order.error || "Order creation failed");
 
+      // Coupon made it fully free — skip Razorpay entirely
+      if (order.free) {
+        runSetupOverlay(() => navigate(`/setup-server?order=${encodeURIComponent(order.orderId)}&server=${encodeURIComponent(order.serverId)}&plan=${encodeURIComponent(planName)}`));
+        return;
+      }
+
       // Log for debugging — confirm backend applied discount
       console.log("[Checkout] Order received:", {
         originalPrice: order.originalPrice,
