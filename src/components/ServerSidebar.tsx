@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Terminal, FolderOpen, Users, ArrowLeft,
-  Play, Square, RotateCcw, Zap, Loader2,
+  Play, Square, RotateCcw, Zap, Loader2, Package,
 } from "lucide-react";
 
 interface ServerData {
@@ -49,8 +49,9 @@ const NAV_SECTIONS = [
   {
     label: "Management",
     items: [
-      { to: "files",   icon: FolderOpen, label: "Files" },
-      { to: "users",   icon: Users,      label: "Users" },
+      { to: "files",     icon: FolderOpen, label: "Files" },
+      { to: "installer", icon: Package,    label: "Plugins & Mods" },
+      { to: "users",     icon: Users,      label: "Users" },
     ],
   },
 ];

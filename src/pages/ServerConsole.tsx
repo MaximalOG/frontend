@@ -3,9 +3,8 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Loader2, AlertCircle, Wifi, WifiOff, Check, Copy,
-  MemoryStick, Cpu, HardDrive, Globe, Edit3, X, Trash2, Zap,
+  MemoryStick, Cpu, HardDrive, Globe, Edit3, X, Trash2,
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import ServerSidebar from "@/components/ServerSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
@@ -226,9 +225,8 @@ const ServerConsole = () => {
   );
 
   if (serverError) return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto px-4 max-w-lg pt-32 text-center">
+    <div className="h-screen bg-background flex items-center justify-center">
+      <div className="text-center px-4">
         <AlertCircle className="w-10 h-10 text-primary mx-auto mb-4" />
         <p className="text-foreground font-semibold mb-2">Console unavailable</p>
         <p className="text-sm text-muted-foreground mb-6">{serverError}</p>
@@ -243,104 +241,102 @@ const ServerConsole = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
+    <div className="min-h-screen bg-background flex overflow-x-hidden">
 
-      <div className="flex flex-1 overflow-hidden" style={{ paddingTop: 64 }}>
+      {/* ── Left Sidebar — sticky, full viewport height ── */}
+      <div className="hidden md:flex flex-col sticky top-0 h-screen px-4 py-5 overflow-y-auto shrink-0"
+        style={{ width: 236, borderRight: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 4.5%)" }}>
+        {server && (
+          <ServerSidebar server={server} onPower={sendPower} powerLoading={powerLoading} />
+        )}
+        <div className="mt-4 pt-4" style={{ borderTop: "1px solid hsl(0 0% 12%)" }}>
+          <button onClick={() => { setShowDelete(true); setDeleteInput(""); }}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-sm text-xs transition-all hover:brightness-110"
+            style={{ color: "hsl(350 85% 45%)", background: "hsl(350 85% 5%)", border: "1px solid hsl(350 85% 16%)" }}>
+            <Trash2 size={12} /> Delete Server
+          </button>
+        </div>
+      </div>
 
-        {/* ── Left Sidebar ── */}
-        <div className="hidden md:flex flex-col h-[calc(100vh-64px)] sticky top-16 px-4 py-5 overflow-y-auto"
-          style={{ width: 236, borderRight: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 4.5%)" }}>
-          {server && (
-            <ServerSidebar server={server} onPower={sendPower} powerLoading={powerLoading} />
-          )}
+      {/* ── Main area — scrollable, console is a fixed-height block ── */}
+      <div className="flex flex-1 overflow-x-hidden min-w-0">
 
-          {/* Delete — at very bottom of sidebar */}
-          <div className="mt-4 pt-4" style={{ borderTop: "1px solid hsl(0 0% 12%)" }}>
-            <button onClick={() => { setShowDelete(true); setDeleteInput(""); }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-sm text-xs transition-all hover:brightness-110"
-              style={{ color: "hsl(350 85% 45%)", background: "hsl(350 85% 5%)", border: "1px solid hsl(350 85% 16%)" }}>
-              <Trash2 size={12} /> Delete Server
+        {/* Center column — console box + stats below */}
+        <div className="flex flex-col flex-1 min-w-0 p-5 gap-5">
+
+        {/* ── Main content row: console + right stats ── */}
+        <div className="flex gap-5 items-start">
+
+          {/* Console box — fixed height, scrolls internally */}
+          <div className="flex-1 min-w-0 rounded-sm overflow-hidden" style={{ border: "1px solid hsl(0 0% 14%)" }}>
+          {/* Top bar */}
+          <div className="flex items-center justify-between px-5 py-3"
+            style={{ borderBottom: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 5%)" }}>
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full" style={{ background: "hsl(0 70% 50%)" }} />
+                <div className="w-3 h-3 rounded-full" style={{ background: "hsl(38 90% 55%)" }} />
+                <div className="w-3 h-3 rounded-full" style={{ background: "hsl(142 60% 45%)" }} />
+              </div>
+              <span className="text-xs text-muted-foreground/50 mono">{server?.name} — console</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {!autoScroll && (
+                <button onClick={() => { setAutoScroll(true); logsEnd.current?.scrollIntoView({ behavior: "smooth" }); }}
+                  className="text-[10px] text-primary/60 hover:text-primary mono">↓ bottom</button>
+              )}
+              {wsStatus === "connected"
+                ? <span className="flex items-center gap-1.5 text-[10px] text-green-400"><Wifi size={10} /> Live</span>
+                : wsStatus === "connecting"
+                ? <span className="flex items-center gap-1.5 text-[10px] text-yellow-400"><Loader2 size={10} className="animate-spin" /> Connecting…</span>
+                : <button onClick={connect} className="flex items-center gap-1.5 text-[10px] text-muted-foreground/40 hover:text-primary transition-colors">
+                    <WifiOff size={10} /> Reconnect
+                  </button>
+              }
+            </div>
+          </div>
+
+          {/* Log output — fixed 420px, scrolls inside */}
+          <div ref={logsRef} onScroll={handleScroll} onClick={() => inputRef.current?.focus()}
+            className="overflow-y-auto font-mono text-[11.5px] leading-[1.7] cursor-text"
+            style={{ height: 420, background: "hsl(0 0% 3%)", padding: "16px 18px" }}>
+            <div className="mb-3 pb-3 select-none" style={{ borderBottom: "1px solid hsl(0 0% 9%)" }}>
+              <span style={{ color: "hsl(350 85% 50%)" }} className="font-bold">NetherNodes</span>
+              <span className="text-muted-foreground/25"> — Minecraft Server Console</span>
+              <br />
+              <span className="text-muted-foreground/20 text-[10px]">{server?.plan} plan · {server?.ram}</span>
+            </div>
+            {logs.length === 0
+              ? <span className="text-muted-foreground/20 select-none">Waiting for output…</span>
+              : logs.map(line => {
+                  const color = line.type==="error" ? "hsl(350 85% 60%)" : line.type==="warn" ? "hsl(38 90% 58%)" : line.type==="success" ? "hsl(142 65% 50%)" : line.type==="input" ? "hsl(210 80% 65%)" : line.type==="system" ? "hsl(270 60% 65%)" : "hsl(0 0% 75%)";
+                  return <div key={line.id} className="whitespace-pre-wrap break-all" style={{ color }}>{line.text}</div>;
+                })
+            }
+            <div ref={logsEnd} />
+          </div>
+
+          {/* Command input */}
+          <div className="flex items-center" style={{ borderTop: "1px solid hsl(0 0% 10%)", background: "hsl(0 0% 4.5%)" }}>
+            <span className="px-4 text-primary font-bold mono select-none">›</span>
+            <input ref={inputRef} type="text" value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={wsStatus === "connected" ? "Type a command and press Enter…" : "Not connected"}
+              disabled={wsStatus !== "connected"}
+              className="flex-1 bg-transparent text-[12px] text-foreground placeholder:text-muted-foreground/20 outline-none py-3 mono"
+            />
+            <button onClick={sendCommand} disabled={!input.trim() || wsStatus !== "connected"}
+              className="px-5 py-3 text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-30"
+              style={{ background: "hsl(350 85% 42%)", color: "white", borderLeft: "1px solid hsl(350 85% 28%)" }}>
+              Send
             </button>
           </div>
         </div>
-
-        {/* ── Main area ── */}
-        <div className="flex flex-1 overflow-hidden">
-
-          {/* Console */}
-          <div className="flex flex-col flex-1 overflow-hidden">
-            {/* Top bar */}
-            <div className="flex items-center justify-between px-5 py-3 shrink-0"
-              style={{ borderBottom: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 5%)" }}>
-              <div className="flex items-center gap-3">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full" style={{ background: "hsl(0 70% 50%)" }} />
-                  <div className="w-3 h-3 rounded-full" style={{ background: "hsl(38 90% 55%)" }} />
-                  <div className="w-3 h-3 rounded-full" style={{ background: "hsl(142 60% 45%)" }} />
-                </div>
-                <span className="text-xs text-muted-foreground/50 mono">{server?.name} — console</span>
-              </div>
-              <div className="flex items-center gap-3">
-                {!autoScroll && (
-                  <button onClick={() => { setAutoScroll(true); logsEnd.current?.scrollIntoView({ behavior: "smooth" }); }}
-                    className="text-[10px] text-primary/60 hover:text-primary mono">↓ bottom</button>
-                )}
-                {wsStatus === "connected"
-                  ? <span className="flex items-center gap-1.5 text-[10px] text-green-400"><Wifi size={10} /> Live</span>
-                  : wsStatus === "connecting"
-                  ? <span className="flex items-center gap-1.5 text-[10px] text-yellow-400"><Loader2 size={10} className="animate-spin" /> Connecting…</span>
-                  : <button onClick={connect} className="flex items-center gap-1.5 text-[10px] text-muted-foreground/40 hover:text-primary transition-colors">
-                      <WifiOff size={10} /> Reconnect
-                    </button>
-                }
-              </div>
-            </div>
-
-            {/* Log output */}
-            <div ref={logsRef} onScroll={handleScroll} onClick={() => inputRef.current?.focus()}
-              className="flex-1 overflow-y-auto font-mono text-[11.5px] leading-[1.7] cursor-text"
-              style={{ background: "hsl(0 0% 3%)", padding: "16px 18px" }}>
-              <div className="mb-3 pb-3 select-none" style={{ borderBottom: "1px solid hsl(0 0% 9%)" }}>
-                <span style={{ color: "hsl(350 85% 50%)" }} className="font-bold">NetherNodes</span>
-                <span className="text-muted-foreground/25"> — Minecraft Server Console</span>
-                <br />
-                <span className="text-muted-foreground/20 text-[10px]">{server?.plan} plan · {server?.ram}</span>
-              </div>
-              {logs.length === 0
-                ? <span className="text-muted-foreground/20 select-none">Waiting for output…</span>
-                : logs.map(line => {
-                    const color = line.type==="error" ? "hsl(350 85% 60%)" : line.type==="warn" ? "hsl(38 90% 58%)" : line.type==="success" ? "hsl(142 65% 50%)" : line.type==="input" ? "hsl(210 80% 65%)" : line.type==="system" ? "hsl(270 60% 65%)" : "hsl(0 0% 75%)";
-                    return <div key={line.id} className="whitespace-pre-wrap break-all" style={{ color }}>{line.text}</div>;
-                  })
-              }
-              <div ref={logsEnd} />
-            </div>
-
-            {/* Input */}
-            <div className="flex items-center shrink-0"
-              style={{ borderTop: "1px solid hsl(0 0% 10%)", background: "hsl(0 0% 4.5%)" }}>
-              <span className="px-4 text-primary font-bold mono select-none">›</span>
-              <input ref={inputRef} type="text" value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={wsStatus === "connected" ? "Type a command and press Enter…" : "Not connected"}
-                disabled={wsStatus !== "connected"}
-                className="flex-1 bg-transparent text-[12px] text-foreground placeholder:text-muted-foreground/20 outline-none py-3 mono"
-              />
-              <button onClick={sendCommand} disabled={!input.trim() || wsStatus !== "connected"}
-                className="px-5 py-3 text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-30"
-                style={{ background: "hsl(350 85% 42%)", color: "white", borderLeft: "1px solid hsl(350 85% 28%)" }}>
-                Send
-              </button>
-            </div>
-          </div>
+        {/* end console box */}
 
           {/* ── Right stats panel ── */}
-          <div className="hidden lg:flex flex-col gap-3 p-4 overflow-y-auto shrink-0"
-            style={{ width: 220, borderLeft: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 4.5%)" }}>
-
-            {/* Address */}
+          <div className="hidden lg:flex flex-col gap-3 shrink-0" style={{ width: 200 }}>
             <div className="rounded-sm p-3" style={{ background: "hsl(0 0% 7%)", border: "1px solid hsl(0 0% 14%)" }}>
               <p className="text-[9px] mono uppercase tracking-wider text-muted-foreground/40 mb-2">Address</p>
               {server?.customAddress ? (
@@ -448,8 +444,13 @@ const ServerConsole = () => {
 
             <p className="text-[9px] text-muted-foreground/20 text-center">↑↓ arrow keys for command history</p>
           </div>
+          {/* end right stats panel */}
         </div>
+        {/* end console+stats row */}
+        </div>
+        {/* end center column */}
       </div>
+      {/* end main area */}
 
       {/* Delete modal */}
       <AnimatePresence>

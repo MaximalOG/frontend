@@ -210,6 +210,58 @@ const Checkout = () => {
         return;
       }
 
+      // Subscription mode (production) — open Razorpay subscription checkout
+      if (order.subscriptionMode) {
+        if (!window.Razorpay) {
+          await new Promise<void>((resolve, reject) => {
+            const s = document.createElement("script");
+            s.src = "https://checkout.razorpay.com/v1/checkout.js";
+            s.onload = () => resolve();
+            s.onerror = () => reject(new Error("Failed to load payment SDK"));
+            document.head.appendChild(s);
+          });
+        }
+
+        const rzp = new window.Razorpay({
+          key:              order.keyId,
+          subscription_id:  order.subscriptionId,
+          name:             "NetherNodes",
+          description:      `${planName} Plan — ₹${order.finalPrice}/month`,
+          prefill:          { email },
+          theme:            { color: "#e53935" },
+          modal:            { ondismiss: () => setLoading(false) },
+          handler: async (response: any) => {
+            try {
+              // Link subscription to the pre-created pending server
+              const linkRes = await apiFetch(`/api/servers/${order.serverId}/subscription/link`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+                body: JSON.stringify({
+                  razorpaySubscriptionId: response.razorpay_subscription_id,
+                  razorpayPaymentId:      response.razorpay_payment_id,
+                }),
+              });
+              const linkData = await linkRes.json();
+
+              if (linkRes.ok) {
+                runSetupOverlay(() => {
+                  setSuccess(true);
+                  navigate(`/setup-server?order=${encodeURIComponent(order.invoiceOrderId)}&server=${encodeURIComponent(order.serverId)}&plan=${encodeURIComponent(planName)}`);
+                });
+              } else {
+                setError(linkData.error || "Subscription linking failed. Please contact support.");
+                setLoading(false);
+              }
+            } catch {
+              setError("Verification error. Please contact support.");
+              setLoading(false);
+            }
+          },
+        });
+        rzp.open();
+        return;
+      }
+
       // Log for debugging — confirm backend applied discount
       console.log("[Checkout] Order received:", {
         originalPrice: order.originalPrice,

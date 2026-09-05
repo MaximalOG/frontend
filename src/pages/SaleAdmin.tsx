@@ -12,6 +12,9 @@ interface PromoCode {
   discount: number;
   discountType: "percent" | "fixed";
   note: string;
+  plans: "all" | string[];
+  maxUses: number;
+  usedCount: number;
 }
 
 interface SaleConfig {
@@ -36,7 +39,7 @@ const DEFAULT: SaleConfig = {
   showCountdown: true, neverExpires: true,
 };
 
-const EMPTY_CODE: PromoCode = { name: "", code: "", discount: 20, discountType: "percent", note: "" };
+const EMPTY_CODE: PromoCode = { name: "", code: "", discount: 20, discountType: "percent", note: "", plans: "all", maxUses: 0, usedCount: 0 };
 
 const SaleAdmin = () => {
   const [config, setConfig] = useState<SaleConfig>(DEFAULT);
@@ -313,6 +316,60 @@ const SaleAdmin = () => {
                     <input value={c.note} onChange={e => updateCode(i, "note", e.target.value)}
                       placeholder="Internal note (optional)"
                       className="w-full bg-transparent text-[10px] text-muted-foreground/50 outline-none italic" />
+
+                    {/* Plan restriction */}
+                    <div className="rounded-sm p-2.5" style={{ background: "hsl(0 0% 6%)", border: "1px solid hsl(0 0% 13%)" }}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-[9px] text-muted-foreground/40 mono uppercase tracking-wider">Apply to Plans</p>
+                        <button onClick={() => updateCode(i, "plans", c.plans === "all" ? [] : "all")}
+                          className="text-[9px] text-primary hover:brightness-125 transition-all">
+                          {c.plans === "all" ? "Restrict" : "All plans"}
+                        </button>
+                      </div>
+                      {c.plans === "all" ? (
+                        <p className="text-[10px] text-muted-foreground/40">Works on all plans</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {PLANS.map(plan => {
+                            const selected = Array.isArray(c.plans) && (c.plans as string[]).includes(plan);
+                            return (
+                              <button key={plan}
+                                onClick={() => {
+                                  const current = Array.isArray(c.plans) ? c.plans as string[] : [];
+                                  updateCode(i, "plans", selected ? current.filter(p => p !== plan) : [...current, plan]);
+                                }}
+                                className="px-2 py-0.5 rounded-sm text-[10px] font-medium transition-all"
+                                style={{
+                                  background: selected ? "hsl(270 50% 18%)" : "hsl(0 0% 10%)",
+                                  color: selected ? "hsl(270 65% 65%)" : "hsl(0 0% 40%)",
+                                  border: `1px solid ${selected ? "hsl(270 50% 30%)" : "hsl(0 0% 18%)"}`,
+                                }}>
+                                {plan}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Max uses */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <p className="text-[9px] text-muted-foreground/40 mono uppercase tracking-wider mb-1">Max Uses <span className="normal-case">(0 = unlimited)</span></p>
+                        <input type="number" min={0} value={c.maxUses ?? 0}
+                          onChange={e => updateCode(i, "maxUses", Number(e.target.value))}
+                          className="w-full bg-transparent text-xs text-foreground outline-none" />
+                      </div>
+                      {(c.usedCount ?? 0) > 0 && (
+                        <div className="shrink-0 text-right">
+                          <p className="text-[9px] text-muted-foreground/40 mono uppercase tracking-wider mb-1">Used</p>
+                          <p className="text-xs font-bold"
+                            style={{ color: c.maxUses && c.usedCount >= c.maxUses ? "hsl(350 85% 60%)" : "hsl(142 65% 52%)" }}>
+                            {c.usedCount}{c.maxUses ? ` / ${c.maxUses}` : ""}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </motion.div>
                 ))}
               </div>

@@ -6,7 +6,6 @@ import {
   Loader2, AlertCircle, X, Check,
   UserCheck, UserX,
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import ServerSidebar from "@/components/ServerSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
@@ -230,20 +229,13 @@ const ServerUsers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
-
-      <div className="flex flex-1 overflow-hidden" style={{ paddingTop: 64 }}>
-
-        {/* Sidebar */}
-        <div className="hidden md:flex flex-col h-[calc(100vh-64px)] sticky top-16 px-4 py-5 overflow-y-auto"
-          style={{ width: 236, borderRight: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 4.5%)" }}>
-          {serverData && <ServerSidebar server={serverData} onPower={async () => {}} powerLoading={null} />}
-        </div>
-
-        {/* Main content */}
-        <div className="flex-1 overflow-y-auto p-6">
-        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease }} className="max-w-3xl mx-auto">
+    <div className="h-screen bg-background flex overflow-hidden">
+      <div className="hidden md:flex flex-col h-screen px-4 py-5 overflow-y-auto shrink-0"
+        style={{ width: 236, borderRight: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 4.5%)" }}>
+        {serverData && <ServerSidebar server={serverData} onPower={async () => {}} powerLoading={null} />}
+      </div>
+      <div className="flex-1 overflow-y-auto p-6">
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease }} className="max-w-3xl mx-auto">
 
           {/* Error */}
           {error && (
@@ -446,7 +438,6 @@ const ServerUsers = () => {
             )}
           </div>
         </motion.div>
-      </div>
       </div>
 
       {/* Edit permissions modal */}
