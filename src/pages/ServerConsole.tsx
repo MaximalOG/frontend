@@ -91,6 +91,17 @@ const ServerConsole = () => {
   const [hnSubmitting, setHnSubmitting] = useState(false);
   const [hnError, setHnError]           = useState("");
 
+  // Live hardware usage
+  const [resources, setResources] = useState<{
+    available: boolean;
+    cpu: number;
+    memoryBytes: number;
+    diskBytes: number;
+    netRxBytes: number;
+    netTxBytes: number;
+    uptimeMs: number;
+  } | null>(null);
+
   const wsRef   = useRef<WebSocket | null>(null);
   const logsRef = useRef<HTMLDivElement>(null);
   const logsEnd = useRef<HTMLDivElement>(null);
@@ -177,6 +188,22 @@ const ServerConsole = () => {
     return () => { wsRef.current?.close(1000); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [server?.id]);
+
+  // Poll live hardware usage every 3 seconds while server is running
+  useEffect(() => {
+    if (!user || !id) return;
+    const fetchResources = async () => {
+      try {
+        const res = await apiFetch(`/api/servers/${id}/resources`, {
+          headers: { Authorization: `Bearer ${token()}` },
+        });
+        if (res.ok) setResources(await res.json());
+      } catch {}
+    };
+    fetchResources();
+    const interval = setInterval(fetchResources, 3000);
+    return () => clearInterval(interval);
+  }, [user, id, token]);
 
   const sendCommand = () => {
     const cmd = input.trim();
@@ -447,6 +474,80 @@ const ServerConsole = () => {
           {/* end right stats panel */}
         </div>
         {/* end console+stats row */}
+
+        {/* ── Live Hardware Usage Cards ── */}
+        {resources?.available && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {/* CPU */}
+            <div className="rounded-sm p-4" style={{ background: "hsl(0 0% 6%)", border: "1px solid hsl(0 0% 14%)" }}>
+              <p className="text-[9px] mono uppercase tracking-wider text-muted-foreground/40 mb-2">CPU Load</p>
+              <p className="text-xl font-bold text-foreground">{resources.cpu.toFixed(1)}<span className="text-xs text-muted-foreground/50 font-normal ml-0.5">%</span></p>
+              <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ background: "hsl(0 0% 12%)" }}>
+                <div className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(resources.cpu, 100)}%`,
+                    background: resources.cpu > 80 ? "hsl(350 85% 50%)" : resources.cpu > 50 ? "hsl(38 90% 55%)" : "hsl(142 65% 50%)",
+                  }} />
+              </div>
+            </div>
+
+            {/* Memory */}
+            <div className="rounded-sm p-4" style={{ background: "hsl(0 0% 6%)", border: "1px solid hsl(0 0% 14%)" }}>
+              <p className="text-[9px] mono uppercase tracking-wider text-muted-foreground/40 mb-2">Memory</p>
+              <p className="text-xl font-bold text-foreground">
+                {(resources.memoryBytes / 1024 / 1024).toFixed(0)}
+                <span className="text-xs text-muted-foreground/50 font-normal ml-0.5">MiB</span>
+              </p>
+              {server?.ram && (
+                <p className="text-[10px] text-muted-foreground/30 mt-1 mono">/ {server.ram}</p>
+              )}
+            </div>
+
+            {/* Disk */}
+            <div className="rounded-sm p-4" style={{ background: "hsl(0 0% 6%)", border: "1px solid hsl(0 0% 14%)" }}>
+              <p className="text-[9px] mono uppercase tracking-wider text-muted-foreground/40 mb-2">Disk</p>
+              <p className="text-xl font-bold text-foreground">
+                {resources.diskBytes >= 1024 * 1024 * 1024
+                  ? `${(resources.diskBytes / 1024 / 1024 / 1024).toFixed(2)}`
+                  : `${(resources.diskBytes / 1024 / 1024).toFixed(0)}`}
+                <span className="text-xs text-muted-foreground/50 font-normal ml-0.5">
+                  {resources.diskBytes >= 1024 * 1024 * 1024 ? "GiB" : "MiB"}
+                </span>
+              </p>
+              {server?.ssd && (
+                <p className="text-[10px] text-muted-foreground/30 mt-1 mono">/ {server.ssd}</p>
+              )}
+            </div>
+
+            {/* Uptime */}
+            <div className="rounded-sm p-4" style={{ background: "hsl(0 0% 6%)", border: "1px solid hsl(0 0% 14%)" }}>
+              <p className="text-[9px] mono uppercase tracking-wider text-muted-foreground/40 mb-2">Uptime</p>
+              {resources.uptimeMs > 0 ? (() => {
+                const s = Math.floor(resources.uptimeMs / 1000);
+                const m = Math.floor(s / 60);
+                const h = Math.floor(m / 60);
+                const d = Math.floor(h / 24);
+                const display = d > 0
+                  ? `${d}d ${h % 24}h`
+                  : h > 0
+                  ? `${h}h ${m % 60}m`
+                  : `${m}m ${s % 60}s`;
+                return <p className="text-xl font-bold text-foreground">{display}</p>;
+              })() : (
+                <p className="text-xl font-bold text-muted-foreground/30">—</p>
+              )}
+              <div className="flex gap-3 mt-2">
+                <div>
+                  <p className="text-[9px] text-muted-foreground/30">↓ {(resources.netRxBytes / 1024 / 1024).toFixed(1)} MiB</p>
+                </div>
+                <div>
+                  <p className="text-[9px] text-muted-foreground/30">↑ {(resources.netTxBytes / 1024 / 1024).toFixed(1)} MiB</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         </div>
         {/* end center column */}
       </div>

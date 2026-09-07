@@ -30,6 +30,7 @@ import ServerConsole from "./pages/ServerConsole.tsx";
 import ServerFiles from "./pages/ServerFiles.tsx";
 import ServerUsers from "./pages/ServerUsers.tsx";
 import ServerInstaller from "./pages/ServerInstaller.tsx";
+import ServerVersion from "./pages/ServerVersion.tsx";
 import ChatBot from "./components/ChatBot.tsx";
 import SaleBanner from "./components/SaleBanner.tsx";
 import { CurrencyProvider } from "@/context/CurrencyContext";
@@ -93,6 +94,7 @@ const App = () => (
           <Route path="/server/:id/files" element={<ServerFiles />} />
           <Route path="/server/:id/users" element={<ServerUsers />} />
           <Route path="/server/:id/installer" element={<ServerInstaller />} />
+          <Route path="/server/:id/version" element={<ServerVersion />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <ChatBotBoundary>
