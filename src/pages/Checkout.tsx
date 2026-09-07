@@ -145,7 +145,7 @@ const Checkout = () => {
       const res = await apiFetch("/api/sale/validate-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, planName }),
       });
       const data = await res.json();
       if (res.ok && data.discount) {
