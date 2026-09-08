@@ -229,9 +229,9 @@ const ServerUsers = () => {
   }
 
   return (
-    <div className="h-screen bg-background flex overflow-hidden">
-      <div className="hidden md:flex flex-col h-screen px-4 py-5 overflow-y-auto shrink-0"
-        style={{ width: 236, borderRight: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 4.5%)" }}>
+    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#080810" }}>
+      <div className="hidden md:flex flex-col h-full overflow-y-auto shrink-0 px-4 py-5"
+        style={{ width: 236, background: "#0b0b14", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
         {serverData && <ServerSidebar server={serverData} onPower={async () => {}} powerLoading={null} />}
       </div>
       <div className="flex-1 overflow-y-auto p-6">
@@ -239,8 +239,8 @@ const ServerUsers = () => {
 
           {/* Error */}
           {error && (
-            <div className="rounded-sm px-4 py-3 mb-4 text-xs flex items-center gap-2"
-              style={{ background: "hsl(350 85% 8%)", border: "1px solid hsl(350 85% 25%)", color: "hsl(350 85% 65%)" }}>
+            <div className="rounded-xl px-4 py-3 mb-4 text-xs flex items-center gap-2"
+              style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.22)", color: "#f87171" }}>
               <AlertCircle size={13} /> {error}
               <button onClick={() => setError("")} className="ml-auto"><X size={11} /></button>
             </div>
@@ -248,18 +248,22 @@ const ServerUsers = () => {
 
           {/* Header bar */}
           <div className="flex items-center justify-between mb-5">
-            <div>
-              <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
-                <Shield size={14} className="text-primary" /> Server Users
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Invite players to manage this server. They must have a NetherNodes account.</p>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.25)" }}>
+                <Shield size={16} style={{ color: "#a78bfa" }} />
+              </div>
+              <div>
+                <h2 className="text-base font-bold" style={{ color: "#f1f5f9" }}>Server Users</h2>
+                <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>Invite players to manage this server</p>
+              </div>
             </div>
             <button
               onClick={() => { setShowAdd(true); setAddError(""); setAddEmail(""); setAddPerms(DEFAULT_PERMS); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110"
-              style={{ background: "hsl(350 85% 45%)", color: "white" }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90"
+              style={{ background: "rgba(139,92,246,0.15)", color: "#c4b5fd", border: "1px solid rgba(139,92,246,0.25)" }}
             >
-              <UserPlus size={12} /> Invite User
+              <UserPlus size={13} /> Invite User
             </button>
           </div>
 
@@ -270,55 +274,48 @@ const ServerUsers = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="rounded-sm overflow-hidden mb-4"
-                style={{ border: "1px solid hsl(350 85% 30%)" }}
+                className="rounded-2xl overflow-hidden mb-4"
+                style={{ border: "1px solid rgba(139,92,246,0.25)" }}
               >
-                <div className="px-5 py-4 space-y-4" style={{ background: "hsl(350 85% 5%)" }}>
+                <div className="px-5 py-4 space-y-4" style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.07),rgba(59,130,246,0.03))" }}>
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <UserPlus size={14} className="text-primary" /> Invite a user
+                    <p className="text-sm font-semibold flex items-center gap-2" style={{ color: "#f1f5f9" }}>
+                      <UserPlus size={14} style={{ color: "#a78bfa" }} /> Invite a user
                     </p>
-                    <button onClick={() => setShowAdd(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                    <button onClick={() => setShowAdd(false)} style={{ color: "#475569" }}>
                       <X size={14} />
                     </button>
                   </div>
 
                   <div>
-                    <label className="text-[9px] mono uppercase tracking-wider text-muted-foreground/50 block mb-1.5">NetherNodes Email</label>
+                    <label className="text-[9px] mono uppercase tracking-widest block mb-1.5" style={{ color: "#475569" }}>NetherNodes Email</label>
                     <input
-                      type="email"
-                      value={addEmail}
+                      type="email" value={addEmail}
                       onChange={e => setAddEmail(e.target.value)}
                       onKeyDown={e => e.key === "Enter" && addUser()}
                       placeholder="friend@example.com"
-                      className="w-full rounded-sm px-3 py-2 text-sm text-foreground bg-transparent outline-none"
-                      style={{ border: "1px solid hsl(0 0% 22%)" }}
-                      onFocus={e => (e.currentTarget.style.borderColor = "hsl(350 85% 45%)")}
-                      onBlur={e => (e.currentTarget.style.borderColor = "hsl(0 0% 22%)")}
+                      className="w-full rounded-xl px-3 py-2 text-sm bg-transparent outline-none"
+                      style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#f1f5f9" }}
                     />
-                    <p className="text-[10px] text-muted-foreground/40 mt-1">The user must already have a NetherNodes account with this email.</p>
+                    <p className="text-[10px] mt-1" style={{ color: "#334155" }}>The user must already have a NetherNodes account.</p>
                   </div>
 
                   {/* Permissions */}
                   <div>
-                    <label className="text-[9px] mono uppercase tracking-wider text-muted-foreground/50 block mb-2">Permissions</label>
+                    <label className="text-[9px] mono uppercase tracking-widest block mb-2" style={{ color: "#475569" }}>Permissions</label>
                     <div className="space-y-3">
                       {PERMISSION_GROUPS.map(group => (
                         <div key={group.group}>
-                          <p className="text-[9px] mono uppercase tracking-wider text-muted-foreground/40 mb-1.5">{group.group}</p>
+                          <p className="text-[9px] mono uppercase tracking-widest mb-1.5" style={{ color: "#334155" }}>{group.group}</p>
                           <div className="flex flex-wrap gap-2">
                             {group.perms.map(p => (
-                              <button
-                                key={p.key}
-                                onClick={() => setAddPerms(prev => togglePerm(prev, p.key))}
-                                title={p.desc}
-                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[11px] font-medium transition-all"
+                              <button key={p.key} onClick={() => setAddPerms(prev => togglePerm(prev, p.key))} title={p.desc}
+                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
                                 style={{
-                                  background: addPerms.includes(p.key) ? "hsl(142 60% 15%)" : "hsl(0 0% 10%)",
-                                  color: addPerms.includes(p.key) ? "hsl(142 70% 55%)" : "hsl(0 0% 45%)",
-                                  border: `1px solid ${addPerms.includes(p.key) ? "hsl(142 60% 25%)" : "hsl(0 0% 18%)"}`,
-                                }}
-                              >
+                                  background: addPerms.includes(p.key) ? "rgba(74,222,128,0.1)" : "rgba(255,255,255,0.04)",
+                                  color: addPerms.includes(p.key) ? "#4ade80" : "#64748b",
+                                  border: `1px solid ${addPerms.includes(p.key) ? "rgba(74,222,128,0.25)" : "rgba(255,255,255,0.08)"}`,
+                                }}>
                                 {addPerms.includes(p.key) && <Check size={9} />}
                                 {p.label}
                               </button>
@@ -329,20 +326,18 @@ const ServerUsers = () => {
                     </div>
                   </div>
 
-                  {addError && (
-                    <p className="text-xs" style={{ color: "hsl(350 85% 65%)" }}>{addError}</p>
-                  )}
+                  {addError && <p className="text-xs" style={{ color: "#f87171" }}>{addError}</p>}
 
                   <div className="flex gap-3 pt-1">
                     <button onClick={() => setShowAdd(false)}
-                      className="h-9 px-4 rounded-sm text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      style={{ border: "1px solid hsl(0 0% 20%)" }}>
+                      className="h-9 px-4 rounded-xl text-xs transition-colors"
+                      style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>
                       Cancel
                     </button>
                     <button onClick={addUser} disabled={adding || !addEmail.trim()}
-                      className="flex-1 h-9 flex items-center justify-center gap-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-50"
-                      style={{ background: "hsl(350 85% 45%)", color: "white" }}>
-                      {adding ? <><Loader2 size={12} className="animate-spin" /> Sending invite…</> : <><UserPlus size={12} /> Send Invite</>}
+                      className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-40"
+                      style={{ background: "linear-gradient(135deg,#5b21b6,#7c3aed)", color: "white" }}>
+                      {adding ? <><Loader2 size={12} className="animate-spin" /> Sending…</> : <><UserPlus size={12} /> Send Invite</>}
                     </button>
                   </div>
                 </div>
@@ -351,9 +346,9 @@ const ServerUsers = () => {
           </AnimatePresence>
 
           {/* User list */}
-          <div className="rounded-sm overflow-hidden" style={{ border: "1px solid hsl(0 0% 14%)" }}>
-            <div className="grid grid-cols-12 px-4 py-2 text-[9px] mono uppercase tracking-wider text-muted-foreground/40"
-              style={{ background: "hsl(0 0% 6%)", borderBottom: "1px solid hsl(0 0% 12%)" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.07)", background: "#0b0b14" }}>
+            <div className="grid grid-cols-12 px-4 py-2 text-[9px] mono uppercase tracking-widest"
+              style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#334155" }}>
               <span className="col-span-5">User</span>
               <span className="col-span-5">Permissions</span>
               <span className="col-span-2 text-right">Actions</span>

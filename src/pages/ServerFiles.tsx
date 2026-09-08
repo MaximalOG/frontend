@@ -178,7 +178,7 @@ const ServerFiles = () => {
   });
 
   return (
-    <div className="h-screen bg-background flex overflow-hidden">
+    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#080810" }}>
 
       {/* Hidden file input for upload — only allow valid server file types */}
       <input ref={fileInputRef} type="file" multiple className="hidden"
@@ -222,8 +222,8 @@ const ServerFiles = () => {
       />
 
       {/* Left sidebar */}
-      <div className="hidden md:flex flex-col h-screen px-4 py-5 overflow-y-auto shrink-0"
-        style={{ width: 236, borderRight: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 4.5%)" }}>
+      <div className="hidden md:flex flex-col h-full overflow-y-auto shrink-0 px-4 py-5"
+        style={{ width: 236, background: "#0b0b14", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
         {server && <ServerSidebar server={server} onPower={async () => {}} powerLoading={null} />}
       </div>
 
@@ -242,31 +242,36 @@ const ServerFiles = () => {
 
           {/* Toolbar */}
           <div className="flex items-center gap-2 flex-wrap shrink-0">
-            <div className="flex items-center gap-1 flex-1 min-w-0 text-xs px-3 py-2 rounded-sm"
-              style={{ background: "hsl(0 0% 8% / 0.75)", backdropFilter: "blur(16px)", border: "1px solid hsl(0 0% 22%)" }}>
+            <div className="flex items-center gap-1 flex-1 min-w-0 text-xs px-3 py-2 rounded-xl"
+              style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.09)" }}>
               <button onClick={() => navigateTo("/")}
-                className="text-muted-foreground hover:text-foreground transition-colors">
+                className="transition-colors" style={{ color: "#475569" }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#94a3b8"}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#475569"}>
                 <Home size={11} />
               </button>
               {breadcrumbs.map((crumb, i) => (
                 <span key={i} className="flex items-center gap-1">
-                  <ChevronRight size={10} className="text-muted-foreground/30" />
+                  <ChevronRight size={10} style={{ color: "#1e293b" }} />
                   <button
                     onClick={() => navigateTo("/" + breadcrumbs.slice(0, i + 1).join("/"))}
-                    className="text-muted-foreground hover:text-foreground transition-colors truncate max-w-[120px]">
+                    className="transition-colors truncate max-w-[120px]"
+                    style={{ color: "#64748b" }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#94a3b8"}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#64748b"}>
                     {crumb}
                   </button>
                 </span>
               ))}
             </div>
             <button onClick={() => loadFiles(directory)} disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-sm text-xs transition-all hover:brightness-110"
-              style={{ background: "hsl(0 0% 8% / 0.75)", backdropFilter: "blur(16px)", border: "1px solid hsl(0 0% 22%)", color: "hsl(0 0% 60%)" }}>
-              <RefreshCw size={11} className={loading ? "animate-spin" : ""} />
+              className="w-8 h-8 flex items-center justify-center rounded-xl transition-all hover:opacity-80"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>
+              <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
             </button>
             <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-sm text-xs font-medium transition-all hover:brightness-110"
-              style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-40"
+              style={{ background: "linear-gradient(135deg,#1d4ed8,#3b82f6)", color: "white" }}>
               {uploading ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
               Upload
             </button>

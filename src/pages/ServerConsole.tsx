@@ -114,6 +114,15 @@ export default function ServerConsole() {
   const [deleteInput, setDeleteInput]   = useState("");
   const [deleting, setDeleting]         = useState(false);
   const [showHnForm, setShowHnForm]     = useState(false);
+
+  /* upload world popup */
+  const [showUploadWorld, setShowUploadWorld] = useState(false);
+  const [worldFile, setWorldFile]             = useState<File | null>(null);
+  const [worldDragOver, setWorldDragOver]     = useState(false);
+  const [uploadingWorld, setUploadingWorld]   = useState(false);
+  const [uploadWorldMsg, setUploadWorldMsg]   = useState("");
+  const [uploadWorldErr, setUploadWorldErr]   = useState("");
+  const worldInputRef                         = useRef<HTMLInputElement>(null);
   const [hnEdit, setHnEdit]             = useState("");
   const [hnChecking, setHnChecking]     = useState(false);
   const [hnAvail, setHnAvail]           = useState<boolean | null>(null);
@@ -290,6 +299,41 @@ export default function ServerConsole() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = `${server?.name ?? "server"}-console.log`; a.click(); URL.revokeObjectURL(url);
+  };
+
+  const uploadWorld = async () => {
+    if (!worldFile) return;
+    setUploadingWorld(true); setUploadWorldErr(""); setUploadWorldMsg("");
+    try {
+      // Determine target dir: .zip goes to root, folders go into worlds/
+      const ext = worldFile.name.split(".").pop()?.toLowerCase();
+      const targetPath = ext === "zip" ? `/${worldFile.name}` : `/worlds/${worldFile.name}`;
+      const text = await worldFile.text().catch(() => null);
+      if (text === null) {
+        // Binary file (zip) — read as arraybuffer and base64-encode not supported via write API
+        // Instead send as raw binary using the Pterodactyl upload endpoint
+        setUploadWorldErr("Binary world uploads (ZIP) are not yet supported via this panel. Use the Files page.");
+        setUploadingWorld(false);
+        return;
+      }
+      const res = await apiFetch(
+        `/api/servers/${id}/files/write?file=${encodeURIComponent(targetPath)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+          body: JSON.stringify({ content: text }),
+        }
+      );
+      if (!res.ok) {
+        const e = await res.json();
+        setUploadWorldErr(e.error || "Upload failed.");
+        return;
+      }
+      setUploadWorldMsg(`✓ ${worldFile.name} uploaded successfully.`);
+      setWorldFile(null);
+      setTimeout(() => { setShowUploadWorld(false); setUploadWorldMsg(""); }, 2500);
+    } catch { setUploadWorldErr("Network error — please try again."); }
+    finally { setUploadingWorld(false); }
   };
 
   const filteredLogs = searchQuery ? logs.filter(l => l.text.toLowerCase().includes(searchQuery.toLowerCase())) : logs;
@@ -861,7 +905,7 @@ export default function ServerConsole() {
             {/* Action list */}
             {([
               { icon: Package, label: "Install Plugin", sub: "Browse Modrinth", color: "#a78bfa", to: `/server/${id}/installer` },
-              { icon: UploadCloud, label: "Upload World", sub: "File manager", color: "#60a5fa", to: `/server/${id}/files` },
+              { icon: UploadCloud, label: "Upload World", sub: "Drop world files", color: "#60a5fa", action: () => { setShowUploadWorld(true); setWorldFile(null); setUploadWorldErr(""); setUploadWorldMsg(""); } },
               { icon: HardDrive, label: "Create Backup", sub: "Snapshot now", color: "#fbbf24", to: `/server/${id}/files` },
               { icon: Calendar, label: "Schedule Restart", sub: "Auto-restart", color: "#4ade80", action: () => confirm("Send restart signal?") && sendPower("restart") },
               { icon: List, label: "Whitelist Manager", sub: "Manage players", color: "#f87171", to: `/server/${id}/users` },
@@ -892,6 +936,128 @@ export default function ServerConsole() {
         {/* end console + sidebar row */}
       </div>
       {/* end main content */}
+
+      {/* ══════ UPLOAD WORLD MODAL ══════ */}
+      <AnimatePresence>
+        {showUploadWorld && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
+            onClick={() => !uploadingWorld && setShowUploadWorld(false)}>
+            <motion.div initial={{ scale: 0.94, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0 }} transition={{ duration: 0.18 }}
+              className="rounded-2xl p-6 max-w-md w-full" onClick={e => e.stopPropagation()}
+              style={{
+                background: "linear-gradient(135deg, #0f0f1a, #0d0d18)",
+                border: "1px solid rgba(96,165,250,0.25)",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.8)",
+              }}>
+
+              {/* Header */}
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                    style={{ background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.25)" }}>
+                    <UploadCloud size={16} style={{ color: "#60a5fa" }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Upload World</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>Upload a world folder or zip to your server</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowUploadWorld(false)} style={{ color: "#475569" }}>
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Hidden file input */}
+              <input
+                ref={worldInputRef}
+                type="file"
+                className="hidden"
+                accept=".zip,.tar,.gz,.rar,.7z,.json,.dat,.mca,.mcworld"
+                onChange={e => {
+                  const f = e.target.files?.[0];
+                  if (f) { setWorldFile(f); setUploadWorldErr(""); setUploadWorldMsg(""); }
+                  e.target.value = "";
+                }}
+              />
+
+              {/* Drop zone */}
+              <div
+                onClick={() => worldInputRef.current?.click()}
+                onDragOver={e => { e.preventDefault(); setWorldDragOver(true); }}
+                onDragLeave={() => setWorldDragOver(false)}
+                onDrop={e => {
+                  e.preventDefault(); setWorldDragOver(false);
+                  const f = e.dataTransfer.files[0];
+                  if (f) { setWorldFile(f); setUploadWorldErr(""); setUploadWorldMsg(""); }
+                }}
+                className="rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-8 cursor-pointer transition-all mb-4"
+                style={{
+                  borderColor: worldDragOver ? "#60a5fa" : worldFile ? "rgba(74,222,128,0.4)" : "rgba(255,255,255,0.1)",
+                  background: worldDragOver ? "rgba(96,165,250,0.06)" : worldFile ? "rgba(74,222,128,0.04)" : "rgba(255,255,255,0.02)",
+                }}>
+                {worldFile ? (
+                  <>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                      style={{ background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.25)" }}>
+                      <Check size={18} style={{ color: "#4ade80" }} />
+                    </div>
+                    <p className="text-sm font-semibold" style={{ color: "#4ade80" }}>{worldFile.name}</p>
+                    <p className="text-[10px] mt-1" style={{ color: "#475569" }}>
+                      {(worldFile.size / 1048576).toFixed(2)} MB — click to change
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                      style={{ background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.18)" }}>
+                      <UploadCloud size={18} style={{ color: worldDragOver ? "#60a5fa" : "#475569" }} />
+                    </div>
+                    <p className="text-sm font-semibold" style={{ color: "#94a3b8" }}>
+                      {worldDragOver ? "Drop it!" : "Click or drag & drop"}
+                    </p>
+                    <p className="text-[10px] mt-1" style={{ color: "#334155" }}>
+                      Supports .zip, .dat, .mca, .mcworld files
+                    </p>
+                  </>
+                )}
+              </div>
+
+              {/* Status messages */}
+              {uploadWorldErr && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-xs"
+                  style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
+                  <AlertCircle size={12} className="shrink-0" /> {uploadWorldErr}
+                </div>
+              )}
+              {uploadWorldMsg && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-xs"
+                  style={{ background: "rgba(74,222,128,0.07)", border: "1px solid rgba(74,222,128,0.2)", color: "#4ade80" }}>
+                  <Check size={12} className="shrink-0" /> {uploadWorldMsg}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                <button onClick={() => setShowUploadWorld(false)} disabled={uploadingWorld}
+                  className="flex-1 h-10 rounded-xl text-xs disabled:opacity-40 transition-colors"
+                  style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>
+                  Cancel
+                </button>
+                <button onClick={uploadWorld} disabled={!worldFile || uploadingWorld}
+                  className="flex-1 h-10 flex items-center justify-center gap-2 rounded-xl text-sm font-bold transition-all hover:opacity-90 disabled:opacity-30"
+                  style={{ background: "linear-gradient(135deg, #1d4ed8, #3b82f6)", color: "white" }}>
+                  {uploadingWorld
+                    ? <><Loader2 size={13} className="animate-spin" /> Uploading…</>
+                    : <><UploadCloud size={13} /> Upload World</>}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ══════ DELETE MODAL ══════ */}
       <AnimatePresence>
