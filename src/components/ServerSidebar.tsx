@@ -1,8 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
   Terminal, FolderOpen, Users, ArrowLeft,
-  Play, Square, RotateCcw, Zap, Loader2, Package, Settings2,
+  Play, Square, RotateCcw, Loader2, Package, Settings2,
+  Calendar, HardDrive, List,
 } from "lucide-react";
 
 interface ServerData {
@@ -23,27 +23,21 @@ interface Props {
   powerLoading: string | null;
 }
 
-const STATUS_COLOR: Record<string, string> = {
-  running:    "hsl(142 70% 55%)",
-  stopped:    "hsl(0 0% 45%)",
-  starting:   "hsl(38 90% 60%)",
-  stopping:   "hsl(38 90% 60%)",
-  installing: "hsl(200 80% 55%)",
-  suspended:  "hsl(350 85% 55%)",
-  unknown:    "hsl(38 90% 40%)",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  running: "Running", stopped: "Stopped", starting: "Starting",
-  stopping: "Stopping", installing: "Installing",
-  suspended: "Suspended", unknown: "Unknown",
+const STATUS_CFG: Record<string, { color: string; dot: string; label: string }> = {
+  running:    { color: "#4ade80", dot: "#22c55e", label: "Online" },
+  stopped:    { color: "#64748b", dot: "#475569", label: "Offline" },
+  starting:   { color: "#fbbf24", dot: "#f59e0b", label: "Starting" },
+  stopping:   { color: "#fbbf24", dot: "#f59e0b", label: "Stopping" },
+  installing: { color: "#60a5fa", dot: "#3b82f6", label: "Installing" },
+  suspended:  { color: "#f87171", dot: "#ef4444", label: "Suspended" },
+  unknown:    { color: "#64748b", dot: "#475569", label: "Unknown" },
 };
 
 const NAV_SECTIONS = [
   {
     label: "Overview",
     items: [
-      { to: "console", icon: Terminal,  label: "Console" },
+      { to: "console",   icon: Terminal,   label: "Console" },
     ],
   },
   {
@@ -55,6 +49,14 @@ const NAV_SECTIONS = [
       { to: "users",     icon: Users,      label: "Users" },
     ],
   },
+  {
+    label: "Tools",
+    items: [
+      { to: "schedules", icon: Calendar,   label: "Schedules" },
+      { to: "backups",   icon: HardDrive,  label: "Backups" },
+      { to: "whitelist", icon: List,       label: "Whitelist" },
+    ],
+  },
 ];
 
 export default function ServerSidebar({ server, onPower, powerLoading }: Props) {
@@ -64,84 +66,135 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
   const isRunning = server.status === "running";
   const isStopped = server.status === "stopped";
   const isBusy    = server.status === "starting" || server.status === "stopping";
-  const statusColor = STATUS_COLOR[server.status] ?? STATUS_COLOR.unknown;
+  const cfg       = STATUS_CFG[server.status] ?? STATUS_CFG.unknown;
 
   return (
-    <aside className="flex flex-col h-full" style={{ width: 220, minWidth: 220 }}>
-      {/* Back link */}
+    <aside className="flex flex-col h-full select-none" style={{ width: 204, minWidth: 204 }}>
+
+      {/* ── Back link ── */}
       <Link to="/dashboard"
-        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors mb-5 px-1">
-        <ArrowLeft size={13} /> Dashboard
+        className="flex items-center gap-2 mb-5 px-1 text-xs font-medium transition-colors"
+        style={{ color: "#475569" }}
+        onMouseEnter={e => (e.currentTarget.style.color = "#94a3b8")}
+        onMouseLeave={e => (e.currentTarget.style.color = "#475569")}>
+        <ArrowLeft size={12} /> Back to Dashboard
       </Link>
 
-      {/* Server identity */}
-      <div className="rounded-sm px-3 py-3 mb-5"
-        style={{ background: "hsl(0 0% 7%)", border: "1px solid hsl(0 0% 14%)" }}>
-        <div className="flex items-center gap-2 mb-1">
-          <span className="relative flex h-2 w-2 shrink-0">
-            {isRunning && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
-              style={{ background: statusColor }} />}
-            <span className="relative inline-flex rounded-full h-2 w-2"
-              style={{ background: statusColor, boxShadow: isRunning ? `0 0 8px ${statusColor}` : undefined }} />
-          </span>
-          <span className="text-sm font-bold text-foreground truncate">{server.name}</span>
+      {/* ── Server identity card ── */}
+      <div className="mb-5 rounded-xl p-3 relative overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(59,130,246,0.04) 100%)",
+          border: "1px solid rgba(139,92,246,0.18)",
+        }}>
+        {/* subtle top-left glow blob */}
+        <div className="absolute -top-4 -left-4 w-16 h-16 rounded-full pointer-events-none"
+          style={{ background: `radial-gradient(circle, ${cfg.color}30 0%, transparent 70%)` }} />
+
+        <div className="relative flex items-center gap-2.5 mb-2">
+          {/* Icon */}
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            style={{
+              background: `linear-gradient(135deg, ${cfg.color}18, ${cfg.color}08)`,
+              border: `1px solid ${cfg.color}30`,
+            }}>
+            <Terminal size={13} style={{ color: cfg.color }} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold truncate" style={{ color: "#f1f5f9" }}>{server.name}</p>
+            <p className="text-[10px] mono" style={{ color: "#475569" }}>{server.plan} plan</p>
+          </div>
         </div>
-        <span className="text-[9px] mono uppercase tracking-widest ml-4"
-          style={{ color: statusColor }}>{STATUS_LABEL[server.status] ?? server.status}</span>
-        <p className="text-[10px] text-muted-foreground/40 mono mt-1 ml-4">{server.plan} plan</p>
+
+        {/* Status pill */}
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
+          style={{ background: `${cfg.color}0d`, border: `1px solid ${cfg.color}20` }}>
+          <span className="relative flex h-1.5 w-1.5 shrink-0">
+            {isRunning && (
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                style={{ background: cfg.dot }} />
+            )}
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: cfg.dot }} />
+          </span>
+          <span className="text-[10px] font-semibold mono" style={{ color: cfg.color }}>{cfg.label}</span>
+          <span className="ml-auto text-[9px] mono" style={{ color: "#334155" }}>{server.ram} RAM</span>
+        </div>
       </div>
 
-      {/* Nav sections */}
-      {NAV_SECTIONS.map(section => (
-        <div key={section.label} className="mb-5">
-          <p className="text-[9px] mono uppercase tracking-widest text-muted-foreground/30 font-semibold px-1 mb-1.5">
-            {section.label}
-          </p>
-          {section.items.map(item => {
-            const href = `${base}/${item.to}`;
-            const active = pathname === href;
-            return (
-              <Link key={item.to} to={href}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-sm text-sm font-medium transition-all mb-0.5"
-                style={{
-                  background: active ? "hsl(350 85% 15%)" : "transparent",
-                  color:      active ? "hsl(350 85% 65%)" : "hsl(0 0% 55%)",
-                  border:     active ? "1px solid hsl(350 85% 28%)" : "1px solid transparent",
-                }}
-                onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.color = "white"; }}
-                onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.color = "hsl(0 0% 55%)"; }}
-              >
-                <item.icon size={14} />
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-      ))}
+      {/* ── Nav sections ── */}
+      <div className="flex-1 overflow-y-auto space-y-4 pr-0.5">
+        {NAV_SECTIONS.map(section => (
+          <div key={section.label}>
+            <p className="text-[9px] mono uppercase tracking-widest font-semibold px-2 mb-1"
+              style={{ color: "#334155" }}>
+              {section.label}
+            </p>
+            <div className="space-y-0.5">
+              {section.items.map(item => {
+                const href   = `${base}/${item.to}`;
+                const active = pathname === href;
+                return (
+                  <Link key={item.to} to={href}
+                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all"
+                    style={{
+                      background: active
+                        ? "linear-gradient(90deg, rgba(139,92,246,0.18), rgba(139,92,246,0.06))"
+                        : "transparent",
+                      color:  active ? "#c4b5fd" : "#64748b",
+                      border: active ? "1px solid rgba(139,92,246,0.25)" : "1px solid transparent",
+                    }}
+                    onMouseEnter={e => {
+                      if (!active) {
+                        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
+                        (e.currentTarget as HTMLElement).style.color = "#94a3b8";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!active) {
+                        (e.currentTarget as HTMLElement).style.background = "transparent";
+                        (e.currentTarget as HTMLElement).style.color = "#64748b";
+                      }
+                    }}>
+                    <item.icon size={13} />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Power controls */}
-      <div className="space-y-1.5">
-        <p className="text-[9px] mono uppercase tracking-widest text-muted-foreground/30 font-semibold px-1 mb-2">Power</p>
-        <div className="flex gap-1.5">
+      {/* ── Power controls ── */}
+      <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        <p className="text-[9px] mono uppercase tracking-widest font-semibold px-1 mb-2" style={{ color: "#334155" }}>
+          Power
+        </p>
+        <div className="flex gap-1.5 mb-1.5">
+          {/* Start */}
           <button onClick={() => onPower("start")} disabled={!!powerLoading || isRunning || isBusy}
-            className="flex-1 h-8 flex items-center justify-center gap-1 rounded-sm text-[11px] font-semibold transition-all hover:brightness-110 disabled:opacity-30"
-            style={{ background: "hsl(142 60% 14%)", color: "hsl(142 65% 52%)", border: "1px solid hsl(142 60% 22%)" }}>
+            className="flex-1 h-8 flex items-center justify-center gap-1 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-25"
+            style={{ background: "rgba(34,197,94,0.1)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.22)" }}
+            onMouseEnter={e => { if (!e.currentTarget.disabled) (e.currentTarget as HTMLElement).style.background = "rgba(34,197,94,0.18)"; }}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(34,197,94,0.1)"}>
             {powerLoading === "start" ? <Loader2 size={11} className="animate-spin" /> : <Play size={11} />}
             Start
           </button>
+          {/* Restart */}
           <button onClick={() => onPower("restart")} disabled={!!powerLoading || !isRunning}
-            className="flex-1 h-8 flex items-center justify-center gap-1 rounded-sm text-[11px] font-semibold transition-all hover:brightness-110 disabled:opacity-30"
-            style={{ background: "hsl(38 90% 9%)", color: "hsl(38 90% 58%)", border: "1px solid hsl(38 90% 22%)" }}>
+            className="flex-1 h-8 flex items-center justify-center gap-1 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-25"
+            style={{ background: "rgba(251,191,36,0.08)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.2)" }}
+            onMouseEnter={e => { if (!e.currentTarget.disabled) (e.currentTarget as HTMLElement).style.background = "rgba(251,191,36,0.16)"; }}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(251,191,36,0.08)"}>
             {powerLoading === "restart" ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
             Restart
           </button>
         </div>
+        {/* Stop */}
         <button onClick={() => onPower("stop")} disabled={!!powerLoading || isStopped || isBusy}
-          className="w-full h-8 flex items-center justify-center gap-1 rounded-sm text-[11px] font-semibold transition-all hover:brightness-110 disabled:opacity-30"
-          style={{ background: "hsl(350 85% 9%)", color: "hsl(350 85% 58%)", border: "1px solid hsl(350 85% 22%)" }}>
+          className="w-full h-8 flex items-center justify-center gap-1 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-25"
+          style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}
+          onMouseEnter={e => { if (!e.currentTarget.disabled) (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.15)"; }}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.08)"}>
           {powerLoading === "stop" ? <Loader2 size={11} className="animate-spin" /> : <Square size={11} />}
           Stop Server
         </button>

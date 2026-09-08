@@ -328,10 +328,10 @@ export default function ServerConsole() {
 
   /* ═════════════════════════════ RENDER ═════════════════════════════ */
   return (
-    <div className="min-h-screen flex overflow-x-hidden" style={{ background: "#080810" }}>
+    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#080810" }}>
 
       {/* ══════ LEFT NAV SIDEBAR ══════ */}
-      <div className="hidden md:flex flex-col sticky top-0 h-screen overflow-y-auto shrink-0 px-4 py-5"
+      <div className="hidden md:flex flex-col h-full overflow-y-auto shrink-0 px-4 py-5"
         style={{ width: 236, background: "#0b0b14", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
         {server && <ServerSidebar server={server} onPower={sendPower} powerLoading={powerLoading} />}
         <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
@@ -344,7 +344,7 @@ export default function ServerConsole() {
       </div>
 
       {/* ══════ MAIN CONTENT ══════ */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-x-hidden">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
         {/* ── TOP HEADER BAR ── */}
         <div className="sticky top-0 z-20 px-6 py-3 flex items-center justify-between gap-4 flex-wrap"
@@ -555,11 +555,11 @@ export default function ServerConsole() {
           </div>
         </div>
 
-        {/* ── CONSOLE + SIDEBAR ROW ── */}
-        <div className="flex flex-1 min-h-0">
+        {/* ── CONSOLE + SIDEBAR ROW — fills all remaining height, no page scroll ── */}
+        <div className="flex flex-1 overflow-hidden">
 
           {/* ─── CONSOLE PANEL ─── */}
-          <div className="flex flex-col flex-1 min-w-0" style={{ borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="flex flex-col flex-1 min-w-0 overflow-hidden" style={{ borderRight: "1px solid rgba(255,255,255,0.06)" }}>
 
             {/* Console toolbar */}
             <div className="flex items-center justify-between px-4 py-2 gap-2 flex-wrap"
@@ -629,10 +629,10 @@ export default function ServerConsole() {
               </div>
             </div>
 
-            {/* Log output — the main terminal */}
+            {/* Log output — fills remaining height, only this scrolls */}
             <div ref={logsRef} onScroll={handleConsoleScroll} onClick={() => inputRef.current?.focus()}
               className="flex-1 overflow-y-auto cursor-text mono text-[12px] leading-[1.7]"
-              style={{ background: "#060608", padding: "16px 20px", minHeight: 400, maxHeight: "calc(100vh - 340px)" }}>
+              style={{ background: "#060608", padding: "16px 20px" }}>
 
               {/* Header line */}
               <div className="mb-4 pb-3 select-none" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
@@ -890,32 +890,6 @@ export default function ServerConsole() {
           {/* end right sidebar */}
         </div>
         {/* end console + sidebar row */}
-
-        {/* ── QUICK ACTIONS (mobile / below lg) ── */}
-        <div className="lg:hidden px-5 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <p className="text-[9px] mono uppercase tracking-widest mb-3" style={{ color: "#334155" }}>Quick Actions</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {[
-              { icon: Package, label: "Install Plugin", color: "#a78bfa", to: `/server/${id}/installer` },
-              { icon: UploadCloud, label: "Upload World", color: "#60a5fa", to: `/server/${id}/files` },
-              { icon: HardDrive, label: "Create Backup", color: "#fbbf24", to: `/server/${id}/files` },
-              { icon: Calendar, label: "Schedule Restart", color: "#4ade80", action: () => confirm("Send restart signal?") && sendPower("restart") },
-              { icon: List, label: "Whitelist Manager", color: "#f87171", to: `/server/${id}/users` },
-              { icon: Zap, label: "Custom Address", color: "#c084fc", action: () => { setShowHnForm(true); setHnEdit(server?.hostname ?? ""); setHnAvail(null); setHnError(""); } },
-            ].map(item => {
-              const Comp: any = (item as any).to ? Link : "button";
-              const extra = (item as any).to ? { to: (item as any).to } : { onClick: (item as any).action };
-              return (
-                <Comp key={item.label} {...extra}
-                  className="flex items-center gap-2.5 p-3 rounded-xl text-left transition-all hover:opacity-80"
-                  style={{ background: `${item.color}0a`, border: `1px solid ${item.color}1a` }}>
-                  <item.icon size={14} style={{ color: item.color }} />
-                  <span className="text-xs font-medium" style={{ color: "#cbd5e1" }}>{item.label}</span>
-                </Comp>
-              );
-            })}
-          </div>
-        </div>
       </div>
       {/* end main content */}
 
