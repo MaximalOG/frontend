@@ -123,6 +123,20 @@ export default function ServerConsole() {
   const [uploadWorldMsg, setUploadWorldMsg]   = useState("");
   const [uploadWorldErr, setUploadWorldErr]   = useState("");
   const worldInputRef                         = useRef<HTMLInputElement>(null);
+
+  /* create backup popup */
+  const [showBackup, setShowBackup]       = useState(false);
+  const [backupName, setBackupName]       = useState("");
+  const [creatingBackup, setCreatingBackup] = useState(false);
+  const [backupMsg, setBackupMsg]         = useState("");
+  const [backupErr, setBackupErr]         = useState("");
+
+  /* whitelist popup */
+  const [showWhitelist, setShowWhitelist]   = useState(false);
+  const [wlPlayer, setWlPlayer]             = useState("");
+  const [wlAdding, setWlAdding]             = useState(false);
+  const [wlMsg, setWlMsg]                   = useState("");
+  const [wlErr, setWlErr]                   = useState("");
   const [hnEdit, setHnEdit]             = useState("");
   const [hnChecking, setHnChecking]     = useState(false);
   const [hnAvail, setHnAvail]           = useState<boolean | null>(null);
@@ -334,6 +348,42 @@ export default function ServerConsole() {
       setTimeout(() => { setShowUploadWorld(false); setUploadWorldMsg(""); }, 2500);
     } catch { setUploadWorldErr("Network error — please try again."); }
     finally { setUploadingWorld(false); }
+  };
+
+  const createBackupNow = async () => {
+    setCreatingBackup(true); setBackupErr(""); setBackupMsg("");
+    try {
+      const name = backupName.trim() || `Backup ${new Date().toLocaleString("en-IN")}`;
+      const res = await apiFetch(`/api/servers/${id}/backups`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setBackupErr(data.error || "Failed to create backup."); return; }
+      setBackupMsg("✓ Backup started — check the Backups tab for progress.");
+      setBackupName("");
+      setTimeout(() => { setShowBackup(false); setBackupMsg(""); }, 3000);
+    } catch { setBackupErr("Network error — please try again."); }
+    finally { setCreatingBackup(false); }
+  };
+
+  const addToWhitelist = async () => {
+    if (!wlPlayer.trim()) { setWlErr("Enter a player name."); return; }
+    setWlAdding(true); setWlErr(""); setWlMsg("");
+    try {
+      const res = await apiFetch(`/api/servers/${id}/whitelist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+        body: JSON.stringify({ username: wlPlayer.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setWlErr(data.error || "Failed to add player."); return; }
+      setWlMsg(`✓ ${wlPlayer.trim()} added to whitelist.`);
+      setWlPlayer("");
+      setTimeout(() => { setShowWhitelist(false); setWlMsg(""); }, 2500);
+    } catch { setWlErr("Network error — please try again."); }
+    finally { setWlAdding(false); }
   };
 
   const filteredLogs = searchQuery ? logs.filter(l => l.text.toLowerCase().includes(searchQuery.toLowerCase())) : logs;
@@ -906,9 +956,9 @@ export default function ServerConsole() {
             {([
               { icon: Package, label: "Install Plugin", sub: "Browse Modrinth", color: "#a78bfa", to: `/server/${id}/installer` },
               { icon: UploadCloud, label: "Upload World", sub: "Drop world files", color: "#60a5fa", action: () => { setShowUploadWorld(true); setWorldFile(null); setUploadWorldErr(""); setUploadWorldMsg(""); } },
-              { icon: HardDrive, label: "Create Backup", sub: "Snapshot now", color: "#fbbf24", to: `/server/${id}/files` },
-              { icon: Calendar, label: "Schedule Restart", sub: "Auto-restart", color: "#4ade80", action: () => confirm("Send restart signal?") && sendPower("restart") },
-              { icon: List, label: "Whitelist Manager", sub: "Manage players", color: "#f87171", to: `/server/${id}/users` },
+              { icon: HardDrive, label: "Create Backup", sub: "Snapshot now", color: "#fbbf24", action: () => { setShowBackup(true); setBackupName(""); setBackupErr(""); setBackupMsg(""); } },
+              { icon: Calendar, label: "Schedules", sub: "Automate actions", color: "#4ade80", to: `/server/${id}/schedules` },
+              { icon: List, label: "Whitelist Manager", sub: "Manage players", color: "#f87171", action: () => { setShowWhitelist(true); setWlPlayer(""); setWlErr(""); setWlMsg(""); } },
               { icon: Zap, label: "Custom Address", sub: "Manage domain", color: "#c084fc", action: () => { setShowHnForm(true); setHnEdit(server?.hostname ?? ""); setHnAvail(null); setHnError(""); } },
             ] as const).map(item => {
               const Comp: any = (item as any).to ? Link : "button";
@@ -936,6 +986,128 @@ export default function ServerConsole() {
         {/* end console + sidebar row */}
       </div>
       {/* end main content */}
+
+      {/* ══════ CREATE BACKUP MODAL ══════ */}
+      <AnimatePresence>
+        {showBackup && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
+            onClick={() => !creatingBackup && setShowBackup(false)}>
+            <motion.div initial={{ scale: 0.94, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0 }} transition={{ duration: 0.18 }}
+              className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
+              style={{ background: "linear-gradient(135deg,#0f0f1a,#0d0d18)", border: "1px solid rgba(251,191,36,0.25)", boxShadow: "0 24px 64px rgba(0,0,0,0.8)" }}>
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                    style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)" }}>
+                    <HardDrive size={16} style={{ color: "#fbbf24" }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Create Backup</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>Snapshot your server files right now</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowBackup(false)} style={{ color: "#475569" }}><X size={15} /></button>
+              </div>
+              <div className="mb-4">
+                <label className="text-[9px] mono uppercase tracking-widest block mb-1.5" style={{ color: "#475569" }}>Backup Name (optional)</label>
+                <input value={backupName} onChange={e => setBackupName(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && createBackupNow()}
+                  placeholder={`Backup ${new Date().toLocaleDateString("en-IN")}`}
+                  className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none"
+                  style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#f1f5f9" }} />
+              </div>
+              {backupErr && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-xs"
+                  style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
+                  <AlertCircle size={12} className="shrink-0" /> {backupErr}
+                </div>
+              )}
+              {backupMsg && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-xs"
+                  style={{ background: "rgba(74,222,128,0.07)", border: "1px solid rgba(74,222,128,0.2)", color: "#4ade80" }}>
+                  <Check size={12} className="shrink-0" /> {backupMsg}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <button onClick={() => setShowBackup(false)} disabled={creatingBackup}
+                  className="flex-1 h-10 rounded-xl text-xs disabled:opacity-40"
+                  style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
+                <button onClick={createBackupNow} disabled={creatingBackup}
+                  className="flex-1 h-10 flex items-center justify-center gap-2 rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-30"
+                  style={{ background: "linear-gradient(135deg,#92400e,#d97706)", color: "white" }}>
+                  {creatingBackup ? <><Loader2 size={13} className="animate-spin" /> Creating…</> : <><HardDrive size={13} /> Create Backup</>}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ══════ WHITELIST MANAGER MODAL ══════ */}
+      <AnimatePresence>
+        {showWhitelist && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
+            onClick={() => !wlAdding && setShowWhitelist(false)}>
+            <motion.div initial={{ scale: 0.94, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0 }} transition={{ duration: 0.18 }}
+              className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
+              style={{ background: "linear-gradient(135deg,#0f0f1a,#0d0d18)", border: "1px solid rgba(239,68,68,0.25)", boxShadow: "0 24px 64px rgba(0,0,0,0.8)" }}>
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                    style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                    <List size={16} style={{ color: "#f87171" }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Whitelist Player</p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>Add a Minecraft player to your whitelist</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowWhitelist(false)} style={{ color: "#475569" }}><X size={15} /></button>
+              </div>
+              <div className="mb-4">
+                <label className="text-[9px] mono uppercase tracking-widest block mb-1.5" style={{ color: "#475569" }}>Minecraft Username</label>
+                <input value={wlPlayer} onChange={e => setWlPlayer(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && addToWhitelist()}
+                  placeholder="e.g. Notch"
+                  autoFocus
+                  className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mono"
+                  style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#f1f5f9" }} />
+                <p className="text-[10px] mt-1.5" style={{ color: "#334155" }}>
+                  Make sure the server is running for the whitelist to update live.
+                </p>
+              </div>
+              {wlErr && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-xs"
+                  style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
+                  <AlertCircle size={12} className="shrink-0" /> {wlErr}
+                </div>
+              )}
+              {wlMsg && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-xs"
+                  style={{ background: "rgba(74,222,128,0.07)", border: "1px solid rgba(74,222,128,0.2)", color: "#4ade80" }}>
+                  <Check size={12} className="shrink-0" /> {wlMsg}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <button onClick={() => setShowWhitelist(false)} disabled={wlAdding}
+                  className="flex-1 h-10 rounded-xl text-xs disabled:opacity-40"
+                  style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
+                <button onClick={addToWhitelist} disabled={wlAdding || !wlPlayer.trim()}
+                  className="flex-1 h-10 flex items-center justify-center gap-2 rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-30"
+                  style={{ background: "linear-gradient(135deg,#991b1b,#dc2626)", color: "white" }}>
+                  {wlAdding ? <><Loader2 size={13} className="animate-spin" /> Adding…</> : <><UsersIcon size={13} /> Add to Whitelist</>}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ══════ UPLOAD WORLD MODAL ══════ */}
       <AnimatePresence>
