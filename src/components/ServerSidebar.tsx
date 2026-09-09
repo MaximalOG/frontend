@@ -86,12 +86,11 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
           background: "linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(59,130,246,0.04) 100%)",
           border: "1px solid rgba(139,92,246,0.18)",
         }}>
-        {/* subtle top-left glow blob */}
+        {/* subtle glow blob */}
         <div className="absolute -top-4 -left-4 w-16 h-16 rounded-full pointer-events-none"
           style={{ background: `radial-gradient(circle, ${cfg.color}30 0%, transparent 70%)` }} />
 
         <div className="relative flex items-center gap-2.5 mb-2">
-          {/* Icon */}
           <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
             style={{
               background: `linear-gradient(135deg, ${cfg.color}18, ${cfg.color}08)`,
@@ -106,7 +105,7 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
         </div>
 
         {/* Status pill */}
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg mb-3"
           style={{ background: `${cfg.color}0d`, border: `1px solid ${cfg.color}20` }}>
           <span className="relative flex h-1.5 w-1.5 shrink-0">
             {isRunning && (
@@ -117,6 +116,51 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
           </span>
           <span className="text-[10px] font-semibold mono" style={{ color: cfg.color }}>{cfg.label}</span>
           <span className="ml-auto text-[9px] mono" style={{ color: "#334155" }}>{server.ram} RAM</span>
+        </div>
+
+        {/* ── Power controls — inside the card, always visible ── */}
+        <div className="relative grid grid-cols-3 gap-1.5">
+          <button
+            onClick={() => onPower("start")}
+            disabled={!!powerLoading || isRunning || isBusy}
+            title="Start server"
+            className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-semibold transition-all disabled:opacity-25 disabled:cursor-not-allowed"
+            style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.22)" }}
+            onMouseEnter={e => { if (!e.currentTarget.disabled) (e.currentTarget as HTMLElement).style.background = "rgba(34,197,94,0.2)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(34,197,94,0.1)"; }}>
+            {powerLoading === "start"
+              ? <Loader2 size={14} className="animate-spin" style={{ color: "#4ade80" }} />
+              : <Play size={14} style={{ color: "#4ade80" }} />}
+            <span className="text-[9px] mono uppercase tracking-wider" style={{ color: "#4ade80" }}>Start</span>
+          </button>
+
+          <button
+            onClick={() => onPower("restart")}
+            disabled={!!powerLoading || !isRunning}
+            title="Restart server"
+            className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-semibold transition-all disabled:opacity-25 disabled:cursor-not-allowed"
+            style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.2)" }}
+            onMouseEnter={e => { if (!e.currentTarget.disabled) (e.currentTarget as HTMLElement).style.background = "rgba(251,191,36,0.18)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(251,191,36,0.08)"; }}>
+            {powerLoading === "restart"
+              ? <Loader2 size={14} className="animate-spin" style={{ color: "#fbbf24" }} />
+              : <RotateCcw size={14} style={{ color: "#fbbf24" }} />}
+            <span className="text-[9px] mono uppercase tracking-wider" style={{ color: "#fbbf24" }}>Restart</span>
+          </button>
+
+          <button
+            onClick={() => onPower("stop")}
+            disabled={!!powerLoading || isStopped || isBusy}
+            title="Stop server"
+            className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-semibold transition-all disabled:opacity-25 disabled:cursor-not-allowed"
+            style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}
+            onMouseEnter={e => { if (!e.currentTarget.disabled) (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.18)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.08)"; }}>
+            {powerLoading === "stop"
+              ? <Loader2 size={14} className="animate-spin" style={{ color: "#f87171" }} />
+              : <Square size={14} style={{ color: "#f87171" }} />}
+            <span className="text-[9px] mono uppercase tracking-wider" style={{ color: "#f87171" }}>Stop</span>
+          </button>
         </div>
       </div>
 
@@ -164,41 +208,6 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
         ))}
       </div>
 
-      {/* ── Power controls ── */}
-      <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        <p className="text-[9px] mono uppercase tracking-widest font-semibold px-1 mb-2" style={{ color: "#334155" }}>
-          Power
-        </p>
-        <div className="flex gap-1.5 mb-1.5">
-          {/* Start */}
-          <button onClick={() => onPower("start")} disabled={!!powerLoading || isRunning || isBusy}
-            className="flex-1 h-8 flex items-center justify-center gap-1 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-25"
-            style={{ background: "rgba(34,197,94,0.1)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.22)" }}
-            onMouseEnter={e => { if (!e.currentTarget.disabled) (e.currentTarget as HTMLElement).style.background = "rgba(34,197,94,0.18)"; }}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(34,197,94,0.1)"}>
-            {powerLoading === "start" ? <Loader2 size={11} className="animate-spin" /> : <Play size={11} />}
-            Start
-          </button>
-          {/* Restart */}
-          <button onClick={() => onPower("restart")} disabled={!!powerLoading || !isRunning}
-            className="flex-1 h-8 flex items-center justify-center gap-1 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-25"
-            style={{ background: "rgba(251,191,36,0.08)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.2)" }}
-            onMouseEnter={e => { if (!e.currentTarget.disabled) (e.currentTarget as HTMLElement).style.background = "rgba(251,191,36,0.16)"; }}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(251,191,36,0.08)"}>
-            {powerLoading === "restart" ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
-            Restart
-          </button>
-        </div>
-        {/* Stop */}
-        <button onClick={() => onPower("stop")} disabled={!!powerLoading || isStopped || isBusy}
-          className="w-full h-8 flex items-center justify-center gap-1 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-25"
-          style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}
-          onMouseEnter={e => { if (!e.currentTarget.disabled) (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.15)"; }}
-          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.08)"}>
-          {powerLoading === "stop" ? <Loader2 size={11} className="animate-spin" /> : <Square size={11} />}
-          Stop Server
-        </button>
-      </div>
     </aside>
   );
 }
