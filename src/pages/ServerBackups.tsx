@@ -5,7 +5,7 @@ import {
   HardDrive, Plus, Trash2, RotateCcw, Download,
   Loader2, AlertCircle, X, Check, Clock, AlertTriangle,
 } from "lucide-react";
-import ServerSidebar from "@/components/ServerSidebar";
+import ServerPageShell from "@/components/ServerPageShell";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
 
@@ -32,15 +32,9 @@ function fmtDate(iso: string) {
 
 function PageShell({ server, children }: { server: ServerData | null; children: React.ReactNode }) {
   return (
-    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#080810" }}>
-      <div className="hidden md:flex flex-col h-full overflow-y-auto shrink-0 px-4 py-5"
-        style={{ width: 236, background: "#0b0b14", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
-        {server && <ServerSidebar server={server} onPower={async () => {}} powerLoading={null} />}
-      </div>
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-3xl mx-auto">{children}</div>
-      </div>
-    </div>
+    <ServerPageShell server={server} title="Backups" maxWidth="max-w-3xl">
+      {children}
+    </ServerPageShell>
   );
 }
 

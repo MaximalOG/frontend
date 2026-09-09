@@ -5,7 +5,7 @@ import {
   Folder, FileText, RefreshCw, Upload, Trash2, Edit3,
   Save, X, ChevronRight, Home, Loader2, AlertCircle, FolderOpen,
 } from "lucide-react";
-import ServerSidebar from "@/components/ServerSidebar";
+import ServerPageShell from "@/components/ServerPageShell";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
 
@@ -166,54 +166,44 @@ const ServerFiles = () => {
   };
 
   if (authLoading || loadingServer) return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+    <div className="flex items-center justify-center h-screen" style={{ background: "#080810" }}>
+      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#a855f7" }} />
     </div>
   );
 
   const sorted = [...files].sort((a, b) => {
-    if (a.attributes.is_file !== b.attributes.is_file)
-      return a.attributes.is_file ? 1 : -1;
+    if (a.attributes.is_file !== b.attributes.is_file) return a.attributes.is_file ? 1 : -1;
     return a.attributes.name.localeCompare(b.attributes.name);
   });
 
+  /* ── The files page needs full-height flex layout inside the shell.
+     ServerPageShell provides the sidebar + mobile drawer; the children
+     slot gets the scrollable content area. We break out of the normal
+     padding by using a negative-margin trick on the inner container.    */
   return (
-    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#080810" }}>
+    <ServerPageShell server={server} title="Files" maxWidth="max-w-none">
 
-      {/* Hidden file input for upload — only allow valid server file types */}
+      {/* Hidden file input */}
       <input ref={fileInputRef} type="file" multiple className="hidden"
         accept=".jar,.yml,.yaml,.json,.txt,.properties,.cfg,.conf,.toml,.sh,.log,.xml,.sk,.zip"
         onChange={async e => {
           const list = e.target.files;
           if (!list || list.length === 0) return;
-
-          // Validate file types client-side
-          const ALLOWED_EXTS = new Set([
-            "jar","yml","yaml","json","txt","properties","cfg","conf",
-            "toml","sh","log","xml","sk","zip","md","ini","env",
-          ]);
-          const blocked = Array.from(list).filter(f => {
-            const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
-            return !ALLOWED_EXTS.has(ext);
-          });
+          const ALLOWED = new Set(["jar","yml","yaml","json","txt","properties","cfg","conf","toml","sh","log","xml","sk","zip","md","ini","env"]);
+          const blocked = Array.from(list).filter(f => !ALLOWED.has(f.name.split(".").pop()?.toLowerCase() ?? ""));
           if (blocked.length > 0) {
             setError(`Cannot upload: ${blocked.map(f => f.name).join(", ")} — file type not allowed.`);
-            e.target.value = "";
-            return;
+            e.target.value = ""; return;
           }
           setUploading(true);
           try {
             for (const file of Array.from(list)) {
               const path = directory === "/" ? `/${file.name}` : `${directory}/${file.name}`;
-              const text = await file.text();
-              await apiFetch(
-                `/api/servers/${id}/files/write?file=${encodeURIComponent(path)}`,
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
-                  body: JSON.stringify({ content: text }),
-                }
-              );
+              await apiFetch(`/api/servers/${id}/files/write?file=${encodeURIComponent(path)}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+                body: JSON.stringify({ content: await file.text() }),
+              });
             }
             loadFiles(directory);
           } catch { setError("Upload failed."); }
@@ -221,42 +211,35 @@ const ServerFiles = () => {
         }}
       />
 
-      {/* Left sidebar */}
-      <div className="hidden md:flex flex-col h-full overflow-y-auto shrink-0 px-4 py-5"
-        style={{ width: 236, background: "#0b0b14", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
-        {server && <ServerSidebar server={server} onPower={async () => {}} powerLoading={null} />}
-      </div>
+      {/* Full-height file browser — nether background */}
+      <div className="flex flex-col overflow-hidden relative rounded-xl"
+        style={{ height: "calc(100vh - 120px)", minHeight: 400 }}>
 
-      {/* Main — nether.jpg background */}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
-
-        {/* Background image */}
-        <div className="absolute inset-0 pointer-events-none">
+        {/* Background */}
+        <div className="absolute inset-0 pointer-events-none rounded-xl overflow-hidden">
           <img src="/nether.jpg" alt="" className="w-full h-full object-cover"
-            style={{ filter: "brightness(0.35) saturate(0.6)" }} />
-          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.45)" }} />
+            style={{ filter: "brightness(0.3) saturate(0.5)" }} />
+          <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.5)" }} />
         </div>
 
         {/* Content */}
-        <div className="relative flex flex-col h-full overflow-hidden p-4 gap-3">
+        <div className="relative flex flex-col h-full overflow-hidden p-3 gap-3">
 
           {/* Toolbar */}
           <div className="flex items-center gap-2 flex-wrap shrink-0">
-            <div className="flex items-center gap-1 flex-1 min-w-0 text-xs px-3 py-2 rounded-xl"
-              style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.09)" }}>
-              <button onClick={() => navigateTo("/")}
-                className="transition-colors" style={{ color: "#475569" }}
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-1 flex-1 min-w-0 text-xs px-3 py-2 rounded-xl overflow-x-auto"
+              style={{ background: "rgba(255,255,255,0.05)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <button onClick={() => navigateTo("/")} style={{ color: "#475569" }}
                 onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#94a3b8"}
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#475569"}>
                 <Home size={11} />
               </button>
               {breadcrumbs.map((crumb, i) => (
-                <span key={i} className="flex items-center gap-1">
+                <span key={i} className="flex items-center gap-1 shrink-0">
                   <ChevronRight size={10} style={{ color: "#1e293b" }} />
-                  <button
-                    onClick={() => navigateTo("/" + breadcrumbs.slice(0, i + 1).join("/"))}
-                    className="transition-colors truncate max-w-[120px]"
-                    style={{ color: "#64748b" }}
+                  <button onClick={() => navigateTo("/" + breadcrumbs.slice(0, i + 1).join("/"))}
+                    className="transition-colors truncate max-w-[100px]" style={{ color: "#64748b" }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#94a3b8"}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#64748b"}>
                     {crumb}
@@ -265,12 +248,12 @@ const ServerFiles = () => {
               ))}
             </div>
             <button onClick={() => loadFiles(directory)} disabled={loading}
-              className="w-8 h-8 flex items-center justify-center rounded-xl transition-all hover:opacity-80"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>
+              className="w-8 h-8 flex items-center justify-center rounded-xl shrink-0"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#64748b" }}>
               <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
             </button>
             <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-40"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold shrink-0"
               style={{ background: "linear-gradient(135deg,#1d4ed8,#3b82f6)", color: "white" }}>
               {uploading ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
               Upload
@@ -279,89 +262,87 @@ const ServerFiles = () => {
 
           {/* Error */}
           {error && (
-            <div className="rounded-sm px-4 py-2 text-xs flex items-center gap-2 shrink-0"
-              style={{ background: "hsl(350 85% 8% / 0.9)", backdropFilter: "blur(8px)", border: "1px solid hsl(350 85% 25%)", color: "hsl(350 85% 65%)" }}>
+            <div className="rounded-xl px-4 py-2 text-xs flex items-center gap-2 shrink-0"
+              style={{ background: "rgba(239,68,68,0.15)", backdropFilter: "blur(8px)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171" }}>
               <AlertCircle size={12} /> {error}
               <button onClick={() => setError("")} className="ml-auto"><X size={11} /></button>
             </div>
           )}
 
-          {/* File table — glassmorphism panel */}
-          <div className="flex-1 rounded-sm overflow-hidden flex flex-col min-h-0"
-            style={{ background: "hsl(0 0% 5% / 0.72)", backdropFilter: "blur(20px)", border: "1px solid hsl(0 0% 20%)", boxShadow: "0 8px 48px rgba(0,0,0,0.6)" }}>
+          {/* File table */}
+          <div className="flex-1 rounded-xl overflow-hidden flex flex-col min-h-0"
+            style={{ background: "rgba(6,6,8,0.75)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.08)" }}>
 
-            {/* Header row */}
-            <div className="grid grid-cols-12 px-4 py-2.5 text-[9px] mono uppercase tracking-wider text-muted-foreground/40 shrink-0"
-              style={{ background: "hsl(0 0% 6% / 0.8)", borderBottom: "1px solid hsl(0 0% 16%)" }}>
-              <span className="col-span-6">Name</span>
-              <span className="col-span-2 text-right">Size</span>
-              <span className="col-span-3 text-right">Modified</span>
-              <span className="col-span-1" />
+            {/* Column headers */}
+            <div className="grid grid-cols-12 px-4 py-2.5 text-[9px] mono uppercase tracking-wider shrink-0"
+              style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.07)", color: "#334155" }}>
+              <span className="col-span-7 sm:col-span-6">Name</span>
+              <span className="hidden sm:block col-span-2 text-right">Size</span>
+              <span className="hidden sm:block col-span-3 text-right">Modified</span>
+              <span className="col-span-5 sm:col-span-1" />
             </div>
 
-            {/* Go up row */}
+            {/* Go up */}
             {directory !== "/" && (
               <button onClick={goUp}
-                className="w-full grid grid-cols-12 px-4 py-2.5 text-xs text-muted-foreground hover:bg-white/[0.06] transition-colors text-left shrink-0"
-                style={{ borderBottom: "1px solid hsl(0 0% 12%)" }}>
+                className="w-full grid grid-cols-12 px-4 py-2.5 text-xs text-left shrink-0 transition-colors hover:bg-white/[0.04]"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#64748b" }}>
                 <span className="col-span-12 flex items-center gap-2">
                   <Folder size={13} className="text-yellow-500/70 shrink-0" /> ..
                 </span>
               </button>
             )}
 
-            {/* File rows */}
+            {/* Rows */}
             <div className="overflow-y-auto flex-1">
               {loading ? (
-                <div className="flex items-center justify-center py-12 text-muted-foreground">
+                <div className="flex items-center justify-center py-12" style={{ color: "#475569" }}>
                   <Loader2 className="w-5 h-5 animate-spin mr-2" />
                   <span className="text-sm">Loading…</span>
                 </div>
               ) : sorted.length === 0 ? (
                 <div className="text-center py-12">
-                  <FolderOpen className="w-8 h-8 mx-auto mb-2 text-muted-foreground/20" />
-                  <p className="text-sm text-muted-foreground/50">Empty directory</p>
+                  <FolderOpen className="w-8 h-8 mx-auto mb-2" style={{ color: "#1e293b" }} />
+                  <p className="text-sm" style={{ color: "#334155" }}>Empty directory</p>
                 </div>
               ) : sorted.map((f, i) => {
                 const attr = f.attributes;
                 const canEdit = attr.is_file && isEditable(attr.name);
                 return (
                   <motion.div key={attr.name}
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.01 }}
-                    className="group grid grid-cols-12 px-4 py-2.5 text-xs items-center hover:bg-white/[0.05] transition-colors"
-                    style={{ borderBottom: i < sorted.length - 1 ? "1px solid hsl(0 0% 11%)" : "none" }}>
-                    <div className="col-span-6 flex items-center gap-2.5 min-w-0">
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.01 }}
+                    className="group grid grid-cols-12 px-4 py-2.5 text-xs items-center transition-colors hover:bg-white/[0.04]"
+                    style={{ borderBottom: i < sorted.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                    <div className="col-span-7 sm:col-span-6 flex items-center gap-2.5 min-w-0">
                       {attr.is_file
                         ? <FileText size={13} className="text-muted-foreground/35 shrink-0" />
-                        : <Folder size={13} className="text-yellow-500/70 shrink-0" />
-                      }
+                        : <Folder size={13} className="text-yellow-500/70 shrink-0" />}
                       <button
-                        onClick={() =>
-                          attr.is_file
-                            ? (canEdit ? openFile(attr.name) : undefined)
-                            : enterFolder(attr.name)
-                        }
-                        className="truncate text-left transition-colors hover:underline"
-                        style={{ color: attr.is_file ? (canEdit ? "hsl(0 0% 88%)" : "hsl(0 0% 50%)") : "hsl(38 90% 72%)" }}>
+                        onClick={() => attr.is_file ? (canEdit ? openFile(attr.name) : undefined) : enterFolder(attr.name)}
+                        className="truncate text-left hover:underline"
+                        style={{ color: attr.is_file ? (canEdit ? "#e2e8f0" : "#475569") : "#fbbf24" }}>
                         {attr.name}
                       </button>
                     </div>
-                    <span className="col-span-2 text-right text-muted-foreground/40 mono">
+                    <span className="hidden sm:block col-span-2 text-right mono" style={{ color: "#334155" }}>
                       {attr.is_file ? formatSize(attr.size) : "—"}
                     </span>
-                    <span className="col-span-3 text-right text-muted-foreground/30">
+                    <span className="hidden sm:block col-span-3 text-right" style={{ color: "#334155" }}>
                       {formatDate(attr.modified_at)}
                     </span>
-                    <div className="col-span-1 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="col-span-5 sm:col-span-1 flex items-center justify-end gap-1">
                       {canEdit && (
                         <button onClick={() => openFile(attr.name)}
-                          className="p-1 text-muted-foreground/40 hover:text-foreground">
+                          className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                          style={{ color: "#64748b" }}>
                           <Edit3 size={11} />
                         </button>
                       )}
                       <button onClick={() => setDeleteTarget(f)}
-                        className="p-1 text-muted-foreground/40 hover:text-red-400">
+                        className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        style={{ color: "#64748b" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#f87171"}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#64748b"}>
                         <Trash2 size={11} />
                       </button>
                     </div>
@@ -373,94 +354,94 @@ const ServerFiles = () => {
         </div>
       </div>
 
-      {/* File editor modal */}
+      {/* ── File editor modal ── */}
       <AnimatePresence>
         {editingFile && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-6"
-            style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)" }}
             onClick={() => !editSaving && setEditingFile(null)}>
             <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
-              className="flex flex-col rounded-sm overflow-hidden w-full max-w-3xl"
-              style={{ maxHeight: "80vh", background: "hsl(0 0% 6%)", border: "1px solid hsl(350 85% 28%)", boxShadow: "0 24px 64px rgba(0,0,0,0.8)" }}
+              className="flex flex-col rounded-2xl overflow-hidden w-full max-w-3xl"
+              style={{ maxHeight: "85vh", background: "#0a0a12", border: "1px solid rgba(139,92,246,0.3)", boxShadow: "0 24px 64px rgba(0,0,0,0.8)" }}
               onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between px-5 py-3.5 shrink-0"
-                style={{ background: "hsl(350 85% 8%)", borderBottom: "1px solid hsl(350 85% 20%)" }}>
-                <div className="flex items-center gap-2.5">
-                  <FileText size={14} className="text-primary shrink-0" />
-                  <span className="text-sm font-medium text-foreground mono truncate max-w-md">{editingFile}</span>
+                style={{ background: "#0d0d1a", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <FileText size={14} style={{ color: "#a78bfa", flexShrink: 0 }} />
+                  <span className="text-sm font-medium mono truncate" style={{ color: "#f1f5f9" }}>{editingFile}</span>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {editError && <span className="text-[10px] text-red-400">{editError}</span>}
+                <div className="flex items-center gap-2 shrink-0 ml-3">
+                  {editError && <span className="text-[10px]" style={{ color: "#f87171" }}>{editError}</span>}
                   <button onClick={saveFile} disabled={editSaving || editLoading}
-                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-sm text-xs font-semibold hover:brightness-110 disabled:opacity-50 transition-all"
-                    style={{ background: "hsl(142 60% 15%)", color: "hsl(142 70% 55%)", border: "1px solid hsl(142 60% 25%)" }}>
-                    {editSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                    Save
+                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold disabled:opacity-50 transition-all hover:opacity-90"
+                    style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.25)" }}>
+                    {editSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} Save
                   </button>
                   <button onClick={() => setEditingFile(null)}
-                    className="p-1.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors">
+                    className="p-1.5 rounded-xl transition-colors" style={{ color: "#475569" }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#94a3b8"}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#475569"}>
                     <X size={16} />
                   </button>
                 </div>
               </div>
               {editLoading
                 ? <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#a855f7" }} />
                   </div>
                 : <textarea value={editContent} onChange={e => setEditContent(e.target.value)}
                     spellCheck={false}
-                    className="flex-1 font-mono text-[12px] text-foreground/90 bg-transparent outline-none resize-none leading-relaxed"
-                    style={{ padding: "16px 20px", minHeight: 400 }}
-                  />
+                    className="flex-1 font-mono text-[12px] bg-transparent outline-none resize-none leading-relaxed overflow-y-auto"
+                    style={{ padding: "16px 20px", color: "#e2e8f0", minHeight: 300 }} />
               }
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Delete confirm modal */}
+      {/* ── Delete confirm modal ── */}
       <AnimatePresence>
         {deleteTarget && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
+            style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)" }}
             onClick={() => setDeleteTarget(null)}>
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="rounded-sm p-6 max-w-sm w-full"
-              style={{ background: "hsl(0 0% 8%)", border: "1px solid hsl(350 85% 30%)" }}
-              onClick={e => e.stopPropagation()}>
+              className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
+              style={{ background: "linear-gradient(135deg,#0f0f1a,#110d1d)", border: "1px solid rgba(239,68,68,0.25)" }}>
               <div className="flex items-center gap-3 mb-4">
-                <AlertCircle size={18} className="text-primary shrink-0" />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
+                  <AlertCircle size={18} style={{ color: "#f87171" }} />
+                </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">
+                  <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>
                     Delete {deleteTarget.attributes.is_file ? "file" : "folder"}?
                   </p>
-                  <p className="text-[10px] text-muted-foreground/50 font-mono mt-0.5 truncate">
+                  <p className="text-[10px] mono mt-0.5 truncate max-w-[200px]" style={{ color: "#475569" }}>
                     {deleteTarget.attributes.name}
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mb-5">This cannot be undone.</p>
-              <div className="flex gap-3">
+              <p className="text-xs mb-5" style={{ color: "#64748b" }}>This cannot be undone.</p>
+              <div className="flex gap-2">
                 <button onClick={() => setDeleteTarget(null)}
-                  className="flex-1 h-9 rounded-sm text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  style={{ border: "1px solid hsl(0 0% 20%)" }}>
-                  Cancel
-                </button>
+                  className="flex-1 h-9 rounded-xl text-xs"
+                  style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#64748b" }}>Cancel</button>
                 <button onClick={deleteFile} disabled={deleting}
-                  className="flex-1 h-9 rounded-sm text-xs font-semibold hover:brightness-110 disabled:opacity-50 transition-all"
-                  style={{ background: "hsl(350 85% 45%)", color: "white" }}>
-                  {deleting ? <Loader2 size={12} className="animate-spin mx-auto" /> : "Delete"}
+                  className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
+                  style={{ background: "linear-gradient(135deg,#991b1b,#dc2626)", color: "white" }}>
+                  {deleting ? <Loader2 size={12} className="animate-spin" /> : "Delete"}
                 </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </ServerPageShell>
   );
 };
 

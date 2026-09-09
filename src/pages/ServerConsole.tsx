@@ -7,7 +7,7 @@ import {
   Globe, Edit3, Trash2, Shield, Clock, Users as UsersIcon,
   HardDrive, Cpu, MemoryStick, Download, Search, X,
   ChevronDown, ChevronUp, Package, Calendar, List, Zap,
-  Server, Activity, UploadCloud,
+  Server, Activity, UploadCloud, Menu,
 } from "lucide-react";
 import ServerSidebar from "@/components/ServerSidebar";
 import { useAuth } from "@/hooks/useAuth";
@@ -111,6 +111,9 @@ export default function ServerConsole() {
   const [powerLoading, setPowerLoading] = useState<string | null>(null);
   const [copied, setCopied]             = useState(false);
   const [showDelete, setShowDelete]     = useState(false);
+
+  /* mobile nav drawer */
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [deleteInput, setDeleteInput]   = useState("");
   const [deleting, setDeleting]         = useState(false);
   const [showHnForm, setShowHnForm]     = useState(false);
@@ -424,7 +427,34 @@ export default function ServerConsole() {
   return (
     <div className="flex overflow-hidden" style={{ height: "100vh", background: "#080810" }}>
 
-      {/* ══════ LEFT NAV SIDEBAR ══════ */}
+      {/* ══════ MOBILE SIDEBAR DRAWER ══════ */}
+      <AnimatePresence>
+        {mobileNavOpen && (
+          <>
+            {/* backdrop */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 md:hidden"
+              style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+              onClick={() => setMobileNavOpen(false)} />
+            {/* drawer */}
+            <motion.div initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed top-0 left-0 h-full z-50 flex flex-col md:hidden px-4 py-5 overflow-y-auto"
+              style={{ width: 260, background: "#0b0b14", borderRight: "1px solid rgba(255,255,255,0.08)" }}>
+              {server && <ServerSidebar server={server} onPower={sendPower} powerLoading={powerLoading} />}
+              <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <button onClick={() => { setMobileNavOpen(false); setShowDelete(true); setDeleteInput(""); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all hover:opacity-80"
+                  style={{ color: "#f87171", background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)" }}>
+                  <Trash2 size={12} /> Delete Server
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ══════ LEFT NAV SIDEBAR (desktop only) ══════ */}
       <div className="hidden md:flex flex-col h-full overflow-y-auto shrink-0 px-4 py-5"
         style={{ width: 236, background: "#0b0b14", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
         {server && <ServerSidebar server={server} onPower={sendPower} powerLoading={powerLoading} />}
@@ -441,30 +471,37 @@ export default function ServerConsole() {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
         {/* ── TOP HEADER BAR ── */}
-        <div className="sticky top-0 z-20 px-6 py-3 flex items-center justify-between gap-4 flex-wrap"
+        <div className="sticky top-0 z-20 px-3 md:px-6 py-3 flex items-center justify-between gap-3"
           style={{
-            background: "rgba(8,8,16,0.85)",
+            background: "rgba(8,8,16,0.92)",
             backdropFilter: "blur(16px)",
             borderBottom: "1px solid rgba(255,255,255,0.06)",
           }}>
 
-          {/* Left: server identity */}
-          <div className="flex items-center gap-3 min-w-0">
-            {/* Glowing server icon */}
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 relative"
+          {/* Left: hamburger (mobile) + server identity */}
+          <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+            {/* Hamburger — mobile only */}
+            <button onClick={() => setMobileNavOpen(true)}
+              className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg shrink-0 transition-colors"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)" }}>
+              <Menu size={16} style={{ color: "#94a3b8" }} />
+            </button>
+
+            {/* Server icon */}
+            <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center shrink-0"
               style={{
                 background: "linear-gradient(135deg, rgba(139,92,246,0.3), rgba(168,85,247,0.15))",
                 border: "1px solid rgba(139,92,246,0.4)",
-                boxShadow: "0 0 16px rgba(139,92,246,0.25)",
+                boxShadow: "0 0 12px rgba(139,92,246,0.2)",
               }}>
-              <Server size={16} style={{ color: "#c084fc" }} />
+              <Server size={14} style={{ color: "#c084fc" }} />
             </div>
 
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-sm font-bold truncate" style={{ color: "#f1f5f9" }}>{server?.name}</h1>
+                <h1 className="text-sm font-bold truncate max-w-[140px] sm:max-w-none" style={{ color: "#f1f5f9" }}>{server?.name}</h1>
                 {/* Status pill */}
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0"
                   style={{ background: `${cfg.color}18`, color: cfg.color, border: `1px solid ${cfg.color}30` }}>
                   <span className="relative flex h-1.5 w-1.5">
                     {isRunning && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: cfg.dot }} />}
@@ -472,39 +509,33 @@ export default function ServerConsole() {
                   </span>
                   {cfg.label}
                 </span>
-                {/* Plan badge */}
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold mono uppercase"
+                {/* Plan badge — hidden on xs */}
+                <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold mono uppercase"
                   style={{ background: "rgba(139,92,246,0.12)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.2)" }}>
                   {server?.plan}
                 </span>
-                {/* Version */}
+                {/* Version — hidden on mobile */}
                 {server?.mcVersion && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] mono"
+                  <span className="hidden md:inline-flex px-2 py-0.5 rounded-full text-[10px] mono"
                     style={{ background: "rgba(96,165,250,0.1)", color: "#93c5fd", border: "1px solid rgba(96,165,250,0.18)" }}>
                     {server.serverType && `${server.serverType} `}{server.mcVersion}
                   </span>
                 )}
               </div>
               {displayAddr && (
-                <p className="text-[10px] mono mt-0.5" style={{ color: "#475569" }}>{displayAddr}</p>
+                <p className="hidden sm:block text-[10px] mono mt-0.5" style={{ color: "#475569" }}>{displayAddr}</p>
               )}
             </div>
           </div>
 
-          {/* Right: meta chips */}
-          <div className="flex items-center gap-2 shrink-0">
-            {server?.node && (
-              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px]"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>
-                <Globe size={10} /> {server.node}
-              </span>
-            )}
+          {/* Right: meta chips — hidden on small screens */}
+          <div className="hidden sm:flex items-center gap-2 shrink-0">
             <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px]"
               style={{ background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.15)", color: "#60a5fa" }}>
               <Shield size={10} /> DDoS Protected
             </span>
             {resources?.uptimeMs != null && resources.uptimeMs > 0 && (
-              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px]"
+              <span className="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px]"
                 style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.15)", color: "#4ade80" }}>
                 <Clock size={10} /> {fmtUptime(resources.uptimeMs)}
               </span>

@@ -5,7 +5,7 @@ import {
   Settings2, Check, ChevronDown, ChevronUp, AlertTriangle,
   Loader2, RefreshCw, X, AlertCircle,
 } from "lucide-react";
-import ServerSidebar from "@/components/ServerSidebar";
+import ServerPageShell from "@/components/ServerPageShell";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
 
@@ -165,17 +165,8 @@ export default function ServerVersion() {
   );
 
   return (
-    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#080810" }}>
-      {/* Sidebar */}
-      <div className="hidden md:flex flex-col h-full overflow-y-auto shrink-0 px-4 py-5"
-        style={{ width: 236, background: "#0b0b14", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
-        {server && <ServerSidebar server={server} onPower={async () => {}} powerLoading={null} />}
-      </div>
-
-      {/* Main */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-3xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+    <ServerPageShell server={server} title="Version & Software" maxWidth="max-w-3xl">
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
 
           {/* ── Page header ── */}
           <div className="flex items-center gap-3 mb-6">
@@ -414,8 +405,6 @@ export default function ServerVersion() {
           </div>
 
           </motion.div>
-        </div>
-      </div>
 
       {/* ── Reinstall confirm modal ── */}
       <AnimatePresence>
@@ -460,6 +449,6 @@ export default function ServerVersion() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </ServerPageShell>
   );
 }

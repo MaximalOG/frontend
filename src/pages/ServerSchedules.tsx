@@ -5,7 +5,7 @@ import {
   Calendar, Plus, Trash2, Play, Pause, Clock,
   Loader2, Check, X, ChevronDown, ChevronUp, AlertTriangle,
 } from "lucide-react";
-import ServerSidebar from "@/components/ServerSidebar";
+import ServerPageShell from "@/components/ServerPageShell";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
 
@@ -42,17 +42,12 @@ const ACTION_CFG = {
   command: { color: "#a78bfa", bg: "rgba(139,92,246,0.1)",  border: "rgba(139,92,246,0.2)",  label: "Command" },
 };
 
-function PageShell({ server, children, onPower, powerLoading }: { server: ServerData | null; children: React.ReactNode; onPower: any; powerLoading: any }) {
+
+function PageShell({ server, children }: { server: ServerData | null; children: React.ReactNode }) {
   return (
-    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#080810" }}>
-      <div className="hidden md:flex flex-col h-full overflow-y-auto shrink-0 px-4 py-5"
-        style={{ width: 236, background: "#0b0b14", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
-        {server && <ServerSidebar server={server} onPower={onPower} powerLoading={powerLoading} />}
-      </div>
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-3xl mx-auto">{children}</div>
-      </div>
-    </div>
+    <ServerPageShell server={server} title="Schedules" maxWidth="max-w-3xl">
+      {children}
+    </ServerPageShell>
   );
 }
 
@@ -147,7 +142,7 @@ export default function ServerSchedules() {
   );
 
   return (
-    <PageShell server={server} onPower={async () => {}} powerLoading={null}>
+    <PageShell server={server}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
