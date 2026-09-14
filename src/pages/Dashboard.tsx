@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Server, Play, Square, RefreshCw, AlertCircle, Cpu, MemoryStick, HardDrive, Settings, ExternalLink, Terminal } from "lucide-react";
+import { Server, Play, Square, RefreshCw, AlertCircle, Cpu, MemoryStick, HardDrive, Settings, ExternalLink, Terminal, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
@@ -24,6 +24,9 @@ interface ServerData {
   hostname?: string | null;
   hostnameStatus?: string | null;
   customAddress?: string | null;
+  // Subuser / shared server fields
+  shared?: boolean;
+  permissions?: string[];
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -161,14 +164,16 @@ const Dashboard = () => {
                   transition={{ delay: i * 0.06, ease }}
                   className="glass-surface rounded-sm p-5"
                   style={{
-                    border: srv.pendingSetup
+                    border: srv.shared
+                      ? "1px solid hsl(210 70% 30%)"
+                      : srv.pendingSetup
                       ? "1px solid hsl(270 70% 35%)"
                       : "1px solid hsl(0 0% 16%)",
                     boxShadow: srv.pendingSetup ? "0 0 20px hsl(270 70% 20% / 0.3)" : undefined,
                   }}
                 >
-                  {/* Setup required banner */}
-                  {srv.pendingSetup && (
+                  {/* Setup required banner — only for owned servers */}
+                  {srv.pendingSetup && !srv.shared && (
                     <div className="rounded-sm px-3 py-2 mb-4 flex items-center justify-between gap-3"
                       style={{ background: "hsl(270 70% 8%)", border: "1px solid hsl(270 70% 25%)" }}>
                       <div className="flex items-center gap-2">
@@ -201,9 +206,16 @@ const Dashboard = () => {
                           }}>
                           {STATUS_LABEL[srv.status] ?? srv.status}
                         </span>
+                        {/* Shared badge */}
+                        {srv.shared && (
+                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[9px] mono uppercase font-semibold shrink-0"
+                            style={{ background: "hsl(210 70% 12%)", color: "hsl(210 80% 65%)", border: "1px solid hsl(210 70% 28%)" }}>
+                            <Users size={8} /> Shared
+                          </span>
+                        )}
                       </div>
 
-                      {/* Connection info — custom address takes priority over raw host */}
+                      {/* Connection info */}
                       {!srv.pendingSetup && (srv.customAddress || srv.host) && (
                         <p className="text-[10px] mono mb-2 flex items-center gap-1.5">
                           {srv.customAddress ? (
@@ -222,25 +234,46 @@ const Dashboard = () => {
                         </p>
                       )}
 
-                      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <MemoryStick size={11} className="text-primary" /> {srv.ram}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Cpu size={11} className="text-primary" /> {srv.cpu}
-                        </span>
-                        {srv.ssd && (
+                      {/* Hardware specs — owned servers only */}
+                      {!srv.shared && (
+                        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <HardDrive size={11} className="text-primary" /> {srv.ssd}
+                            <MemoryStick size={11} className="text-primary" /> {srv.ram}
                           </span>
-                        )}
-                        <span className="text-muted-foreground/40">{srv.plan} plan</span>
-                      </div>
+                          <span className="flex items-center gap-1">
+                            <Cpu size={11} className="text-primary" /> {srv.cpu}
+                          </span>
+                          {srv.ssd && (
+                            <span className="flex items-center gap-1">
+                              <HardDrive size={11} className="text-primary" /> {srv.ssd}
+                            </span>
+                          )}
+                          <span className="text-muted-foreground/40">{srv.plan} plan</span>
+                        </div>
+                      )}
+
+                      {/* Permission chips — shared servers only */}
+                      {srv.shared && srv.permissions && srv.permissions.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {srv.permissions.slice(0, 5).map(p => {
+                            const label = p.split(".")[1] ?? p;
+                            return (
+                              <span key={p} className="px-1.5 py-0.5 rounded text-[9px] mono"
+                                style={{ background: "hsl(0 0% 10%)", color: "hsl(0 0% 45%)", border: "1px solid hsl(0 0% 18%)" }}>
+                                {label}
+                              </span>
+                            );
+                          })}
+                          {srv.permissions.length > 5 && (
+                            <span className="text-[9px] text-muted-foreground/40">+{srv.permissions.length - 5} more</span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Actions */}
                     <div className="flex gap-2 shrink-0">
-                      {srv.status === "pending_setup" && (
+                      {srv.status === "pending_setup" && !srv.shared && (
                         <Link to={`/setup-server?server=${srv.id}`}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110"
                           style={{ background: "hsl(270 70% 20%)", color: "hsl(270 70% 70%)", border: "1px solid hsl(270 70% 35%)" }}>
@@ -253,20 +286,6 @@ const Dashboard = () => {
                           style={{ background: "hsl(0 0% 10%)", color: "hsl(0 0% 70%)", border: "1px solid hsl(0 0% 22%)" }}>
                           <Terminal size={11} /> Console
                         </Link>
-                      )}
-                      {false && srv.status === "stopped" && (
-                        <button onClick={() => serverAction(srv.id, "start")} disabled={actionLoading[srv.id]}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110 disabled:opacity-50"
-                          style={{ background: "hsl(142 60% 15%)", color: "hsl(142 70% 55%)", border: "1px solid hsl(142 60% 25%)" }}>
-                          {actionLoading[srv.id] ? <RefreshCw size={11} className="animate-spin" /> : <Play size={11} />} Start
-                        </button>
-                      )}
-                      {false && srv.status === "running" && (
-                        <button onClick={() => serverAction(srv.id, "stop")} disabled={actionLoading[srv.id]}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110 disabled:opacity-50"
-                          style={{ background: "hsl(350 85% 15%)", color: "hsl(350 85% 65%)", border: "1px solid hsl(350 85% 30%)" }}>
-                          {actionLoading[srv.id] ? <RefreshCw size={11} className="animate-spin" /> : <Square size={11} />} Stop
-                        </button>
                       )}
                       {(srv.status === "starting" || srv.status === "stopping" || srv.status === "installing") && (
                         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs text-muted-foreground"

@@ -271,7 +271,13 @@ const ServerInstaller = () => {
       if (!res.ok) { setInstallError(data.error || "Install failed."); return; }
       setInstallSuccess(`✓ ${data.projectName} installed to /${data.directory}`);
       setTimeout(() => setInstallSuccess(""), 4000);
-    } catch { setInstallError("Network error during install."); }
+    } catch (err: any) {
+      if (err?.name === "AbortError") {
+        setInstallError("Install timed out — the file may be very large. Check the Files tab to see if it was uploaded.");
+      } else {
+        setInstallError(err?.message || "Network error during install. Please try again.");
+      }
+    }
     finally { setInstalling(p => ({ ...p, [project.id]: false })); }
   };
 

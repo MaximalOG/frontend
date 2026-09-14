@@ -202,6 +202,8 @@ export default function ServerConsole() {
   /* WebSocket */
   const connect = useCallback(async () => {
     if (!id || wsRef.current?.readyState === WebSocket.OPEN) return;
+    // Don't attempt to connect if the tab is hidden — wait until visible
+    if (document.visibilityState === "hidden") return;
     setWsStatus("connecting");
     addLog(`[${nowStr()}] Connecting…`, "system");
     try {
@@ -226,7 +228,12 @@ export default function ServerConsole() {
                 } catch {}
               })();
               break;
-            case "token expired": addLog(`[${nowStr()}] Session expired.`, "warn"); ws.close(); setTimeout(connect, 1500); break;
+            case "token expired":
+              addLog(`[${nowStr()}] Session expired.`, "warn");
+              ws.close();
+              // Only reconnect if the tab is visible
+              if (document.visibilityState === "visible") setTimeout(connect, 1500);
+              break;
             case "console output":
               if (Array.isArray(msg.args)) msg.args.forEach((raw: string) => { const l = processLine(raw); if (l) addLog(l, classifyLine(l)); });
               break;
@@ -234,8 +241,23 @@ export default function ServerConsole() {
           }
         } catch {}
       };
-      ws.onerror = () => { setWsStatus("error"); addLog(`[${nowStr()}] Connection error.`, "error"); };
-      ws.onclose = (e) => { setWsStatus("disconnected"); if (e.code !== 1000) addLog(`[${nowStr()}] Disconnected (${e.code}).`, "warn"); };
+      ws.onerror = () => {
+        // Only log as error if tab is visible — silent when AFK
+        if (document.visibilityState === "visible") {
+          setWsStatus("error");
+          addLog(`[${nowStr()}] Connection error.`, "error");
+        } else {
+          setWsStatus("disconnected");
+        }
+      };
+      ws.onclose = (e) => {
+        setWsStatus("disconnected");
+        // Code 1006 = abnormal closure (Pterodactyl idle timeout after ~9 min)
+        // Only log + reconnect if the user is actively viewing the tab
+        if (e.code === 1000) return; // intentional close — no action
+        if (document.visibilityState === "hidden") return; // tab hidden — reconnect on visibility change
+        addLog(`[${nowStr()}] Disconnected (${e.code}).`, "warn");
+      };
     } catch (err: any) { addLog(`[${nowStr()}] Failed: ${err?.message}`, "error"); setWsStatus("error"); }
   }, [id, token, addLog]);
 
@@ -244,6 +266,19 @@ export default function ServerConsole() {
     return () => { wsRef.current?.close(1000); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [server?.id]);
+
+  /* Reconnect when the user returns to this tab after being AFK */
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible" &&
+          wsRef.current?.readyState !== WebSocket.OPEN &&
+          wsRef.current?.readyState !== WebSocket.CONNECTING) {
+        connect();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [connect]);
 
   /* poll resources */
   useEffect(() => {
@@ -968,13 +1003,6 @@ export default function ServerConsole() {
                   style={{ background: "rgba(124,58,237,0.1)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)" }}>
                   <Globe size={12} /> Set Custom Address
                 </button>
-              )}
-
-              {server?.customAddress && (
-                <div className="mt-2 p-2 rounded-lg" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                  <p className="text-[9px] mono" style={{ color: "#334155" }}>Your domain</p>
-                  <p className="text-[11px] mono mt-0.5 break-all" style={{ color: "#7dd3fc" }}>{server.customAddress}</p>
-                </div>
               )}
             </div>
 

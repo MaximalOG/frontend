@@ -43,6 +43,290 @@ const TEXT_EXTS = new Set([
 const isEditable = (name: string) =>
   TEXT_EXTS.has(name.split(".").pop()?.toLowerCase() ?? "");
 
+// ── Syntax highlighting ───────────────────────────────────────────────────────
+
+function escHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Shared color palette
+const C = {
+  comment:   "color:#4ade80;opacity:0.55;font-style:italic",
+  key:       "color:#c084fc",
+  eq:        "color:#475569",
+  valTrue:   "color:#4ade80;font-weight:600",
+  valFalse:  "color:#f87171;font-weight:600",
+  valNum:    "color:#60a5fa",
+  valStr:    "color:#e2e8f0",
+  valEmpty:  "color:#334155",
+  string:    "color:#fbbf24",          // quoted strings
+  keyword:   "color:#f472b6;font-weight:600",
+  number:    "color:#60a5fa",
+  boolean:   "color:#4ade80;font-weight:600",
+  boolFalse: "color:#f87171;font-weight:600",
+  null_:     "color:#f87171;opacity:0.8",
+  punct:     "color:#64748b",
+  tag:       "color:#38bdf8",
+  attr:      "color:#c084fc",
+  heading:   "color:#f472b6;font-weight:700",
+  bold:      "font-weight:700;color:#e2e8f0",
+  italic_:   "font-style:italic;color:#e2e8f0",
+  url:       "color:#60a5fa;text-decoration:underline",
+  section:   "color:#fbbf24;font-weight:600",
+  operator:  "color:#94a3b8",
+  plain:     "color:#e2e8f0",
+};
+
+function sp(style: string, text: string) { return `<span style="${style}">${text}</span>`; }
+
+// ── Shared helpers ────────────────────────────────────────────────────────────
+
+function colorKVValue(raw: string): string {
+  const v = raw.trim();
+  if (v === "true")  return sp(C.valTrue,  escHtml(raw));
+  if (v === "false") return sp(C.valFalse, escHtml(raw));
+  if (/^-?\d+(\.\d+)?$/.test(v)) return sp(C.valNum, escHtml(raw));
+  if (v === "")      return sp(C.valEmpty, "&#8203;");
+  return sp(C.valStr, escHtml(raw));
+}
+
+// ── properties / cfg / ini / env / conf ──────────────────────────────────────
+
+function highlightProperties(text: string): string {
+  return text.split("\n").map(line => {
+    if (/^\s*[#;]/.test(line)) return sp(C.comment, escHtml(line));
+    if (!line.trim()) return "";
+    // [section] headers
+    if (/^\s*\[.+\]/.test(line)) return sp(C.section, escHtml(line));
+    const eq = line.indexOf("=");
+    if (eq !== -1) {
+      return sp(C.key, escHtml(line.slice(0, eq)))
+           + sp(C.eq,  escHtml("="))
+           + colorKVValue(line.slice(eq + 1));
+    }
+    return sp(C.plain, escHtml(line));
+  }).join("\n");
+}
+
+// ── YAML / yml ────────────────────────────────────────────────────────────────
+
+function highlightYaml(text: string): string {
+  return text.split("\n").map(line => {
+    if (/^\s*#/.test(line)) return sp(C.comment, escHtml(line));
+    if (!line.trim()) return "";
+    // key: value
+    const m = line.match(/^(\s*)([\w.\-]+)(\s*:\s*)(.*)$/);
+    if (m) {
+      const [, indent, key, colon, val] = m;
+      const valTrimmed = val.trim();
+      let valHtml: string;
+      if (valTrimmed === "true")  valHtml = sp(C.boolean,   escHtml(val));
+      else if (valTrimmed === "false") valHtml = sp(C.boolFalse, escHtml(val));
+      else if (valTrimmed === "null" || valTrimmed === "~") valHtml = sp(C.null_, escHtml(val));
+      else if (/^-?\d+(\.\d+)?$/.test(valTrimmed)) valHtml = sp(C.number, escHtml(val));
+      else if (/^['"]/.test(valTrimmed)) valHtml = sp(C.string, escHtml(val));
+      else if (val === "") valHtml = "";
+      else valHtml = sp(C.valStr, escHtml(val));
+      return escHtml(indent) + sp(C.key, escHtml(key)) + sp(C.punct, escHtml(colon)) + valHtml;
+    }
+    // list item
+    if (/^\s*-\s/.test(line)) {
+      const dm = line.match(/^(\s*-\s*)(.*)$/);
+      if (dm) return sp(C.punct, escHtml(dm[1])) + sp(C.valStr, escHtml(dm[2]));
+    }
+    return sp(C.plain, escHtml(line));
+  }).join("\n");
+}
+
+// ── TOML ──────────────────────────────────────────────────────────────────────
+
+function highlightToml(text: string): string {
+  return text.split("\n").map(line => {
+    if (/^\s*#/.test(line)) return sp(C.comment, escHtml(line));
+    if (!line.trim()) return "";
+    if (/^\s*\[/.test(line)) return sp(C.section, escHtml(line));
+    const eq = line.indexOf("=");
+    if (eq !== -1) {
+      const key = line.slice(0, eq);
+      const val = line.slice(eq + 1).trim();
+      let valHtml: string;
+      if (val === "true")  valHtml = sp(C.boolean,   escHtml(line.slice(eq + 1)));
+      else if (val === "false") valHtml = sp(C.boolFalse, escHtml(line.slice(eq + 1)));
+      else if (/^-?\d+(\.\d+)?$/.test(val)) valHtml = sp(C.number, escHtml(line.slice(eq + 1)));
+      else if (/^["']/.test(val)) valHtml = sp(C.string, escHtml(line.slice(eq + 1)));
+      else valHtml = sp(C.valStr, escHtml(line.slice(eq + 1)));
+      return sp(C.key, escHtml(key)) + sp(C.eq, "=") + valHtml;
+    }
+    return sp(C.plain, escHtml(line));
+  }).join("\n");
+}
+
+// ── JSON ──────────────────────────────────────────────────────────────────────
+
+function highlightJson(text: string): string {
+  // Token-by-token pass — simple but effective
+  let out = "";
+  let i = 0;
+  while (i < text.length) {
+    const ch = text[i];
+    // String
+    if (ch === '"') {
+      let j = i + 1;
+      while (j < text.length) {
+        if (text[j] === "\\" ) { j += 2; continue; }
+        if (text[j] === '"')  { j++; break; }
+        j++;
+      }
+      const raw = escHtml(text.slice(i, j));
+      // Key (string followed by optional whitespace then colon)
+      const after = text.slice(j).trimStart();
+      out += after.startsWith(":") ? sp(C.key, raw) : sp(C.string, raw);
+      i = j; continue;
+    }
+    // Number
+    if (/[\d\-]/.test(ch) && (i === 0 || /[^.\w]/.test(text[i-1]))) {
+      let j = i + 1;
+      while (j < text.length && /[\d.eE+\-]/.test(text[j])) j++;
+      out += sp(C.number, escHtml(text.slice(i, j)));
+      i = j; continue;
+    }
+    // true / false / null
+    if (text.startsWith("true",  i)) { out += sp(C.boolean,   "true");  i += 4; continue; }
+    if (text.startsWith("false", i)) { out += sp(C.boolFalse, "false"); i += 5; continue; }
+    if (text.startsWith("null",  i)) { out += sp(C.null_,     "null");  i += 4; continue; }
+    // Punctuation
+    if ("{}[]:,".includes(ch)) { out += sp(C.punct, escHtml(ch)); i++; continue; }
+    // Newline / whitespace — preserve as-is
+    out += escHtml(ch); i++;
+  }
+  return out;
+}
+
+// ── XML / HTML ────────────────────────────────────────────────────────────────
+
+function highlightXml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;").replace(/</g, "\x00LT\x00").replace(/>/g, "\x00GT\x00")
+    // Restore so we can do regex on raw-ish text, then re-escape in spans
+    .replace(/\x00LT\x00!--[\s\S]*?--\x00GT\x00/g, m =>
+      sp(C.comment, m.replace(/\x00LT\x00/g, "&lt;").replace(/\x00GT\x00/g, "&gt;")))
+    .replace(/\x00LT\x00\/?[\w:.-]+(?:\s[^]*?)?\x00GT\x00/g, m => {
+      const inner = m.replace(/\x00LT\x00/g, "").replace(/\x00GT\x00/g, "");
+      const withAttrs = inner
+        .replace(/([\w:.-]+)(=)(".*?")/g,
+          (_, a, e, v) => sp(C.attr, a) + sp(C.eq, e) + sp(C.string, escHtml(v)));
+      // tag name is first word
+      const named = withAttrs.replace(/^(\/?)([\w:.-]+)/, (_, sl, tag) =>
+        escHtml(sl) + sp(C.tag, tag));
+      return sp(C.punct, "&lt;") + named + sp(C.punct, "&gt;");
+    })
+    .replace(/\x00LT\x00/g, "&lt;").replace(/\x00GT\x00/g, "&gt;");
+}
+
+// ── Shell / bash ──────────────────────────────────────────────────────────────
+
+const SH_KEYWORDS = new Set(["if","then","else","elif","fi","for","while","do","done",
+  "case","esac","in","function","return","exit","echo","export","source","cd","set",
+  "unset","local","readonly","shift","break","continue","true","false"]);
+
+function highlightShell(text: string): string {
+  return text.split("\n").map(line => {
+    if (/^\s*#/.test(line)) return sp(C.comment, escHtml(line));
+    if (!line.trim()) return "";
+    let out = "";
+    // Tokenise roughly
+    const tokens = line.split(/(\s+|"[^"]*"|'[^']*'|[|&;()<>$])/);
+    for (const tok of tokens) {
+      if (!tok) continue;
+      if (/^\s+$/.test(tok)) { out += tok; continue; }
+      if (tok.startsWith("#")) { out += sp(C.comment, escHtml(tok)); continue; }
+      if (/^["']/.test(tok))  { out += sp(C.string,  escHtml(tok)); continue; }
+      if (SH_KEYWORDS.has(tok)) { out += sp(C.keyword, escHtml(tok)); continue; }
+      if (/^\$[\w{]/.test(tok)) { out += sp(C.valNum, escHtml(tok)); continue; }
+      if (/^[|&;()<>]$/.test(tok)) { out += sp(C.punct, escHtml(tok)); continue; }
+      if (/^-?\d+$/.test(tok)) { out += sp(C.number, escHtml(tok)); continue; }
+      out += sp(C.plain, escHtml(tok));
+    }
+    return out;
+  }).join("\n");
+}
+
+// ── Plain text / log / md / txt ───────────────────────────────────────────────
+
+function highlightLog(text: string): string {
+  return text.split("\n").map(line => {
+    if (!line.trim()) return "";
+    // Timestamps / IPs
+    const annotated = escHtml(line)
+      .replace(/\b(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)/g,
+        m => sp(C.number, m))
+      .replace(/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b/g, m => sp(C.valNum, m))
+      .replace(/\b(ERROR|FATAL|CRITICAL)\b/g, m => sp(C.valFalse, m))
+      .replace(/\b(WARN|WARNING)\b/g,         m => `<span style="color:#fbbf24;font-weight:600">${m}</span>`)
+      .replace(/\b(INFO|DEBUG|TRACE)\b/g,     m => sp(C.boolean, m));
+    return annotated;
+  }).join("\n");
+}
+
+function highlightMarkdown(text: string): string {
+  return text.split("\n").map(line => {
+    if (!line.trim()) return "";
+    // Headings
+    if (/^#{1,6}\s/.test(line)) return sp(C.heading, escHtml(line));
+    // Code fence
+    if (/^```/.test(line)) return sp(C.punct, escHtml(line));
+    // List items
+    const esc = escHtml(line)
+      // Inline code
+      .replace(/`([^`]+)`/g, (_, c) => sp(C.string, "`" + c + "`"))
+      // Bold **text**
+      .replace(/\*\*(.+?)\*\*/g, (_, t) => `<strong style="${C.bold}">${t}</strong>`)
+      // Italic *text*
+      .replace(/\*(.+?)\*/g, (_, t) => `<em style="${C.italic_}">${t}</em>`)
+      // [link](url)
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, href) =>
+        sp(C.plain, "[") + sp(C.valStr, label) + sp(C.plain, "](") + sp(C.url, href) + sp(C.plain, ")"));
+    if (/^(\s*[-*+]|\d+\.)\s/.test(line)) return sp(C.punct, escHtml(line.match(/^(\s*[-*+]|\d+\.)\s/)?.[0] ?? "")) + esc.slice((line.match(/^(\s*[-*+]|\d+\.)\s/)?.[0] ?? "").length);
+    return esc;
+  }).join("\n");
+}
+
+// ── Dispatcher ────────────────────────────────────────────────────────────────
+
+function highlight(text: string, ext: string): string {
+  switch (ext) {
+    case "properties":
+    case "cfg":
+    case "conf":
+    case "config":
+    case "ini":
+    case "env":
+      return highlightProperties(text);
+    case "yml":
+    case "yaml":
+      return highlightYaml(text);
+    case "toml":
+      return highlightToml(text);
+    case "json":
+      return highlightJson(text);
+    case "xml":
+    case "html":
+    case "htm":
+      return highlightXml(text);
+    case "sh":
+    case "bash":
+      return highlightShell(text);
+    case "log":
+      return highlightLog(text);
+    case "md":
+    case "markdown":
+      return highlightMarkdown(text);
+    // txt / java / py / ts / js / css — plain with escaping
+    default:
+      return text.split("\n").map(l => escHtml(l) || "").join("\n");
+  }
+}
+
 const ServerFiles = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -391,10 +675,37 @@ const ServerFiles = () => {
                 ? <div className="flex items-center justify-center py-20">
                     <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#a855f7" }} />
                   </div>
-                : <textarea value={editContent} onChange={e => setEditContent(e.target.value)}
-                    spellCheck={false}
-                    className="flex-1 font-mono text-[12px] bg-transparent outline-none resize-none leading-relaxed overflow-y-auto"
-                    style={{ padding: "16px 20px", color: "#e2e8f0", minHeight: 300 }} />
+                : (() => {
+                    const ext = editingFile?.split(".").pop()?.toLowerCase() ?? "";
+                    const useHighlight = TEXT_EXTS.has(ext);
+                    if (useHighlight) {
+                      return (
+                        <div className="flex-1 relative overflow-hidden" style={{ minHeight: 300 }}>
+                          {/* Highlighted backdrop — mirrors textarea content exactly */}
+                          <pre
+                            aria-hidden="true"
+                            className="absolute inset-0 font-mono text-[12px] leading-relaxed overflow-auto pointer-events-none select-none whitespace-pre"
+                            style={{ padding: "16px 20px", margin: 0, color: "transparent", zIndex: 1 }}
+                            dangerouslySetInnerHTML={{ __html: highlight(editContent, ext) + "\n" }}
+                          />
+                          {/* Editable textarea on top — transparent text so highlight shows through */}
+                          <textarea
+                            value={editContent}
+                            onChange={e => setEditContent(e.target.value)}
+                            spellCheck={false}
+                            className="absolute inset-0 w-full h-full font-mono text-[12px] bg-transparent outline-none resize-none leading-relaxed overflow-auto caret-white"
+                            style={{ padding: "16px 20px", color: "transparent", caretColor: "#e2e8f0", zIndex: 2 }}
+                          />
+                        </div>
+                      );
+                    }
+                    return (
+                      <textarea value={editContent} onChange={e => setEditContent(e.target.value)}
+                        spellCheck={false}
+                        className="flex-1 font-mono text-[12px] bg-transparent outline-none resize-none leading-relaxed overflow-y-auto"
+                        style={{ padding: "16px 20px", color: "#e2e8f0", minHeight: 300 }} />
+                    );
+                  })()
               }
             </motion.div>
           </motion.div>
