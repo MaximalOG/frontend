@@ -327,6 +327,56 @@ function highlight(text: string, ext: string): string {
   }
 }
 
+// ── Highlight editor — scroll-synced overlay ─────────────────────────────────
+// The textarea is the scroll driver (it has the real scrollbar).
+// The <pre> sits behind it and its scroll position is kept in sync via onScroll.
+// This prevents the two layers drifting apart and eliminates the ghost-text glitch.
+const HighlightEditor = ({
+  content, ext, onChange,
+}: { content: string; ext: string; onChange: (v: string) => void }) => {
+  const preRef = useRef<HTMLPreElement>(null);
+
+  const syncScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    if (preRef.current) {
+      preRef.current.scrollTop  = e.currentTarget.scrollTop;
+      preRef.current.scrollLeft = e.currentTarget.scrollLeft;
+    }
+  };
+
+  return (
+    <div className="flex-1 relative overflow-hidden" style={{ minHeight: 300 }}>
+      {/* Highlighted backdrop — scroll is driven by the textarea below */}
+      <pre
+        ref={preRef}
+        aria-hidden="true"
+        className="absolute inset-0 font-mono text-[12px] leading-relaxed pointer-events-none select-none whitespace-pre"
+        style={{
+          padding: "16px 20px", margin: 0,
+          overflow: "hidden", // pre never shows its own scrollbar
+          zIndex: 1,
+        }}
+        dangerouslySetInnerHTML={{ __html: highlight(content, ext) + "\n" }}
+      />
+      {/* Textarea — the only scrollable element; text is transparent so the pre shows through */}
+      <textarea
+        value={content}
+        onChange={e => onChange(e.target.value)}
+        onScroll={syncScroll}
+        spellCheck={false}
+        className="absolute inset-0 w-full h-full font-mono text-[12px] bg-transparent outline-none resize-none leading-relaxed"
+        style={{
+          padding: "16px 20px",
+          color: "transparent",
+          caretColor: "#e2e8f0",
+          zIndex: 2,
+          overflowY: "auto",
+          overflowX: "auto",
+        }}
+      />
+    </div>
+  );
+};
+
 const ServerFiles = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -469,11 +519,12 @@ const ServerFiles = () => {
 
       {/* Hidden file input */}
       <input ref={fileInputRef} type="file" multiple className="hidden"
-        accept=".jar,.yml,.yaml,.json,.txt,.properties,.cfg,.conf,.toml,.sh,.log,.xml,.sk,.zip"
+        accept=".jar,.yml,.yaml,.json,.txt,.properties,.cfg,.conf,.toml,.sh,.log,.xml,.sk,.zip,.png,.gif,.webp,.ico,.jpg,.jpeg"
         onChange={async e => {
           const list = e.target.files;
           if (!list || list.length === 0) return;
-          const ALLOWED = new Set(["jar","yml","yaml","json","txt","properties","cfg","conf","toml","sh","log","xml","sk","zip","md","ini","env"]);
+          const ALLOWED = new Set(["jar","yml","yaml","json","txt","properties","cfg","conf","toml","sh","log","xml","sk","zip","md","ini","env","png","gif","webp","ico","jpg","jpeg"]);
+          const BINARY  = new Set(["png","gif","webp","ico","jpg","jpeg","jar","zip"]);
           const blocked = Array.from(list).filter(f => !ALLOWED.has(f.name.split(".").pop()?.toLowerCase() ?? ""));
           if (blocked.length > 0) {
             setError(`Cannot upload: ${blocked.map(f => f.name).join(", ")} — file type not allowed.`);
@@ -482,11 +533,23 @@ const ServerFiles = () => {
           setUploading(true);
           try {
             for (const file of Array.from(list)) {
+              const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
               const path = directory === "/" ? `/${file.name}` : `${directory}/${file.name}`;
+              let body: string;
+              if (BINARY.has(ext)) {
+                // Read as binary and base64-encode so it survives JSON transport
+                const buf = await file.arrayBuffer();
+                const bytes = new Uint8Array(buf);
+                let bin = "";
+                for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+                body = JSON.stringify({ content: btoa(bin), encoding: "base64" });
+              } else {
+                body = JSON.stringify({ content: await file.text() });
+              }
               await apiFetch(`/api/servers/${id}/files/write?file=${encodeURIComponent(path)}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
-                body: JSON.stringify({ content: await file.text() }),
+                body,
               });
             }
             loadFiles(directory);
@@ -680,23 +743,11 @@ const ServerFiles = () => {
                     const useHighlight = TEXT_EXTS.has(ext);
                     if (useHighlight) {
                       return (
-                        <div className="flex-1 relative overflow-hidden" style={{ minHeight: 300 }}>
-                          {/* Highlighted backdrop — mirrors textarea content exactly */}
-                          <pre
-                            aria-hidden="true"
-                            className="absolute inset-0 font-mono text-[12px] leading-relaxed overflow-auto pointer-events-none select-none whitespace-pre"
-                            style={{ padding: "16px 20px", margin: 0, color: "transparent", zIndex: 1 }}
-                            dangerouslySetInnerHTML={{ __html: highlight(editContent, ext) + "\n" }}
-                          />
-                          {/* Editable textarea on top — transparent text so highlight shows through */}
-                          <textarea
-                            value={editContent}
-                            onChange={e => setEditContent(e.target.value)}
-                            spellCheck={false}
-                            className="absolute inset-0 w-full h-full font-mono text-[12px] bg-transparent outline-none resize-none leading-relaxed overflow-auto caret-white"
-                            style={{ padding: "16px 20px", color: "transparent", caretColor: "#e2e8f0", zIndex: 2 }}
-                          />
-                        </div>
+                        <HighlightEditor
+                          content={editContent}
+                          ext={ext}
+                          onChange={setEditContent}
+                        />
                       );
                     }
                     return (
