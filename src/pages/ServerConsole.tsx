@@ -357,34 +357,50 @@ export default function ServerConsole() {
     if (!worldFile) return;
     setUploadingWorld(true); setUploadWorldErr(""); setUploadWorldMsg("");
     try {
-      // Determine target dir: .zip goes to root, folders go into worlds/
-      const ext = worldFile.name.split(".").pop()?.toLowerCase();
-      const targetPath = ext === "zip" ? `/${worldFile.name}` : `/worlds/${worldFile.name}`;
-      const text = await worldFile.text().catch(() => null);
-      if (text === null) {
-        // Binary file (zip) — read as arraybuffer and base64-encode not supported via write API
-        // Instead send as raw binary using the Pterodactyl upload endpoint
-        setUploadWorldErr("Binary world uploads (ZIP) are not yet supported via this panel. Use the Files page.");
-        setUploadingWorld(false);
-        return;
+      const ext = worldFile.name.split(".").pop()?.toLowerCase() ?? "";
+      // Minecraft world files are always binary — zip, mca, dat, mcworld etc.
+      // Use the base64 encoding path so they survive JSON transport intact.
+      const BINARY_EXTS = new Set(["zip","tar","gz","rar","7z","mca","dat","mcworld","nbt","ldb","ldb","db"]);
+      const isBinary = BINARY_EXTS.has(ext);
+
+      // Target path: zip/archive → server root; everything else → /worlds/
+      const targetPath = (ext === "zip" || ext === "tar" || ext === "gz" || ext === "rar" || ext === "7z")
+        ? `/${worldFile.name}`
+        : `/worlds/${worldFile.name}`;
+
+      let body: string;
+      if (isBinary) {
+        const buf   = await worldFile.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        let bin = "";
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        body = JSON.stringify({ content: btoa(bin), encoding: "base64" });
+      } else {
+        body = JSON.stringify({ content: await worldFile.text() });
       }
+
       const res = await apiFetch(
         `/api/servers/${id}/files/write?file=${encodeURIComponent(targetPath)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
-          body: JSON.stringify({ content: text }),
+          body,
         }
       );
       if (!res.ok) {
-        const e = await res.json();
-        setUploadWorldErr(e.error || "Upload failed.");
+        let msg = "Upload failed.";
+        try { const e = await res.json(); msg = e.error || msg; } catch {}
+        setUploadWorldErr(msg);
         return;
       }
       setUploadWorldMsg(`✓ ${worldFile.name} uploaded successfully.`);
       setWorldFile(null);
       setTimeout(() => { setShowUploadWorld(false); setUploadWorldMsg(""); }, 2500);
-    } catch { setUploadWorldErr("Network error — please try again."); }
+    } catch (err: any) {
+      setUploadWorldErr(err?.message && !err.message.includes("NetworkError") && !err.message.includes("fetch")
+        ? err.message
+        : "Could not reach the server. Check your connection and try again.");
+    }
     finally { setUploadingWorld(false); }
   };
 
@@ -397,12 +413,16 @@ export default function ServerConsole() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
         body: JSON.stringify({ name }),
       });
-      const data = await res.json();
-      if (!res.ok) { setBackupErr(data.error || "Failed to create backup."); return; }
+      let data: any = {};
+      try { data = await res.json(); } catch {}
+      if (!res.ok) { setBackupErr(data.error || `Backup failed (${res.status}).`); return; }
       setBackupMsg("✓ Backup started — check the Backups tab for progress.");
       setBackupName("");
       setTimeout(() => { setShowBackup(false); setBackupMsg(""); }, 3000);
-    } catch { setBackupErr("Network error — please try again."); }
+    } catch (err: any) {
+      setBackupErr(err?.message && !err.message.includes("fetch")
+        ? err.message : "Could not reach the server. Check your connection.");
+    }
     finally { setCreatingBackup(false); }
   };
 
@@ -415,12 +435,16 @@ export default function ServerConsole() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
         body: JSON.stringify({ username: wlPlayer.trim() }),
       });
-      const data = await res.json();
-      if (!res.ok) { setWlErr(data.error || "Failed to add player."); return; }
+      let data: any = {};
+      try { data = await res.json(); } catch {}
+      if (!res.ok) { setWlErr(data.error || `Failed to add player (${res.status}).`); return; }
       setWlMsg(`✓ ${wlPlayer.trim()} added to whitelist.`);
       setWlPlayer("");
       setTimeout(() => { setShowWhitelist(false); setWlMsg(""); }, 2500);
-    } catch { setWlErr("Network error — please try again."); }
+    } catch (err: any) {
+      setWlErr(err?.message && !err.message.includes("fetch")
+        ? err.message : "Could not reach the server. Check your connection.");
+    }
     finally { setWlAdding(false); }
   };
 
@@ -984,11 +1008,15 @@ export default function ServerConsole() {
                             method, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
                             body: JSON.stringify({ name: hnEdit }),
                           });
-                          const d = await r.json();
-                          if (!r.ok) { setHnError(d.error || "Failed."); return; }
+                          let d: any = {};
+                          try { d = await r.json(); } catch {}
+                          if (!r.ok) { setHnError(d.error || `Failed (${r.status}).`); return; }
                           setServer(p => p ? { ...p, hostname: d.hostname, hostnameStatus: d.hostnameStatus, customAddress: d.customAddress } : p);
                           setShowHnForm(false);
-                        } catch { setHnError("Network error."); }
+                        } catch (err: any) {
+                          setHnError(err?.message && !err.message.includes("fetch")
+                            ? err.message : "Could not reach the server. Check your connection.");
+                        }
                         finally { setHnSubmitting(false); }
                       }}
                       className="flex-1 h-7 rounded-lg text-[10px] font-semibold disabled:opacity-30 transition-all hover:opacity-90"
