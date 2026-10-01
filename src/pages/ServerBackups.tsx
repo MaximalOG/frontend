@@ -51,10 +51,11 @@ export default function ServerBackups() {
   const [creating, setCreating]       = useState(false);
   const [createMsg, setCreateMsg]     = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Backup | null>(null);
-  const [deleting, setDeleting]       = useState(false);
+  const [deleting, setDeleting]           = useState(false);
   const [restoreTarget, setRestoreTarget] = useState<Backup | null>(null);
-  const [restoring, setRestoring]     = useState(false);
-  const [restoreError, setRestoreError] = useState("");
+  const [restoring, setRestoring]         = useState(false);
+  const [restoreError, setRestoreError]   = useState("");
+  const [downloadingUuid, setDownloadingUuid] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/login", { state: { from: `/server/${id}/backups` } });
@@ -139,6 +140,21 @@ export default function ServerBackups() {
     finally { setRestoring(false); }
   };
 
+  const downloadBackup = async (b: Backup) => {
+    setDownloadingUuid(b.uuid);
+    try {
+      const res = await apiFetch(`/api/servers/${id}/backups/${b.uuid}/download`, {
+        headers: { Authorization: `Bearer ${token()}` },
+      });
+      let data: any = {};
+      try { data = await res.json(); } catch {}
+      if (!res.ok) { setError(data.error || "Failed to get download link."); return; }
+      // Open the signed URL in a new tab — the browser will download the .tar.gz
+      window.open(data.url, "_blank", "noopener,noreferrer");
+    } catch { setError("Network error getting download link."); }
+    finally { setDownloadingUuid(null); }
+  };
+
   if (authLoading || loadingServer) return (
     <div className="flex items-center justify-center h-screen" style={{ background: "#080810" }}>
       <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#a855f7" }} />
@@ -210,14 +226,14 @@ export default function ServerBackups() {
           style={{ border: "1px solid rgba(255,255,255,0.07)", background: "#0b0b14" }}>
           {/* Column headers */}
           <div className="grid px-4 py-2 text-[9px] mono uppercase tracking-widest"
-            style={{ gridTemplateColumns: "1fr 90px 140px 80px", gap: "0 12px", color: "#334155", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+            style={{ gridTemplateColumns: "1fr 90px 140px 112px", gap: "0 12px", color: "#334155", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
             <span>Name</span><span>Size</span><span>Created</span><span className="text-right">Actions</span>
           </div>
 
           {backups.map((b, i) => (
             <motion.div key={b.uuid} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
               className="grid items-center px-4 py-3 transition-colors"
-              style={{ gridTemplateColumns: "1fr 90px 140px 80px", gap: "0 12px", borderBottom: i < backups.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
+              style={{ gridTemplateColumns: "1fr 90px 140px 112px", gap: "0 12px", borderBottom: i < backups.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.02)"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}>
 
@@ -242,6 +258,19 @@ export default function ServerBackups() {
               </p>
 
               <div className="flex items-center justify-end gap-1.5">
+                {/* Download — only available once backup is complete */}
+                {b.isSuccessful && (
+                  <button
+                    title="Download"
+                    onClick={() => downloadBackup(b)}
+                    disabled={downloadingUuid === b.uuid}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-80 disabled:opacity-40"
+                    style={{ background: "rgba(96,165,250,0.1)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.2)" }}>
+                    {downloadingUuid === b.uuid
+                      ? <Loader2 size={11} className="animate-spin" />
+                      : <Download size={11} />}
+                  </button>
+                )}
                 <button title="Restore" onClick={() => { setRestoreTarget(b); setRestoreError(""); }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-80"
                   style={{ background: "rgba(139,92,246,0.1)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.2)" }}>

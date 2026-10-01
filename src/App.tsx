@@ -34,6 +34,7 @@ import ServerVersion from "./pages/ServerVersion.tsx";
 import ServerSchedules from "./pages/ServerSchedules.tsx";
 import ServerBackups from "./pages/ServerBackups.tsx";
 import ServerWhitelist from "./pages/ServerWhitelist.tsx";
+import Subscriptions from "./pages/Subscriptions.tsx";
 import ChatBot from "./components/ChatBot.tsx";
 import SaleBanner from "./components/SaleBanner.tsx";
 import { CurrencyProvider } from "@/context/CurrencyContext";
@@ -101,6 +102,7 @@ const App = () => (
           <Route path="/server/:id/schedules" element={<ServerSchedules />} />
           <Route path="/server/:id/backups" element={<ServerBackups />} />
           <Route path="/server/:id/whitelist" element={<ServerWhitelist />} />
+          <Route path="/subscriptions" element={<Subscriptions />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <ChatBotBoundary>

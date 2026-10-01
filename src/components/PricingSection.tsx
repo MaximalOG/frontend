@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import PromoCode, { type DiscountInfo } from "./PromoCode";
 import CheckoutButton from "./CheckoutButton";
 import { useCurrency } from "@/hooks/useCurrency";
+import { useAuth } from "@/hooks/useAuth";
+import { apiFetch } from "@/lib/api";
 
 // Smart Plan Selector — 4-step logic
 const STEPS = [
@@ -255,6 +257,27 @@ const PricingSection = () => {
       })
       .catch(() => {}); // silently fall back to hardcoded values
   }, []);
+
+  // Reclaimable subscriptions — active plans where the server was deleted.
+  // Keyed by planName (lowercase) so we can look up quickly per plan card.
+  const { user, token } = useAuth();
+  const [reclaimableByPlan, setReclaimableByPlan] = useState<Record<string, {
+    subscriptionId: string; planName: string; status: string;
+  }>>({});
+
+  useEffect(() => {
+    if (!user) return;
+    apiFetch("/api/subscriptions/reclaimable", {
+      headers: { Authorization: `Bearer ${token()}` },
+    })
+      .then(r => r.ok ? r.json() : [])
+      .then((subs: { subscriptionId: string; planName: string; status: string }[]) => {
+        const map: typeof reclaimableByPlan = {};
+        subs.forEach(s => { map[s.planName.toLowerCase()] = s; });
+        setReclaimableByPlan(map);
+      })
+      .catch(() => {});
+  }, [user, token]);
 
   // Merge live prices into the static plans array
   const livePlans = plans.map(p => {
@@ -584,6 +607,7 @@ const PricingSection = () => {
                       label={plan.btnLabel}
                       isPopular={isPopular}
                       className="mb-2"
+                      reclaimableSub={reclaimableByPlan[plan.name.toLowerCase()] ?? null}
                     />
 
                     <div className="flex items-center justify-center gap-1 pt-1">
@@ -677,6 +701,7 @@ const PricingSection = () => {
                         currency={currency}
                         label={plan.btnLabel}
                         isPopular={isPopular}
+                        reclaimableSub={reclaimableByPlan[plan.name.toLowerCase()] ?? null}
                       />
                     </motion.div>
                   )}

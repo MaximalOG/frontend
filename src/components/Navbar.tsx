@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, LogOut, Server, ChevronDown, Zap, Settings } from "lucide-react";
+import { Menu, X, LogOut, Server, ChevronDown, Zap, Settings, CreditCard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCurrency, CURRENCY_FLAGS, CURRENCY_SYMBOLS, type Currency } from "@/hooks/useCurrency";
 import { useBanner } from "@/context/BannerContext";
@@ -222,6 +222,13 @@ const Navbar = () => {
                       <Server size={12} /> My Servers
                     </Link>
                     <Link
+                      to="/subscriptions"
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+                    >
+                      <CreditCard size={12} /> Subscriptions
+                    </Link>
+                    <Link
                       to="/settings"
                       onClick={() => setProfileOpen(false)}
                       className="flex items-center gap-2 px-3 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
@@ -311,6 +318,9 @@ const Navbar = () => {
                   <>
                     <Link to="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2">
                       <Server size={14} /> My Servers
+                    </Link>
+                    <Link to="/subscriptions" onClick={() => setOpen(false)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2">
+                      <CreditCard size={14} /> Subscriptions
                     </Link>
                     <Link to="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2">
                       <Settings size={14} /> Account Settings
