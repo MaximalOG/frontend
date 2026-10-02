@@ -8,6 +8,7 @@ import {
   HardDrive, Cpu, MemoryStick, Download, Search, X,
   ChevronDown, ChevronUp, Package, Calendar, List, Zap,
   Server, Activity, UploadCloud, Menu, ArrowLeft,
+  Sparkles, Send,
 } from "lucide-react";
 import ServerSidebar from "@/components/ServerSidebar";
 import { useAuth } from "@/hooks/useAuth";
@@ -149,6 +150,12 @@ export default function ServerConsole() {
     Array.from({ length: 30 }, (_, i) => ({ t: i, v: 0 }))
   );
 
+  /* ── AI chat state ── */
+  const [aiMessages, setAiMessages]     = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [aiInput, setAiInput]           = useState("");
+  const [aiLoading, setAiLoading]       = useState(false);
+  const aiChatEndRef                    = useRef<HTMLDivElement>(null);
+
   /* ── refs ── */
   const wsRef    = useRef<WebSocket | null>(null);
   const logsRef  = useRef<HTMLDivElement>(null);
@@ -197,16 +204,48 @@ export default function ServerConsole() {
   };
 
   /* ── WebSocket ── */
+  const connStatusIdRef = useRef<number | null>(null); // tracks the single "Connecting…/Connected" log line
+
+  const updateConnLog = useCallback((text: string, type: LogLine["type"]) => {
+    // If we already have a connection status line, overwrite it in-place.
+    // This prevents spamming "Connecting… / Connected" on every reconnect.
+    if (connStatusIdRef.current !== null) {
+      const lid = connStatusIdRef.current;
+      setLogs(prev => {
+        const idx = prev.findIndex(l => l.id === lid);
+        if (idx === -1) {
+          // Line was cleared — append fresh
+          const fresh = mkLine(text, type);
+          connStatusIdRef.current = fresh.id;
+          const next = [...prev.slice(-1200), fresh];
+          try { sessionStorage.setItem(LOG_KEY, JSON.stringify(next.slice(-MAX_STORED))); } catch {}
+          return next;
+        }
+        const next = prev.map(l => l.id === lid ? { ...l, text, type } : l);
+        try { sessionStorage.setItem(LOG_KEY, JSON.stringify(next.slice(-MAX_STORED))); } catch {}
+        return next;
+      });
+    } else {
+      const fresh = mkLine(text, type);
+      connStatusIdRef.current = fresh.id;
+      setLogs(prev => {
+        const next = [...prev.slice(-1200), fresh];
+        try { sessionStorage.setItem(LOG_KEY, JSON.stringify(next.slice(-MAX_STORED))); } catch {}
+        return next;
+      });
+    }
+  }, [LOG_KEY, MAX_STORED]);
+
   const connect = useCallback(async () => {
     if (!id || wsRef.current?.readyState === WebSocket.OPEN) return;
     if (document.visibilityState === "hidden") return;
     setWsStatus("connecting");
-    addLog(`[${nowStr()}] Connecting…`, "system");
+    updateConnLog(`[${nowStr()}] Connecting…`, "system");
     try {
       const res = await apiFetch(`/api/servers/${id}/console-token`, { headers: { Authorization: `Bearer ${token()}` } });
-      if (!res.ok) { addLog(`[${nowStr()}] Failed: ${(await res.json()).error}`, "error"); setWsStatus("error"); return; }
+      if (!res.ok) { updateConnLog(`[${nowStr()}] Failed: ${(await res.json()).error}`, "error"); setWsStatus("error"); return; }
       const { token: wsTok, socket: wsUrl } = await res.json();
-      if (!wsTok || !wsUrl) { addLog(`[${nowStr()}] Console unavailable.`, "error"); setWsStatus("error"); return; }
+      if (!wsTok || !wsUrl) { updateConnLog(`[${nowStr()}] Console unavailable.`, "error"); setWsStatus("error"); return; }
       tokenRef.current = wsTok;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
@@ -215,7 +254,10 @@ export default function ServerConsole() {
         try {
           const msg = JSON.parse(evt.data);
           switch (msg.event) {
-            case "auth success": setWsStatus("connected"); addLog(`[${nowStr()}] ✓ Connected to console`, "success"); break;
+            case "auth success":
+              setWsStatus("connected");
+              updateConnLog(`[${nowStr()}] ✓ Connected to console`, "success");
+              break;
             case "token expiring":
               (async () => {
                 try {
@@ -225,7 +267,7 @@ export default function ServerConsole() {
               })();
               break;
             case "token expired":
-              addLog(`[${nowStr()}] Session expired.`, "warn");
+              updateConnLog(`[${nowStr()}] Session expired — reconnecting…`, "warn");
               ws.close();
               if (document.visibilityState === "visible") setTimeout(connect, 1500);
               break;
@@ -237,16 +279,16 @@ export default function ServerConsole() {
         } catch {}
       };
       ws.onerror = () => {
-        if (document.visibilityState === "visible") { setWsStatus("error"); addLog(`[${nowStr()}] Connection error.`, "error"); }
+        if (document.visibilityState === "visible") { setWsStatus("error"); updateConnLog(`[${nowStr()}] Connection error.`, "error"); }
         else setWsStatus("disconnected");
       };
       ws.onclose = (e) => {
         setWsStatus("disconnected");
         if (e.code === 1000 || document.visibilityState === "hidden") return;
-        addLog(`[${nowStr()}] Disconnected (${e.code}).`, "warn");
+        updateConnLog(`[${nowStr()}] Disconnected (${e.code}).`, "warn");
       };
-    } catch (err: any) { addLog(`[${nowStr()}] Failed: ${err?.message}`, "error"); setWsStatus("error"); }
-  }, [id, token, addLog]);
+    } catch (err: any) { updateConnLog(`[${nowStr()}] Failed: ${err?.message}`, "error"); setWsStatus("error"); }
+  }, [id, token, addLog, updateConnLog]);
 
   useEffect(() => {
     if (server && !server.pendingSetup) connect();
@@ -396,6 +438,37 @@ export default function ServerConsole() {
     finally { setWlAdding(false); }
   };
 
+  /* ── AI chat send ── */
+  const sendAiMessage = async () => {
+    const msg = aiInput.trim();
+    if (!msg || aiLoading) return;
+    const userMsg = { role: "user" as const, content: msg };
+    setAiMessages(prev => [...prev, userMsg]);
+    setAiInput("");
+    setAiLoading(true);
+    // scroll to bottom
+    setTimeout(() => aiChatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    try {
+      const res = await apiFetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: msg,
+          history: aiMessages.slice(-6).map(m => ({ role: m.role, content: m.content })),
+        }),
+      });
+      let data: any = {};
+      try { data = await res.json(); } catch {}
+      const reply = data.message || (res.ok ? "No response." : (data.error || "Error."));
+      setAiMessages(prev => [...prev, { role: "assistant", content: reply }]);
+    } catch {
+      setAiMessages(prev => [...prev, { role: "assistant", content: "Could not reach AI. Check your connection." }]);
+    } finally {
+      setAiLoading(false);
+      setTimeout(() => aiChatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    }
+  };
+
   /* ── Derived values ── */
   const filteredLogs = searchQuery ? logs.filter(l => l.text.toLowerCase().includes(searchQuery.toLowerCase())) : logs;
   const cfg          = STATUS_CFG[server?.status ?? ""] ?? STATUS_CFG.stopped;
@@ -494,7 +567,7 @@ export default function ServerConsole() {
             </button>
 
             {/* Avatar */}
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-[11px] font-bold"
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-[12px] font-bold"
               style={{ background: `${cfg.color}18`, border: `1px solid ${cfg.color}30`, color: cfg.color }}>
               {server?.name?.charAt(0)?.toUpperCase()}
             </div>
@@ -504,7 +577,7 @@ export default function ServerConsole() {
                 <span className="text-sm font-semibold truncate" style={{ color: "#f1f5f9" }}>{server?.name}</span>
 
                 {/* Status dot + label */}
-                <span className="flex items-center gap-1.5 text-[10px] font-medium shrink-0">
+                <span className="flex items-center gap-1.5 text-[11px] font-medium shrink-0">
                   <span className="relative flex h-1.5 w-1.5">
                     {isRunning && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: cfg.dot }} />}
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: cfg.dot }} />
@@ -513,14 +586,14 @@ export default function ServerConsole() {
                 </span>
 
                 {/* Plan */}
-                <span className="hidden sm:inline text-[9px] mono px-1.5 py-0.5 rounded"
+                <span className="hidden sm:inline text-[10px] mono px-1.5 py-0.5 rounded"
                   style={{ background: "rgba(124,58,237,0.1)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.18)" }}>
                   {server?.plan}
                 </span>
 
                 {/* Version */}
                 {server?.mcVersion && (
-                  <span className="hidden md:inline text-[9px] mono px-1.5 py-0.5 rounded"
+                  <span className="hidden md:inline text-[10px] mono px-1.5 py-0.5 rounded"
                     style={{ background: "rgba(96,165,250,0.08)", color: "#7dd3fc", border: "1px solid rgba(96,165,250,0.15)" }}>
                     {server.serverType && `${server.serverType} `}{server.mcVersion}
                   </span>
@@ -532,7 +605,7 @@ export default function ServerConsole() {
                 <button onClick={() => copyAddr(displayAddr)}
                   className="flex items-center gap-1 mt-0.5 group"
                   title="Copy address">
-                  <span className="text-[10px] mono" style={{ color: "#334155" }}>{displayAddr}</span>
+                  <span className="text-[11px] mono" style={{ color: "#334155" }}>{displayAddr}</span>
                   {copied
                     ? <Check size={9} style={{ color: "#4ade80" }} />
                     : <Copy size={9} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#475569" }} />}
@@ -541,78 +614,123 @@ export default function ServerConsole() {
             </div>
           </div>
 
-          {/* Right: slim metrics strip */}
-          <div className="hidden lg:flex items-center gap-4 shrink-0">
-            {/* CPU */}
-            <div className="flex items-center gap-1.5">
-              <Cpu size={10} style={{ color: cpuPct > 80 ? "#f87171" : cpuPct > 50 ? "#fbbf24" : "#475569" }} />
-              <div style={{ width: 48, height: 16 }}>
+          {/* Right: DDoS badge only — metrics moved below */}
+          <div className="hidden lg:flex items-center gap-3 shrink-0">
+            <span className="text-[11px] mono flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
+              style={{ background: "rgba(96,165,250,0.06)", color: "#475569", border: "1px solid rgba(96,165,250,0.12)" }}>
+              <Shield size={10} style={{ color: "#60a5fa" }} /> DDoS Protected
+            </span>
+          </div>
+        </div>
+
+        {/* ── Metrics bar ── */}
+        {/* ── Metrics cards ── */}
+        <div className="shrink-0 hidden lg:flex gap-3 px-4 py-3"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "#080810" }}>
+
+          {/* CPU */}
+          <div className="flex-1 rounded-xl p-3 flex items-center gap-3"
+            style={{ background: "#0d0d18", border: `1px solid ${cpuPct > 80 ? "rgba(248,113,113,0.28)" : "rgba(251,191,36,0.16)"}` }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: cpuPct > 80 ? "rgba(248,113,113,0.12)" : "rgba(251,191,36,0.1)", border: `1px solid ${cpuPct > 80 ? "rgba(248,113,113,0.22)" : "rgba(251,191,36,0.2)"}` }}>
+              <Cpu size={16} style={{ color: cpuPct > 80 ? "#f87171" : "#fbbf24" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] mono uppercase tracking-wider" style={{ color: "#475569" }}>CPU</span>
+                <span className="text-sm font-bold mono" style={{ color: cpuPct > 80 ? "#f87171" : cpuPct > 50 ? "#fbbf24" : "#f1f5f9" }}>
+                  {resources?.available ? `${cpuPct.toFixed(1)}%` : "—"}
+                </span>
+              </div>
+              <div style={{ height: 24 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={cpuHistory} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="cpuG" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="cpuG2" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={cpuPct > 80 ? "#f87171" : "#a78bfa"} stopOpacity={0.4} />
                         <stop offset="100%" stopColor={cpuPct > 80 ? "#f87171" : "#a78bfa"} stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <Area type="monotone" dataKey="v" stroke={cpuPct > 80 ? "#f87171" : "#7c3aed"}
-                      strokeWidth={1} fill="url(#cpuG)" dot={false} isAnimationActive={false} />
+                    <Area type="monotone" dataKey="v" stroke={cpuPct > 80 ? "#f87171" : cpuPct > 50 ? "#fbbf24" : "#7c3aed"}
+                      strokeWidth={1.5} fill="url(#cpuG2)" dot={false} isAnimationActive={false} />
                     <Tooltip content={() => null} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-              <span className="text-[10px] mono w-8 text-right"
-                style={{ color: cpuPct > 80 ? "#f87171" : "#475569" }}>
-                {resources?.available ? `${cpuPct.toFixed(0)}%` : "—"}
-              </span>
             </div>
+          </div>
 
-            <div className="w-px h-3" style={{ background: "rgba(255,255,255,0.07)" }} />
-
-            {/* RAM */}
-            <div className="flex items-center gap-1.5">
-              <MemoryStick size={10} style={{ color: "#475569" }} />
-              <div className="flex items-center gap-1">
-                <div className="w-16 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                  <div className="h-full rounded-full" style={{ width: `${ramPct}%`, background: ramPct > 90 ? "#f87171" : "#7c3aed" }} />
-                </div>
-                <span className="text-[10px] mono" style={{ color: "#475569" }}>
-                  {resources?.available ? `${ramUsedMB.toFixed(0)}/${server?.ram}` : `—/${server?.ram ?? "?"}`}
+          {/* RAM */}
+          <div className="flex-1 rounded-xl p-3 flex items-center gap-3"
+            style={{ background: "#0d0d18", border: `1px solid ${ramPct > 90 ? "rgba(248,113,113,0.28)" : "rgba(139,92,246,0.2)"}` }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.22)" }}>
+              <MemoryStick size={16} style={{ color: "#a78bfa" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] mono uppercase tracking-wider" style={{ color: "#475569" }}>RAM</span>
+                <span className="text-sm font-bold mono" style={{ color: ramPct > 90 ? "#f87171" : "#f1f5f9" }}>
+                  {resources?.available ? `${ramUsedMB.toFixed(0)} MB` : "—"}
                 </span>
               </div>
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                <div className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${ramPct}%`, background: ramPct > 90 ? "#ef4444" : "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
+              </div>
+              <p className="text-[11px] mono mt-1" style={{ color: "#475569" }}>
+                {ramPct.toFixed(0)}% of {server?.ram ?? "?"}
+              </p>
             </div>
+          </div>
 
-            <div className="w-px h-3" style={{ background: "rgba(255,255,255,0.07)" }} />
-
-            {/* Disk */}
-            <div className="flex items-center gap-1.5">
-              <HardDrive size={10} style={{ color: "#475569" }} />
-              <div className="flex items-center gap-1">
-                <div className="w-12 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                  <div className="h-full rounded-full" style={{ width: `${diskPct}%`, background: "#3b82f6" }} />
-                </div>
-                <span className="text-[10px] mono" style={{ color: "#475569" }}>
+          {/* Disk */}
+          <div className="flex-1 rounded-xl p-3 flex items-center gap-3"
+            style={{ background: "#0d0d18", border: "1px solid rgba(96,165,250,0.18)" }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.2)" }}>
+              <HardDrive size={16} style={{ color: "#60a5fa" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] mono uppercase tracking-wider" style={{ color: "#475569" }}>Disk</span>
+                <span className="text-sm font-bold mono" style={{ color: "#f1f5f9" }}>
                   {resources?.available ? fmtBytes(resources.diskBytes) : "—"}
                 </span>
               </div>
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                <div className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${diskPct}%`, background: "linear-gradient(90deg,#1d4ed8,#3b82f6)" }} />
+              </div>
+              <p className="text-[11px] mono mt-1" style={{ color: "#475569" }}>
+                {diskPct.toFixed(0)}% of {server?.ssd ?? "?"}
+              </p>
             </div>
+          </div>
 
-            {/* Uptime */}
-            {resources?.uptimeMs != null && resources.uptimeMs > 0 && (
-              <>
-                <div className="w-px h-3" style={{ background: "rgba(255,255,255,0.07)" }} />
-                <span className="text-[10px] mono flex items-center gap-1" style={{ color: "#334155" }}>
-                  <Clock size={9} /> {fmtUptime(resources.uptimeMs)}
+          {/* Uptime */}
+          <div className="flex-1 rounded-xl p-3 flex items-center gap-3"
+            style={{ background: "#0d0d18", border: `1px solid ${isRunning ? "rgba(74,222,128,0.18)" : "rgba(71,85,105,0.2)"}` }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: isRunning ? "rgba(74,222,128,0.08)" : "rgba(71,85,105,0.08)", border: isRunning ? "1px solid rgba(74,222,128,0.2)" : "1px solid rgba(71,85,105,0.2)" }}>
+              <Activity size={16} style={{ color: isRunning ? "#4ade80" : "#475569" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] mono uppercase tracking-wider" style={{ color: "#475569" }}>Uptime</span>
+                <span className="text-[11px] font-semibold" style={{ color: isRunning ? "#4ade80" : "#334155" }}>
+                  {isRunning ? "Online" : "Offline"}
                 </span>
-              </>
-            )}
-
-            <div className="w-px h-3" style={{ background: "rgba(255,255,255,0.07)" }} />
-
-            {/* DDoS badge */}
-            <span className="text-[10px] mono flex items-center gap-1" style={{ color: "#334155" }}>
-              <Shield size={9} style={{ color: "#60a5fa" }} /> Protected
-            </span>
+              </div>
+              <p className="text-sm font-bold mono" style={{ color: resources?.uptimeMs && resources.uptimeMs > 0 ? "#f1f5f9" : "#334155" }}>
+                {resources?.uptimeMs && resources.uptimeMs > 0 ? fmtUptime(resources.uptimeMs) : "—"}
+              </p>
+              {resources?.netRxBytes != null && (
+                <p className="text-[11px] mono mt-0.5" style={{ color: "#334155" }}>
+                  ↓{(resources.netRxBytes/1048576).toFixed(1)} ↑{(resources.netTxBytes/1048576).toFixed(1)} MB
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -632,7 +750,7 @@ export default function ServerConsole() {
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#f59e0b" }} />
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
                 </div>
-                <span className="text-[10px] mono hidden sm:block" style={{ color: "#1e293b" }}>{server?.name} — console</span>
+                <span className="text-[11px] mono hidden sm:block" style={{ color: "#1e293b" }}>{server?.name} — console</span>
               </div>
 
               <div className="flex items-center gap-1">
@@ -645,7 +763,7 @@ export default function ServerConsole() {
                       <Search size={9} className="ml-2 shrink-0" style={{ color: "#334155" }} />
                       <input autoFocus type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                         placeholder="Search…"
-                        className="flex-1 bg-transparent outline-none px-2 py-1 mono text-[10px]"
+                        className="flex-1 bg-transparent outline-none px-2 py-1 mono text-[11px]"
                         style={{ color: "#e2e8f0" }} />
                     </motion.div>
                   )}
@@ -669,18 +787,18 @@ export default function ServerConsole() {
 
                 {/* WS status chip */}
                 {wsStatus === "connected" ? (
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] mono ml-1"
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1"
                     style={{ background: "rgba(74,222,128,0.08)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.15)" }}>
                     <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> Live
                   </span>
                 ) : wsStatus === "connecting" ? (
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] mono ml-1"
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1"
                     style={{ background: "rgba(251,191,36,0.06)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.15)" }}>
                     <Loader2 size={8} className="animate-spin" /> …
                   </span>
                 ) : (
                   <button onClick={connect}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] mono ml-1 transition-all hover:opacity-80"
+                    className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1 transition-all hover:opacity-80"
                     style={{ background: "rgba(239,68,68,0.06)", color: "#f87171", border: "1px solid rgba(239,68,68,0.15)" }}>
                     <WifiOff size={8} /> Reconnect
                   </button>
@@ -690,7 +808,7 @@ export default function ServerConsole() {
 
             {/* Log output */}
             <div ref={logsRef} onScroll={handleConsoleScroll} onClick={() => inputRef.current?.focus()}
-              className="flex-1 overflow-y-auto cursor-text font-mono text-[11.5px] leading-relaxed"
+              className="flex-1 overflow-y-auto cursor-text font-mono text-[13px] leading-relaxed"
               style={{ background: "#060608", padding: "14px 18px" }}>
 
               <div className="mb-3 pb-2.5 select-none" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
@@ -710,7 +828,7 @@ export default function ServerConsole() {
                   return (
                     <div key={line.id} className="flex items-start gap-1.5 mb-px">
                       {s.badge && (
-                        <span className="shrink-0 text-[8px] font-bold px-1 py-px rounded mt-0.5"
+                        <span className="shrink-0 text-[10px] font-bold px-1 py-px rounded mt-0.5"
                           style={{ color: s.color, background: s.badgeBg, minWidth: 28, textAlign: "center" }}>
                           {s.badge}
                         </span>
@@ -737,7 +855,7 @@ export default function ServerConsole() {
                 onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder={wsStatus === "connected" ? "Enter command…" : "Not connected"}
                 disabled={wsStatus !== "connected"}
-                className="flex-1 bg-transparent outline-none py-3 font-mono text-[12px] disabled:opacity-40"
+                className="flex-1 bg-transparent outline-none py-3 font-mono text-[13px] disabled:opacity-40"
                 style={{ color: "#e2e8f0", caretColor: "transparent" }} />
               <button onClick={sendCommand} disabled={!input.trim() || wsStatus !== "connected"}
                 className="px-4 py-3 text-xs font-bold shrink-0 transition-all hover:opacity-90 disabled:opacity-25"
@@ -748,31 +866,31 @@ export default function ServerConsole() {
           </div>
 
           {/* ── Right sidebar ── */}
-          <div className="hidden lg:flex flex-col shrink-0 overflow-y-auto"
+          <div className="hidden lg:flex flex-col shrink-0 overflow-hidden"
             style={{ width: 232, background: "#09090f", borderLeft: "1px solid rgba(255,255,255,0.05)" }}>
 
             {/* Address + copy */}
             <div className="p-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-              <p className="text-[9px] mono uppercase tracking-widest mb-2" style={{ color: "#1e293b" }}>Address</p>
+              <p className="text-[10px] mono uppercase tracking-widest mb-2" style={{ color: "#1e293b" }}>Address</p>
               {displayAddr ? (
                 <button onClick={() => copyAddr(displayAddr)}
                   className="w-full flex items-center justify-between gap-2 p-2 rounded-lg transition-all hover:opacity-80"
                   style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <span className="text-[10px] mono truncate" style={{ color: "#4ade80" }}>{displayAddr}</span>
+                  <span className="text-[11px] mono truncate" style={{ color: "#4ade80" }}>{displayAddr}</span>
                   {copied ? <Check size={10} style={{ color: "#4ade80" }} /> : <Copy size={10} style={{ color: "#1e293b" }} />}
                 </button>
               ) : (
-                <p className="text-[10px] mono" style={{ color: "#1e293b" }}>Not assigned yet</p>
+                <p className="text-[11px] mono" style={{ color: "#1e293b" }}>Not assigned yet</p>
               )}
 
               {/* Players + Uptime inline under address */}
               <div className="flex gap-3 mt-2.5">
                 <div className="flex-1 rounded-lg p-2" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                  <p className="text-[8px] mono uppercase tracking-wider mb-0.5" style={{ color: "#1e293b" }}>Players</p>
+                  <p className="text-[10px] mono uppercase tracking-wider mb-0.5" style={{ color: "#1e293b" }}>Players</p>
                   <p className="text-sm font-bold" style={{ color: isRunning ? "#f1f5f9" : "#334155" }}>{isRunning ? "0" : "—"}</p>
                 </div>
                 <div className="flex-1 rounded-lg p-2" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                  <p className="text-[8px] mono uppercase tracking-wider mb-0.5" style={{ color: "#1e293b" }}>Uptime</p>
+                  <p className="text-[10px] mono uppercase tracking-wider mb-0.5" style={{ color: "#1e293b" }}>Uptime</p>
                   <p className="text-xs font-semibold" style={{ color: resources?.uptimeMs && resources.uptimeMs > 0 ? "#f1f5f9" : "#334155" }}>
                     {resources?.uptimeMs && resources.uptimeMs > 0 ? fmtUptime(resources.uptimeMs) : "—"}
                   </p>
@@ -783,7 +901,7 @@ export default function ServerConsole() {
             {/* Custom domain */}
             <div className="p-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[9px] mono uppercase tracking-widest" style={{ color: "#1e293b" }}>Custom Domain</p>
+                <p className="text-[10px] mono uppercase tracking-widest" style={{ color: "#1e293b" }}>Custom Domain</p>
                 {server?.hostname && !showHnForm && (
                   <button onClick={() => { setShowHnForm(true); setHnEdit(server.hostname ?? ""); setHnAvail(null); setHnError(""); }}
                     style={{ color: "#334155" }} className="hover:text-purple-400 transition-colors">
@@ -796,11 +914,11 @@ export default function ServerConsole() {
                 <div className="rounded-lg p-2" style={{ background: "rgba(124,58,237,0.07)", border: "1px solid rgba(124,58,237,0.14)" }}>
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span className={`w-1.5 h-1.5 rounded-full ${server.hostnameStatus === "active" ? "bg-green-400" : "bg-yellow-400"}`} />
-                    <span className="text-[9px] mono" style={{ color: "#475569" }}>
+                    <span className="text-[10px] mono" style={{ color: "#475569" }}>
                       {server.hostnameStatus === "active" ? "Active" : "Activating…"}
                     </span>
                   </div>
-                  <p className="text-[10px] mono break-all" style={{ color: "#c4b5fd" }}>{server.customAddress}</p>
+                  <p className="text-[11px] mono break-all" style={{ color: "#c4b5fd" }}>{server.customAddress}</p>
                 </div>
               ) : showHnForm ? (
                 <div className="space-y-1.5">
@@ -825,15 +943,15 @@ export default function ServerConsole() {
                         }
                       }}
                       placeholder="yourname"
-                      className="flex-1 bg-transparent outline-none px-2 py-1.5 mono text-[10px] min-w-0"
+                      className="flex-1 bg-transparent outline-none px-2 py-1.5 mono text-[11px] min-w-0"
                       style={{ color: "#e2e8f0" }} />
                     {hnChecking && <Loader2 size={9} className="animate-spin mr-2" style={{ color: "#475569" }} />}
                     {!hnChecking && hnAvail === true && <Check size={9} className="mr-2" style={{ color: "#4ade80" }} />}
                   </div>
-                  {hnError && <p className="text-[9px] mono" style={{ color: "#f87171" }}>{hnError}</p>}
+                  {hnError && <p className="text-[10px] mono" style={{ color: "#f87171" }}>{hnError}</p>}
                   <div className="flex gap-1.5">
                     <button onClick={() => { setShowHnForm(false); setHnError(""); }}
-                      className="flex-1 h-6 rounded-lg text-[9px] transition-colors"
+                      className="flex-1 h-6 rounded-lg text-[10px] transition-colors"
                       style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#475569" }}>Cancel</button>
                     <button disabled={hnSubmitting || !hnAvail || hnEdit.length < 3}
                       onClick={async () => {
@@ -851,7 +969,7 @@ export default function ServerConsole() {
                         } catch (err: any) { setHnError(err?.message || "Network error."); }
                         finally { setHnSubmitting(false); }
                       }}
-                      className="flex-1 h-6 rounded-lg text-[9px] font-semibold disabled:opacity-30"
+                      className="flex-1 h-6 rounded-lg text-[10px] font-semibold disabled:opacity-30"
                       style={{ background: "#7c3aed", color: "white" }}>
                       {hnSubmitting ? <Loader2 size={9} className="animate-spin mx-auto" /> : "Save"}
                     </button>
@@ -859,7 +977,7 @@ export default function ServerConsole() {
                 </div>
               ) : (
                 <button onClick={() => { setShowHnForm(true); setHnEdit(""); setHnAvail(null); setHnError(""); }}
-                  className="w-full h-7 flex items-center justify-center gap-1.5 rounded-lg text-[10px] font-medium transition-all hover:opacity-80"
+                  className="w-full h-7 flex items-center justify-center gap-1.5 rounded-lg text-[11px] font-medium transition-all hover:opacity-80"
                   style={{ background: "rgba(124,58,237,0.08)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.16)" }}>
                   <Globe size={10} /> Set Custom Address
                 </button>
@@ -867,31 +985,91 @@ export default function ServerConsole() {
             </div>
 
             {/* Quick Actions */}
-            <div className="py-1">
-              <p className="text-[9px] mono uppercase tracking-widest px-3 py-2" style={{ color: "#1e293b" }}>Quick Actions</p>
-              {([
-                { icon: Package,    label: "Install Plugin",   color: "#a78bfa", to: `/server/${id}/installer` },
-                { icon: UploadCloud,label: "Upload World",     color: "#60a5fa", action: () => { setShowUploadWorld(true); setWorldFile(null); setUploadWorldErr(""); setUploadWorldMsg(""); } },
-                { icon: HardDrive,  label: "Create Backup",    color: "#fbbf24", action: () => { setShowBackup(true); setBackupName(""); setBackupErr(""); setBackupMsg(""); } },
-                { icon: Calendar,   label: "Schedules",        color: "#4ade80", to: `/server/${id}/schedules` },
-                { icon: List,       label: "Whitelist",        color: "#f87171", action: () => { setShowWhitelist(true); setWlPlayer(""); setWlErr(""); setWlMsg(""); } },
-                { icon: Zap,        label: "Custom Address",   color: "#c084fc", action: () => { setShowHnForm(true); setHnEdit(server?.hostname ?? ""); setHnAvail(null); setHnError(""); } },
-              ] as const).map(item => {
-                const Comp: any = (item as any).to ? Link : "button";
-                const extra = (item as any).to ? { to: (item as any).to } : { onClick: (item as any).action };
-                return (
-                  <Comp key={item.label} {...extra}
-                    className="flex items-center gap-2.5 px-3 py-2 w-full text-left transition-all"
-                    onMouseEnter={(e: any) => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
-                    onMouseLeave={(e: any) => e.currentTarget.style.background = "transparent"}>
-                    <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-                      style={{ background: `${item.color}10`, border: `1px solid ${item.color}1a` }}>
+            <div className="p-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              <p className="text-[10px] mono uppercase tracking-widest mb-2" style={{ color: "#1e293b" }}>Quick Actions</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {([
+                  { icon: Package,    label: "Plugins",     color: "#a78bfa", to: `/server/${id}/installer` },
+                  { icon: UploadCloud,label: "Upload World",color: "#60a5fa", action: () => { setShowUploadWorld(true); setWorldFile(null); setUploadWorldErr(""); setUploadWorldMsg(""); } },
+                  { icon: HardDrive,  label: "Backup",      color: "#fbbf24", action: () => { setShowBackup(true); setBackupName(""); setBackupErr(""); setBackupMsg(""); } },
+                  { icon: Calendar,   label: "Schedules",   color: "#4ade80", to: `/server/${id}/schedules` },
+                  { icon: List,       label: "Whitelist",   color: "#f87171", action: () => { setShowWhitelist(true); setWlPlayer(""); setWlErr(""); setWlMsg(""); } },
+                  { icon: Zap,        label: "Domain",      color: "#c084fc", action: () => { setShowHnForm(true); setHnEdit(server?.hostname ?? ""); setHnAvail(null); setHnError(""); } },
+                ] as const).map(item => {
+                  const Comp: any = (item as any).to ? Link : "button";
+                  const extra = (item as any).to ? { to: (item as any).to } : { onClick: (item as any).action };
+                  return (
+                    <Comp key={item.label} {...extra}
+                      className="flex items-center gap-2 px-2.5 py-2 rounded-lg w-full text-left transition-all hover:brightness-110"
+                      style={{ background: `${item.color}0f`, border: `1px solid ${item.color}22` }}>
                       <item.icon size={11} style={{ color: item.color }} />
+                      <span className="text-[11px] font-semibold" style={{ color: item.color }}>{item.label}</span>
+                    </Comp>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── AI Chat ── */}
+            <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex items-center gap-2 px-3 py-2.5 shrink-0"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center"
+                  style={{ background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.22)" }}>
+                  <Sparkles size={11} style={{ color: "#a78bfa" }} />
+                </div>
+                <span className="text-[11px] font-semibold" style={{ color: "#94a3b8" }}>NetherNodes AI</span>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2" style={{ minHeight: 0 }}>
+                {aiMessages.length === 0 ? (
+                  <div className="text-center py-4">
+                    <Sparkles size={18} className="mx-auto mb-2 opacity-20" style={{ color: "#a78bfa" }} />
+                    <p className="text-[11px]" style={{ color: "#334155" }}>Ask me anything about your server, plugins, or hosting.</p>
+                  </div>
+                ) : (
+                  aiMessages.map((m, i) => (
+                    <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                      <div className="max-w-[90%] rounded-xl px-2.5 py-1.5 text-[11px] leading-relaxed"
+                        style={m.role === "user"
+                          ? { background: "rgba(124,58,237,0.18)", border: "1px solid rgba(124,58,237,0.28)", color: "#e2e8f0" }
+                          : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", color: "#94a3b8" }}>
+                        {m.content}
+                      </div>
                     </div>
-                    <span className="text-[11px] font-medium" style={{ color: "#94a3b8" }}>{item.label}</span>
-                  </Comp>
-                );
-              })}
+                  ))
+                )}
+                {aiLoading && (
+                  <div className="flex justify-start">
+                    <div className="rounded-xl px-2.5 py-1.5 flex items-center gap-1.5"
+                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                      <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                )}
+                <div ref={aiChatEndRef} />
+              </div>
+
+              {/* Input */}
+              <div className="shrink-0 flex items-center gap-1.5 p-2"
+                style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                <input
+                  value={aiInput}
+                  onChange={e => setAiInput(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendAiMessage()}
+                  placeholder="Ask AI…"
+                  className="flex-1 bg-transparent outline-none text-[11px] px-2.5 py-1.5 rounded-lg mono"
+                  style={{ color: "#e2e8f0", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+                />
+                <button onClick={sendAiMessage} disabled={!aiInput.trim() || aiLoading}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-90 disabled:opacity-30 shrink-0"
+                  style={{ background: "rgba(124,58,237,0.25)", border: "1px solid rgba(124,58,237,0.35)" }}>
+                  <Send size={11} style={{ color: "#a78bfa" }} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -916,7 +1094,7 @@ export default function ServerConsole() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Create Backup</p>
-                  <p className="text-[10px]" style={{ color: "#475569" }}>Snapshot your server now</p>
+                  <p className="text-[11px]" style={{ color: "#475569" }}>Snapshot your server now</p>
                 </div>
                 <button onClick={() => setShowBackup(false)} style={{ color: "#334155" }}><X size={14} /></button>
               </div>
@@ -959,7 +1137,7 @@ export default function ServerConsole() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Whitelist Player</p>
-                  <p className="text-[10px]" style={{ color: "#475569" }}>Add a Minecraft player</p>
+                  <p className="text-[11px]" style={{ color: "#475569" }}>Add a Minecraft player</p>
                 </div>
                 <button onClick={() => setShowWhitelist(false)} style={{ color: "#334155" }}><X size={14} /></button>
               </div>
@@ -1002,7 +1180,7 @@ export default function ServerConsole() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Upload World</p>
-                  <p className="text-[10px]" style={{ color: "#475569" }}>Upload a world folder or zip</p>
+                  <p className="text-[11px]" style={{ color: "#475569" }}>Upload a world folder or zip</p>
                 </div>
                 <button onClick={() => setShowUploadWorld(false)} style={{ color: "#334155" }}><X size={14} /></button>
               </div>
@@ -1022,7 +1200,7 @@ export default function ServerConsole() {
                   <>
                     <Check size={20} className="mb-2" style={{ color: "#4ade80" }} />
                     <p className="text-sm font-semibold" style={{ color: "#4ade80" }}>{worldFile.name}</p>
-                    <p className="text-[10px] mt-1" style={{ color: "#475569" }}>{(worldFile.size/1048576).toFixed(2)} MB — click to change</p>
+                    <p className="text-[11px] mt-1" style={{ color: "#475569" }}>{(worldFile.size/1048576).toFixed(2)} MB — click to change</p>
                   </>
                 ) : (
                   <>
@@ -1030,7 +1208,7 @@ export default function ServerConsole() {
                     <p className="text-sm font-semibold" style={{ color: worldDragOver ? "#60a5fa" : "#64748b" }}>
                       {worldDragOver ? "Drop it!" : "Click or drag & drop"}
                     </p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "#1e293b" }}>Supports .zip, .dat, .mca, .mcworld</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: "#1e293b" }}>Supports .zip, .dat, .mca, .mcworld</p>
                   </>
                 )}
               </div>
@@ -1068,13 +1246,13 @@ export default function ServerConsole() {
                 </div>
                 <div>
                   <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Delete Server?</p>
-                  <p className="text-[10px]" style={{ color: "#475569" }}>This cannot be undone</p>
+                  <p className="text-[11px]" style={{ color: "#475569" }}>This cannot be undone</p>
                 </div>
               </div>
               <p className="text-xs mb-3 px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.14)", color: "#fca5a5" }}>
                 All files and data will be permanently deleted.
               </p>
-              <label className="text-[9px] mono uppercase tracking-wider block mb-1.5" style={{ color: "#475569" }}>
+              <label className="text-[10px] mono uppercase tracking-wider block mb-1.5" style={{ color: "#475569" }}>
                 Type <strong style={{ color: "#f1f5f9" }}>{server?.name}</strong> to confirm
               </label>
               <input type="text" value={deleteInput} onChange={e => setDeleteInput(e.target.value)}
