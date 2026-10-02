@@ -7,13 +7,13 @@ import {
   Globe, Edit3, Trash2, Shield, Clock, Users as UsersIcon,
   HardDrive, Cpu, MemoryStick, Download, Search, X,
   ChevronDown, ChevronUp, Package, Calendar, List, Zap,
-  Server, Activity, UploadCloud, Menu,
+  Server, Activity, UploadCloud, Menu, ArrowLeft,
 } from "lucide-react";
 import ServerSidebar from "@/components/ServerSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
 
-/* ───────────────────────────── Types ───────────────────────────────── */
+/* ─── Types ──────────────────────────────────────────────────────────── */
 interface ServerData {
   id: string; name: string; status: string;
   ram: string; cpu: string; ssd?: string;
@@ -25,23 +25,22 @@ interface ServerData {
   customAddress?: string | null;
   node?: string;
 }
-
 interface LogLine {
   id: number; text: string;
   type: "info" | "warn" | "error" | "success" | "input" | "system";
 }
 
-/* ───────────────────────────── Helpers ─────────────────────────────── */
+/* ─── Helpers ────────────────────────────────────────────────────────── */
 let _lid = 0;
 const mkLine = (text: string, type: LogLine["type"] = "info"): LogLine => ({ id: ++_lid, text, type });
 
 function stripAnsi(s: string) {
   // eslint-disable-next-line no-control-regex
-  return s.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, "").replace(/\x1B\[[0-9;]*m/g, "").replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, "");
+  return s.replace(/\x1B\[[0-9;]*[a-zA-Z]/g,"").replace(/\x1B\[[0-9;]*m/g,"").replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g,"");
 }
 function rebrand(s: string) {
-  return s.replace(/\[Pterodactyl Daemon\]/gi, "[NetherNodes]").replace(/Pterodactyl Daemon/gi, "NetherNodes")
-    .replace(/container@pterodactyl~/gi, "server@nethernodes ~").replace(/Pterodactyl/gi, "NetherNodes");
+  return s.replace(/\[Pterodactyl Daemon\]/gi,"[NetherNodes]").replace(/Pterodactyl Daemon/gi,"NetherNodes")
+    .replace(/container@pterodactyl~/gi,"server@nethernodes ~").replace(/Pterodactyl/gi,"NetherNodes");
 }
 function processLine(raw: string) { return rebrand(stripAnsi(raw)).trim(); }
 function classifyLine(text: string): LogLine["type"] {
@@ -54,36 +53,33 @@ function classifyLine(text: string): LogLine["type"] {
       t.includes("loaded") || t.includes("finished") || t.includes("connected to console")) return "success";
   return "info";
 }
-function nowStr() { return new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" }); }
-function fmtBytes(b: number) { return b >= 1073741824 ? `${(b / 1073741824).toFixed(2)} GB` : `${(b / 1048576).toFixed(0)} MB`; }
+function nowStr() { return new Date().toLocaleTimeString("en-IN",{ hour:"2-digit", minute:"2-digit", second:"2-digit" }); }
+function fmtBytes(b: number) { return b >= 1073741824 ? `${(b/1073741824).toFixed(1)}GB` : `${(b/1048576).toFixed(0)}MB`; }
 function fmtUptime(ms: number) {
-  if (ms <= 0) return "Offline";
-  const s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60), d = Math.floor(h / 24);
-  if (d > 0) return `${d}d ${h % 24}h ${m % 60}m`;
-  if (h > 0) return `${h}h ${m % 60}m`;
-  return `${m}m ${s % 60}s`;
+  if (ms <= 0) return "—";
+  const s = Math.floor(ms/1000), m = Math.floor(s/60), h = Math.floor(m/60), d = Math.floor(h/24);
+  if (d > 0) return `${d}d ${h%24}h`;
+  if (h > 0) return `${h}h ${m%60}m`;
+  return `${m}m ${s%60}s`;
 }
 function parseRamMB(ram?: string) {
   if (!ram) return 0;
   const n = parseFloat(ram);
-  if (ram.toLowerCase().includes("gb")) return n * 1024;
-  return n;
+  return ram.toLowerCase().includes("gb") ? n * 1024 : n;
 }
 
-/* ─── Log line colors ───────────────────────────────────────────────── */
+/* ─── Constants ──────────────────────────────────────────────────────── */
 const LINE_STYLE: Record<LogLine["type"], { color: string; badge?: string; badgeBg?: string }> = {
-  error:   { color: "#f87171", badge: "ERR",  badgeBg: "rgba(239,68,68,0.15)" },
-  warn:    { color: "#fbbf24", badge: "WARN", badgeBg: "rgba(251,191,36,0.12)" },
-  success: { color: "#4ade80", badge: "INFO", badgeBg: "rgba(74,222,128,0.1)" },
-  info:    { color: "#94a3b8" },
-  input:   { color: "#7dd3fc", badge: "CMD",  badgeBg: "rgba(125,211,252,0.1)" },
-  system:  { color: "#c084fc", badge: "SYS",  badgeBg: "rgba(192,132,252,0.1)" },
+  error:   { color: "#f87171", badge: "ERR",  badgeBg: "rgba(239,68,68,0.12)" },
+  warn:    { color: "#fbbf24", badge: "WARN", badgeBg: "rgba(251,191,36,0.10)" },
+  success: { color: "#4ade80", badge: "OK",   badgeBg: "rgba(74,222,128,0.08)" },
+  info:    { color: "#64748b" },
+  input:   { color: "#7dd3fc", badge: "CMD",  badgeBg: "rgba(125,211,252,0.08)" },
+  system:  { color: "#a78bfa", badge: "SYS",  badgeBg: "rgba(167,139,250,0.08)" },
 };
-
-/* ─── Status config ─────────────────────────────────────────────────── */
 const STATUS_CFG: Record<string, { color: string; dot: string; label: string }> = {
   running:    { color: "#4ade80", dot: "#22c55e", label: "Online" },
-  stopped:    { color: "#64748b", dot: "#475569", label: "Offline" },
+  stopped:    { color: "#475569", dot: "#334155", label: "Offline" },
   starting:   { color: "#fbbf24", dot: "#f59e0b", label: "Starting" },
   stopping:   { color: "#fbbf24", dot: "#f59e0b", label: "Stopping" },
   installing: { color: "#60a5fa", dot: "#3b82f6", label: "Installing" },
@@ -96,63 +92,64 @@ export default function ServerConsole() {
   const navigate = useNavigate();
   const { user, loading: authLoading, token, logout } = useAuth();
 
-  const [server, setServer]             = useState<ServerData | null>(null);
+  const LOG_KEY    = `nn_console_logs_${id}`;
+  const MAX_STORED = 600;
+  const loadStoredLogs = (): LogLine[] => {
+    try { const r = sessionStorage.getItem(LOG_KEY); return r ? JSON.parse(r) as LogLine[] : []; } catch { return []; }
+  };
+
+  /* ── state ── */
+  const [server, setServer]               = useState<ServerData | null>(null);
   const [loadingServer, setLoadingServer] = useState(true);
-  const [serverError, setServerError]   = useState("");
-  const [logs, setLogs]                 = useState<LogLine[]>([]);
-  const [input, setInput]               = useState("");
-  const [history, setHistory]           = useState<string[]>([]);
-  const [histIdx, setHistIdx]           = useState(-1);
-  const [wsStatus, setWsStatus]         = useState<"disconnected" | "connecting" | "connected" | "error">("disconnected");
-  const [autoScroll, setAutoScroll]     = useState(true);
-  const [searchOpen, setSearchOpen]     = useState(false);
-  const [searchQuery, setSearchQuery]   = useState("");
-  const [blink, setBlink]               = useState(true);
-  const [powerLoading, setPowerLoading] = useState<string | null>(null);
-  const [copied, setCopied]             = useState(false);
-  const [showDelete, setShowDelete]     = useState(false);
-
-  /* mobile nav drawer */
+  const [serverError, setServerError]     = useState("");
+  const [logs, setLogs]                   = useState<LogLine[]>(() => loadStoredLogs());
+  const [input, setInput]                 = useState("");
+  const [history, setHistory]             = useState<string[]>([]);
+  const [histIdx, setHistIdx]             = useState(-1);
+  const [wsStatus, setWsStatus]           = useState<"disconnected"|"connecting"|"connected"|"error">("disconnected");
+  const [autoScroll, setAutoScroll]       = useState(true);
+  const [searchOpen, setSearchOpen]       = useState(false);
+  const [searchQuery, setSearchQuery]     = useState("");
+  const [blink, setBlink]                 = useState(true);
+  const [powerLoading, setPowerLoading]   = useState<string | null>(null);
+  const [copied, setCopied]               = useState(false);
+  const [showDelete, setShowDelete]       = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [deleteInput, setDeleteInput]   = useState("");
-  const [deleting, setDeleting]         = useState(false);
-  const [showHnForm, setShowHnForm]     = useState(false);
-
-  /* upload world popup */
+  const [deleteInput, setDeleteInput]     = useState("");
+  const [deleting, setDeleting]           = useState(false);
+  const [showHnForm, setShowHnForm]       = useState(false);
   const [showUploadWorld, setShowUploadWorld] = useState(false);
   const [worldFile, setWorldFile]             = useState<File | null>(null);
   const [worldDragOver, setWorldDragOver]     = useState(false);
   const [uploadingWorld, setUploadingWorld]   = useState(false);
   const [uploadWorldMsg, setUploadWorldMsg]   = useState("");
   const [uploadWorldErr, setUploadWorldErr]   = useState("");
-  const worldInputRef                         = useRef<HTMLInputElement>(null);
-
-  /* create backup popup */
+  const worldInputRef = useRef<HTMLInputElement>(null);
   const [showBackup, setShowBackup]       = useState(false);
   const [backupName, setBackupName]       = useState("");
   const [creatingBackup, setCreatingBackup] = useState(false);
   const [backupMsg, setBackupMsg]         = useState("");
   const [backupErr, setBackupErr]         = useState("");
-
-  /* whitelist popup */
-  const [showWhitelist, setShowWhitelist]   = useState(false);
-  const [wlPlayer, setWlPlayer]             = useState("");
-  const [wlAdding, setWlAdding]             = useState(false);
-  const [wlMsg, setWlMsg]                   = useState("");
-  const [wlErr, setWlErr]                   = useState("");
-  const [hnEdit, setHnEdit]             = useState("");
-  const [hnChecking, setHnChecking]     = useState(false);
-  const [hnAvail, setHnAvail]           = useState<boolean | null>(null);
-  const [hnSubmitting, setHnSubmitting] = useState(false);
-  const [hnError, setHnError]           = useState("");
-  const [resources, setResources]       = useState<{
+  const [showWhitelist, setShowWhitelist] = useState(false);
+  const [wlPlayer, setWlPlayer]           = useState("");
+  const [wlAdding, setWlAdding]           = useState(false);
+  const [wlMsg, setWlMsg]                 = useState("");
+  const [wlErr, setWlErr]                 = useState("");
+  const [hnEdit, setHnEdit]               = useState("");
+  const [hnChecking, setHnChecking]       = useState(false);
+  const [hnAvail, setHnAvail]             = useState<boolean | null>(null);
+  const [hnSubmitting, setHnSubmitting]   = useState(false);
+  const [hnError, setHnError]             = useState("");
+  const [resources, setResources] = useState<{
     available: boolean; cpu: number; memoryBytes: number;
     diskBytes: number; netRxBytes: number; netTxBytes: number; uptimeMs: number;
+    limitMemoryMB: number | null; limitDiskMB: number | null; limitCpu: number | null;
   } | null>(null);
   const [cpuHistory, setCpuHistory] = useState<{ t: number; v: number }[]>(
     Array.from({ length: 30 }, (_, i) => ({ t: i, v: 0 }))
   );
 
+  /* ── refs ── */
   const wsRef    = useRef<WebSocket | null>(null);
   const logsRef  = useRef<HTMLDivElement>(null);
   const logsEnd  = useRef<HTMLDivElement>(null);
@@ -160,15 +157,11 @@ export default function ServerConsole() {
   const tokenRef = useRef("");
   const tickRef  = useRef(30);
 
-  /* cursor blink */
+  /* ── effects ── */
   useEffect(() => { const t = setInterval(() => setBlink(b => !b), 500); return () => clearInterval(t); }, []);
-
-  /* auth guard */
   useEffect(() => {
     if (!authLoading && !user) navigate("/login", { state: { from: `/server/${id}/console` } });
   }, [authLoading, user, navigate, id]);
-
-  /* load server */
   useEffect(() => {
     if (!user || !id) return;
     (async () => {
@@ -186,8 +179,12 @@ export default function ServerConsole() {
   }, [user, id, token, logout, navigate]);
 
   const addLog = useCallback((text: string, type: LogLine["type"] = "info") => {
-    setLogs(prev => [...prev.slice(-1200), mkLine(text, type)]);
-  }, []);
+    setLogs(prev => {
+      const next = [...prev.slice(-1200), mkLine(text, type)];
+      try { sessionStorage.setItem(LOG_KEY, JSON.stringify(next.slice(-MAX_STORED))); } catch {}
+      return next;
+    });
+  }, [LOG_KEY, MAX_STORED]);
 
   useEffect(() => {
     if (autoScroll) logsEnd.current?.scrollIntoView({ behavior: "auto" });
@@ -199,10 +196,9 @@ export default function ServerConsole() {
     setAutoScroll(el.scrollHeight - el.scrollTop - el.clientHeight < 40);
   };
 
-  /* WebSocket */
+  /* ── WebSocket ── */
   const connect = useCallback(async () => {
     if (!id || wsRef.current?.readyState === WebSocket.OPEN) return;
-    // Don't attempt to connect if the tab is hidden — wait until visible
     if (document.visibilityState === "hidden") return;
     setWsStatus("connecting");
     addLog(`[${nowStr()}] Connecting…`, "system");
@@ -231,7 +227,6 @@ export default function ServerConsole() {
             case "token expired":
               addLog(`[${nowStr()}] Session expired.`, "warn");
               ws.close();
-              // Only reconnect if the tab is visible
               if (document.visibilityState === "visible") setTimeout(connect, 1500);
               break;
             case "console output":
@@ -242,20 +237,12 @@ export default function ServerConsole() {
         } catch {}
       };
       ws.onerror = () => {
-        // Only log as error if tab is visible — silent when AFK
-        if (document.visibilityState === "visible") {
-          setWsStatus("error");
-          addLog(`[${nowStr()}] Connection error.`, "error");
-        } else {
-          setWsStatus("disconnected");
-        }
+        if (document.visibilityState === "visible") { setWsStatus("error"); addLog(`[${nowStr()}] Connection error.`, "error"); }
+        else setWsStatus("disconnected");
       };
       ws.onclose = (e) => {
         setWsStatus("disconnected");
-        // Code 1006 = abnormal closure (Pterodactyl idle timeout after ~9 min)
-        // Only log + reconnect if the user is actively viewing the tab
-        if (e.code === 1000) return; // intentional close — no action
-        if (document.visibilityState === "hidden") return; // tab hidden — reconnect on visibility change
+        if (e.code === 1000 || document.visibilityState === "hidden") return;
         addLog(`[${nowStr()}] Disconnected (${e.code}).`, "warn");
       };
     } catch (err: any) { addLog(`[${nowStr()}] Failed: ${err?.message}`, "error"); setWsStatus("error"); }
@@ -267,20 +254,17 @@ export default function ServerConsole() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [server?.id]);
 
-  /* Reconnect when the user returns to this tab after being AFK */
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === "visible" &&
           wsRef.current?.readyState !== WebSocket.OPEN &&
-          wsRef.current?.readyState !== WebSocket.CONNECTING) {
-        connect();
-      }
+          wsRef.current?.readyState !== WebSocket.CONNECTING) connect();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [connect]);
 
-  /* poll resources */
+  /* ── Resource poll ── */
   useEffect(() => {
     if (!user || !id) return;
     const poll = async () => {
@@ -292,6 +276,17 @@ export default function ServerConsole() {
           if (d.available) {
             const tick = tickRef.current++;
             setCpuHistory(prev => [...prev.slice(1), { t: tick, v: d.cpu }]);
+            if (d.limitMemoryMB != null || d.limitDiskMB != null || d.limitCpu != null) {
+              setServer(prev => {
+                if (!prev) return prev;
+                const updates: Partial<typeof prev> = {};
+                if (d.limitMemoryMB != null) { const gb = d.limitMemoryMB/1024; updates.ram = gb%1===0?`${gb}GB`:`${gb.toFixed(1)}GB`; }
+                if (d.limitDiskMB != null)   { const gb = d.limitDiskMB/1024;   updates.ssd = gb%1===0?`${gb}GB`:`${gb.toFixed(1)}GB`; }
+                if (d.limitCpu != null)       { updates.cpu = `${d.limitCpu}%`; }
+                const changed = (Object.keys(updates) as (keyof typeof updates)[]).some(k => updates[k] !== prev[k as keyof typeof prev]);
+                return changed ? { ...prev, ...updates } : prev;
+              });
+            }
           }
         }
       } catch {}
@@ -301,7 +296,7 @@ export default function ServerConsole() {
     return () => clearInterval(iv);
   }, [user, id, token]);
 
-  /* send command */
+  /* ── Handlers ── */
   const sendCommand = () => {
     const cmd = input.trim();
     if (!cmd || wsRef.current?.readyState !== WebSocket.OPEN) return;
@@ -310,14 +305,12 @@ export default function ServerConsole() {
     setHistory(h => [cmd, ...h.slice(0, 49)]);
     setHistIdx(-1); setInput(""); setAutoScroll(true);
   };
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") { sendCommand(); return; }
-    if (e.key === "ArrowUp") { e.preventDefault(); const n = Math.min(histIdx + 1, history.length - 1); setHistIdx(n); setInput(history[n] ?? ""); }
-    if (e.key === "ArrowDown") { e.preventDefault(); const n = Math.max(histIdx - 1, -1); setHistIdx(n); setInput(n === -1 ? "" : history[n] ?? ""); }
+    if (e.key === "ArrowUp")   { e.preventDefault(); const n = Math.min(histIdx+1, history.length-1); setHistIdx(n); setInput(history[n]??""); }
+    if (e.key === "ArrowDown") { e.preventDefault(); const n = Math.max(histIdx-1, -1); setHistIdx(n); setInput(n===-1?"":history[n]??""); }
   };
-
-  const sendPower = async (signal: "start" | "stop" | "restart" | "kill") => {
+  const sendPower = async (signal: "start"|"stop"|"restart"|"kill") => {
     setPowerLoading(signal);
     try {
       const res = await apiFetch(`/api/servers/${id}/power`, {
@@ -330,7 +323,6 @@ export default function ServerConsole() {
     } catch { addLog(`[${nowStr()}] Network error.`, "error"); }
     finally { setPowerLoading(null); }
   };
-
   const deleteServer = async () => {
     if (deleteInput !== server?.name) return;
     setDeleting(true);
@@ -341,171 +333,131 @@ export default function ServerConsole() {
     } catch { addLog("Network error.", "error"); setShowDelete(false); }
     finally { setDeleting(false); }
   };
-
   const copyAddr = (addr: string) => {
     navigator.clipboard.writeText(addr).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   };
-
   const downloadLogs = () => {
     const blob = new Blob([logs.map(l => l.text).join("\n")], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `${server?.name ?? "server"}-console.log`; a.click(); URL.revokeObjectURL(url);
+    a.href = url; a.download = `${server?.name??"server"}-console.log`; a.click(); URL.revokeObjectURL(url);
   };
-
   const uploadWorld = async () => {
     if (!worldFile) return;
     setUploadingWorld(true); setUploadWorldErr(""); setUploadWorldMsg("");
     try {
       const ext = worldFile.name.split(".").pop()?.toLowerCase() ?? "";
-      // Minecraft world files are always binary — zip, mca, dat, mcworld etc.
-      // Use the base64 encoding path so they survive JSON transport intact.
-      const BINARY_EXTS = new Set(["zip","tar","gz","rar","7z","mca","dat","mcworld","nbt","ldb","ldb","db"]);
+      const BINARY_EXTS = new Set(["zip","tar","gz","rar","7z","mca","dat","mcworld","nbt","ldb","db"]);
       const isBinary = BINARY_EXTS.has(ext);
-
-      // Target path: zip/archive → server root; everything else → /worlds/
-      const targetPath = (ext === "zip" || ext === "tar" || ext === "gz" || ext === "rar" || ext === "7z")
-        ? `/${worldFile.name}`
-        : `/worlds/${worldFile.name}`;
-
+      const targetPath = ["zip","tar","gz","rar","7z"].includes(ext) ? `/${worldFile.name}` : `/worlds/${worldFile.name}`;
       let body: string;
       if (isBinary) {
-        const buf   = await worldFile.arrayBuffer();
-        const bytes = new Uint8Array(buf);
-        let bin = "";
+        const buf = await worldFile.arrayBuffer(); const bytes = new Uint8Array(buf); let bin = "";
         for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
         body = JSON.stringify({ content: btoa(bin), encoding: "base64" });
-      } else {
-        body = JSON.stringify({ content: await worldFile.text() });
-      }
-
-      const res = await apiFetch(
-        `/api/servers/${id}/files/write?file=${encodeURIComponent(targetPath)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
-          body,
-        }
-      );
-      if (!res.ok) {
-        let msg = "Upload failed.";
-        try { const e = await res.json(); msg = e.error || msg; } catch {}
-        setUploadWorldErr(msg);
-        return;
-      }
-      setUploadWorldMsg(`✓ ${worldFile.name} uploaded successfully.`);
-      setWorldFile(null);
+      } else { body = JSON.stringify({ content: await worldFile.text() }); }
+      const res = await apiFetch(`/api/servers/${id}/files/write?file=${encodeURIComponent(targetPath)}`, {
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` }, body,
+      });
+      if (!res.ok) { let m = "Upload failed."; try { const e = await res.json(); m = e.error||m; } catch {} setUploadWorldErr(m); return; }
+      setUploadWorldMsg(`✓ ${worldFile.name} uploaded.`); setWorldFile(null);
       setTimeout(() => { setShowUploadWorld(false); setUploadWorldMsg(""); }, 2500);
-    } catch (err: any) {
-      setUploadWorldErr(err?.message && !err.message.includes("NetworkError") && !err.message.includes("fetch")
-        ? err.message
-        : "Could not reach the server. Check your connection and try again.");
-    }
+    } catch (err: any) { setUploadWorldErr(err?.message||"Upload failed."); }
     finally { setUploadingWorld(false); }
   };
-
   const createBackupNow = async () => {
     setCreatingBackup(true); setBackupErr(""); setBackupMsg("");
     try {
       const name = backupName.trim() || `Backup ${new Date().toLocaleString("en-IN")}`;
       const res = await apiFetch(`/api/servers/${id}/backups`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
         body: JSON.stringify({ name }),
       });
-      let data: any = {};
-      try { data = await res.json(); } catch {}
-      if (!res.ok) { setBackupErr(data.error || `Backup failed (${res.status}).`); return; }
-      setBackupMsg("✓ Backup started — check the Backups tab for progress.");
-      setBackupName("");
+      let data: any = {}; try { data = await res.json(); } catch {}
+      if (!res.ok) { setBackupErr(data.error||`Backup failed (${res.status}).`); return; }
+      setBackupMsg("✓ Backup started."); setBackupName("");
       setTimeout(() => { setShowBackup(false); setBackupMsg(""); }, 3000);
-    } catch (err: any) {
-      setBackupErr(err?.message && !err.message.includes("fetch")
-        ? err.message : "Could not reach the server. Check your connection.");
-    }
+    } catch (err: any) { setBackupErr(err?.message||"Network error."); }
     finally { setCreatingBackup(false); }
   };
-
   const addToWhitelist = async () => {
     if (!wlPlayer.trim()) { setWlErr("Enter a player name."); return; }
     setWlAdding(true); setWlErr(""); setWlMsg("");
     try {
       const res = await apiFetch(`/api/servers/${id}/whitelist`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
         body: JSON.stringify({ username: wlPlayer.trim() }),
       });
-      let data: any = {};
-      try { data = await res.json(); } catch {}
-      if (!res.ok) { setWlErr(data.error || `Failed to add player (${res.status}).`); return; }
-      setWlMsg(`✓ ${wlPlayer.trim()} added to whitelist.`);
-      setWlPlayer("");
+      let data: any = {}; try { data = await res.json(); } catch {}
+      if (!res.ok) { setWlErr(data.error||`Failed (${res.status}).`); return; }
+      setWlMsg(`✓ ${wlPlayer.trim()} added.`); setWlPlayer("");
       setTimeout(() => { setShowWhitelist(false); setWlMsg(""); }, 2500);
-    } catch (err: any) {
-      setWlErr(err?.message && !err.message.includes("fetch")
-        ? err.message : "Could not reach the server. Check your connection.");
-    }
+    } catch (err: any) { setWlErr(err?.message||"Network error."); }
     finally { setWlAdding(false); }
   };
 
+  /* ── Derived values ── */
   const filteredLogs = searchQuery ? logs.filter(l => l.text.toLowerCase().includes(searchQuery.toLowerCase())) : logs;
-  const cfg = STATUS_CFG[server?.status ?? ""] ?? STATUS_CFG.stopped;
-  const isRunning = server?.status === "running";
-  const displayAddr = server?.customAddress ?? server?.host ?? null;
-  const ramLimitMB = parseRamMB(server?.ram);
-  const ramUsedMB  = resources ? resources.memoryBytes / 1048576 : 0;
-  const ramPct     = ramLimitMB > 0 ? Math.min((ramUsedMB / ramLimitMB) * 100, 100) : 0;
-  const cpuPct     = resources?.cpu ?? 0;
+  const cfg          = STATUS_CFG[server?.status ?? ""] ?? STATUS_CFG.stopped;
+  const isRunning    = server?.status === "running";
+  const displayAddr  = server?.customAddress ?? server?.host ?? null;
+  const ramLimitMB   = parseRamMB(server?.ram);
+  const ramUsedMB    = resources ? resources.memoryBytes / 1048576 : 0;
+  const ramPct       = ramLimitMB > 0 ? Math.min((ramUsedMB / ramLimitMB) * 100, 100) : 0;
+  const cpuPct       = resources?.cpu ?? 0;
+  const diskLimitMB  = resources?.limitDiskMB ?? (() => {
+    const s = server?.ssd ?? ""; const n = parseFloat(s);
+    if (!n) return 0;
+    return s.toUpperCase().includes("GB") ? n * 1024 : n;
+  })();
+  const diskUsedMB   = resources ? resources.diskBytes / 1048576 : 0;
+  const diskPct      = diskLimitMB > 0 ? Math.min((diskUsedMB / diskLimitMB) * 100, 100) : 0;
 
-  /* ── loading / error ── */
+  /* ── Loading / error states ── */
   if (authLoading || loadingServer) return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="min-h-screen bg-background flex items-center justify-center" style={{ background: "#080810" }}>
       <div className="flex flex-col items-center gap-3">
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-          style={{ background: "linear-gradient(135deg,#1a0d2e,#0d1a2e)", border: "1px solid rgba(139,92,246,0.3)" }}>
-          <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#a855f7" }} />
+        <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
+          style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)" }}>
+          <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#a78bfa" }} />
         </div>
-        <p className="text-sm" style={{ color: "#64748b" }}>Connecting to console…</p>
+        <p className="text-xs mono" style={{ color: "#475569" }}>Connecting to console…</p>
       </div>
     </div>
   );
-
   if (serverError) return (
-    <div className="h-screen bg-background flex items-center justify-center">
+    <div className="h-screen flex items-center justify-center" style={{ background: "#080810" }}>
       <div className="text-center px-4">
-        <AlertCircle className="w-10 h-10 text-primary mx-auto mb-4" />
-        <p className="font-semibold mb-2">Console unavailable</p>
-        <p className="text-sm mb-6" style={{ color: "#64748b" }}>{serverError}</p>
-        <Link to="/dashboard" className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold"
-          style={{ background: "#7c3aed", color: "white" }}>Back to Dashboard</Link>
+        <AlertCircle className="w-8 h-8 mx-auto mb-3" style={{ color: "#f87171" }} />
+        <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>Console unavailable</p>
+        <p className="text-xs mb-5" style={{ color: "#475569" }}>{serverError}</p>
+        <Link to="/dashboard" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold"
+          style={{ background: "#7c3aed", color: "white" }}>← Dashboard</Link>
       </div>
     </div>
   );
 
-  /* ═════════════════════════════ RENDER ═════════════════════════════ */
+  /* ══════════════════════════ RENDER ═══════════════════════════════════ */
   return (
     <div className="flex overflow-hidden" style={{ height: "100vh", background: "#080810" }}>
 
-      {/* ══════ MOBILE SIDEBAR DRAWER ══════ */}
+      {/* ── Mobile drawer ── */}
       <AnimatePresence>
         {mobileNavOpen && (
           <>
-            {/* backdrop */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 md:hidden"
-              style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+              className="fixed inset-0 z-40 md:hidden" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
               onClick={() => setMobileNavOpen(false)} />
-            {/* drawer */}
-            <motion.div initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed top-0 left-0 h-full z-50 flex flex-col md:hidden px-4 py-5 overflow-y-auto"
-              style={{ width: 260, background: "#0b0b14", borderRight: "1px solid rgba(255,255,255,0.08)" }}>
+            <motion.div initial={{ x: -260 }} animate={{ x: 0 }} exit={{ x: -260 }}
+              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+              className="fixed top-0 left-0 h-full z-50 flex flex-col md:hidden px-3 py-4 overflow-y-auto"
+              style={{ width: 248, background: "#0a0a12", borderRight: "1px solid rgba(255,255,255,0.07)" }}>
               {server && <ServerSidebar server={server} onPower={sendPower} powerLoading={powerLoading} />}
-              <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                 <button onClick={() => { setMobileNavOpen(false); setShowDelete(true); setDeleteInput(""); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all hover:opacity-80"
-                  style={{ color: "#f87171", background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)" }}>
-                  <Trash2 size={12} /> Delete Server
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+                  style={{ color: "#f87171", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.14)" }}>
+                  <Trash2 size={11} /> Delete Server
                 </button>
               </div>
             </motion.div>
@@ -513,314 +465,236 @@ export default function ServerConsole() {
         )}
       </AnimatePresence>
 
-      {/* ══════ LEFT NAV SIDEBAR (desktop only) ══════ */}
-      <div className="hidden md:flex flex-col h-full overflow-y-auto shrink-0 px-4 py-5"
-        style={{ width: 236, background: "#0b0b14", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+      {/* ── Left sidebar (desktop) ── */}
+      <div className="hidden md:flex flex-col h-full overflow-y-auto shrink-0 px-3 py-4"
+        style={{ width: 220, background: "#0a0a12", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
         {server && <ServerSidebar server={server} onPower={sendPower} powerLoading={powerLoading} />}
-        <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
           <button onClick={() => { setShowDelete(true); setDeleteInput(""); }}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all hover:opacity-80"
-            style={{ color: "#f87171", background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)" }}>
-            <Trash2 size={12} /> Delete Server
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors hover:opacity-80"
+            style={{ color: "#f87171", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.14)" }}>
+            <Trash2 size={11} /> Delete Server
           </button>
         </div>
       </div>
 
-      {/* ══════ MAIN CONTENT ══════ */}
+      {/* ── Main area ── */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
-        {/* ── TOP HEADER BAR ── */}
-        <div className="sticky top-0 z-20 px-3 md:px-6 py-3 flex items-center justify-between gap-3"
-          style={{
-            background: "rgba(8,8,16,0.92)",
-            backdropFilter: "blur(16px)",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
-          }}>
+        {/* ── Top header ── */}
+        <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-2.5"
+          style={{ background: "#0a0a12", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
 
-          {/* Left: hamburger (mobile) + server identity */}
-          <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-            {/* Hamburger — mobile only */}
+          {/* Left */}
+          <div className="flex items-center gap-3 min-w-0">
             <button onClick={() => setMobileNavOpen(true)}
-              className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg shrink-0 transition-colors"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)" }}>
-              <Menu size={16} style={{ color: "#94a3b8" }} />
+              className="md:hidden w-7 h-7 flex items-center justify-center rounded-lg"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <Menu size={14} style={{ color: "#64748b" }} />
             </button>
 
-            {/* Server icon */}
-            <div className="w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{
-                background: "linear-gradient(135deg, rgba(139,92,246,0.3), rgba(168,85,247,0.15))",
-                border: "1px solid rgba(139,92,246,0.4)",
-                boxShadow: "0 0 12px rgba(139,92,246,0.2)",
-              }}>
-              <Server size={14} style={{ color: "#c084fc" }} />
+            {/* Avatar */}
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-[11px] font-bold"
+              style={{ background: `${cfg.color}18`, border: `1px solid ${cfg.color}30`, color: cfg.color }}>
+              {server?.name?.charAt(0)?.toUpperCase()}
             </div>
 
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-sm font-bold truncate max-w-[140px] sm:max-w-none" style={{ color: "#f1f5f9" }}>{server?.name}</h1>
-                {/* Status pill */}
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0"
-                  style={{ background: `${cfg.color}18`, color: cfg.color, border: `1px solid ${cfg.color}30` }}>
+                <span className="text-sm font-semibold truncate" style={{ color: "#f1f5f9" }}>{server?.name}</span>
+
+                {/* Status dot + label */}
+                <span className="flex items-center gap-1.5 text-[10px] font-medium shrink-0">
                   <span className="relative flex h-1.5 w-1.5">
-                    {isRunning && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: cfg.dot }} />}
+                    {isRunning && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: cfg.dot }} />}
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: cfg.dot }} />
                   </span>
-                  {cfg.label}
+                  <span style={{ color: cfg.color }}>{cfg.label}</span>
                 </span>
-                {/* Plan badge — hidden on xs */}
-                <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold mono uppercase"
-                  style={{ background: "rgba(139,92,246,0.12)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.2)" }}>
+
+                {/* Plan */}
+                <span className="hidden sm:inline text-[9px] mono px-1.5 py-0.5 rounded"
+                  style={{ background: "rgba(124,58,237,0.1)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.18)" }}>
                   {server?.plan}
                 </span>
-                {/* Version — hidden on mobile */}
+
+                {/* Version */}
                 {server?.mcVersion && (
-                  <span className="hidden md:inline-flex px-2 py-0.5 rounded-full text-[10px] mono"
-                    style={{ background: "rgba(96,165,250,0.1)", color: "#93c5fd", border: "1px solid rgba(96,165,250,0.18)" }}>
+                  <span className="hidden md:inline text-[9px] mono px-1.5 py-0.5 rounded"
+                    style={{ background: "rgba(96,165,250,0.08)", color: "#7dd3fc", border: "1px solid rgba(96,165,250,0.15)" }}>
                     {server.serverType && `${server.serverType} `}{server.mcVersion}
                   </span>
                 )}
               </div>
+
+              {/* Address inline */}
               {displayAddr && (
-                <p className="hidden sm:block text-[10px] mono mt-0.5" style={{ color: "#475569" }}>{displayAddr}</p>
+                <button onClick={() => copyAddr(displayAddr)}
+                  className="flex items-center gap-1 mt-0.5 group"
+                  title="Copy address">
+                  <span className="text-[10px] mono" style={{ color: "#334155" }}>{displayAddr}</span>
+                  {copied
+                    ? <Check size={9} style={{ color: "#4ade80" }} />
+                    : <Copy size={9} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#475569" }} />}
+                </button>
               )}
             </div>
           </div>
 
-          {/* Right: meta chips — hidden on small screens */}
-          <div className="hidden sm:flex items-center gap-2 shrink-0">
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px]"
-              style={{ background: "rgba(96,165,250,0.06)", border: "1px solid rgba(96,165,250,0.15)", color: "#60a5fa" }}>
-              <Shield size={10} /> DDoS Protected
-            </span>
-            {resources?.uptimeMs != null && resources.uptimeMs > 0 && (
-              <span className="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px]"
-                style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.15)", color: "#4ade80" }}>
-                <Clock size={10} /> {fmtUptime(resources.uptimeMs)}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* ── METRICS ROW ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-
-          {/* CPU */}
-          <div className="p-5 relative overflow-hidden"
-            style={{ borderRight: "1px solid rgba(255,255,255,0.06)" }}>
-            <div className="absolute inset-0 opacity-30" style={{
-              background: "radial-gradient(ellipse at 100% 0%, rgba(251,191,36,0.08) 0%, transparent 60%)"
-            }} />
-            <div className="relative">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                    style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)" }}>
-                    <Cpu size={13} style={{ color: "#fbbf24" }} />
-                  </div>
-                  <span className="text-[10px] mono uppercase tracking-wider" style={{ color: "#475569" }}>CPU Usage</span>
-                </div>
-                <span className="text-[10px] mono" style={{ color: cpuPct > 80 ? "#f87171" : cpuPct > 50 ? "#fbbf24" : "#4ade80" }}>
-                  {resources?.available ? `${cpuPct.toFixed(1)}%` : "—"}
-                </span>
-              </div>
-              {/* Recharts sparkline */}
-              <div style={{ height: 36, marginBottom: 8 }}>
+          {/* Right: slim metrics strip */}
+          <div className="hidden lg:flex items-center gap-4 shrink-0">
+            {/* CPU */}
+            <div className="flex items-center gap-1.5">
+              <Cpu size={10} style={{ color: cpuPct > 80 ? "#f87171" : cpuPct > 50 ? "#fbbf24" : "#475569" }} />
+              <div style={{ width: 48, height: 16 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={cpuHistory} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="cpuGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={cpuPct > 80 ? "#f87171" : cpuPct > 50 ? "#fbbf24" : "#4ade80"} stopOpacity={0.3} />
-                        <stop offset="100%" stopColor={cpuPct > 80 ? "#f87171" : cpuPct > 50 ? "#fbbf24" : "#4ade80"} stopOpacity={0} />
+                      <linearGradient id="cpuG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={cpuPct > 80 ? "#f87171" : "#a78bfa"} stopOpacity={0.4} />
+                        <stop offset="100%" stopColor={cpuPct > 80 ? "#f87171" : "#a78bfa"} stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <Area type="monotone" dataKey="v" stroke={cpuPct > 80 ? "#f87171" : cpuPct > 50 ? "#fbbf24" : "#4ade80"}
-                      strokeWidth={1.5} fill="url(#cpuGrad)" dot={false} isAnimationActive={false} />
+                    <Area type="monotone" dataKey="v" stroke={cpuPct > 80 ? "#f87171" : "#7c3aed"}
+                      strokeWidth={1} fill="url(#cpuG)" dot={false} isAnimationActive={false} />
                     <Tooltip content={() => null} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-              {/* Progress track */}
-              <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${Math.min(cpuPct, 100)}%`, background: cpuPct > 80 ? "#ef4444" : cpuPct > 50 ? "#f59e0b" : "#22c55e" }} />
-              </div>
+              <span className="text-[10px] mono w-8 text-right"
+                style={{ color: cpuPct > 80 ? "#f87171" : "#475569" }}>
+                {resources?.available ? `${cpuPct.toFixed(0)}%` : "—"}
+              </span>
             </div>
-          </div>
 
-          {/* RAM */}
-          <div className="p-5 relative overflow-hidden"
-            style={{ borderRight: "1px solid rgba(255,255,255,0.06)" }}>
-            <div className="absolute inset-0 opacity-30" style={{
-              background: "radial-gradient(ellipse at 100% 0%, rgba(139,92,246,0.08) 0%, transparent 60%)"
-            }} />
-            <div className="relative">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                  style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)" }}>
-                  <MemoryStick size={13} style={{ color: "#a78bfa" }} />
+            <div className="w-px h-3" style={{ background: "rgba(255,255,255,0.07)" }} />
+
+            {/* RAM */}
+            <div className="flex items-center gap-1.5">
+              <MemoryStick size={10} style={{ color: "#475569" }} />
+              <div className="flex items-center gap-1">
+                <div className="w-16 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                  <div className="h-full rounded-full" style={{ width: `${ramPct}%`, background: ramPct > 90 ? "#f87171" : "#7c3aed" }} />
                 </div>
-                <span className="text-[10px] mono uppercase tracking-wider" style={{ color: "#475569" }}>RAM Usage</span>
-              </div>
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-xl font-bold" style={{ color: "#f1f5f9" }}>
-                  {resources?.available ? ramUsedMB.toFixed(0) : "—"}
+                <span className="text-[10px] mono" style={{ color: "#475569" }}>
+                  {resources?.available ? `${ramUsedMB.toFixed(0)}/${server?.ram}` : `—/${server?.ram ?? "?"}`}
                 </span>
-                <span className="text-xs" style={{ color: "#475569" }}>/ {server?.ram ?? "?"}</span>
               </div>
-              <div className="h-2 rounded-full overflow-hidden mt-2" style={{ background: "rgba(255,255,255,0.06)" }}>
-                <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${ramPct}%`, background: "linear-gradient(90deg, #7c3aed, #a855f7)" }} />
-              </div>
-              <p className="text-[10px] mono mt-1.5" style={{ color: "#475569" }}>{ramPct.toFixed(0)}% used</p>
             </div>
-          </div>
 
-          {/* Disk */}
-          <div className="p-5 relative overflow-hidden"
-            style={{ borderRight: "1px solid rgba(255,255,255,0.06)" }}>
-            <div className="absolute inset-0 opacity-30" style={{
-              background: "radial-gradient(ellipse at 100% 0%, rgba(96,165,250,0.06) 0%, transparent 60%)"
-            }} />
-            <div className="relative">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                  style={{ background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.2)" }}>
-                  <HardDrive size={13} style={{ color: "#60a5fa" }} />
+            <div className="w-px h-3" style={{ background: "rgba(255,255,255,0.07)" }} />
+
+            {/* Disk */}
+            <div className="flex items-center gap-1.5">
+              <HardDrive size={10} style={{ color: "#475569" }} />
+              <div className="flex items-center gap-1">
+                <div className="w-12 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                  <div className="h-full rounded-full" style={{ width: `${diskPct}%`, background: "#3b82f6" }} />
                 </div>
-                <span className="text-[10px] mono uppercase tracking-wider" style={{ color: "#475569" }}>Disk Usage</span>
-              </div>
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-xl font-bold" style={{ color: "#f1f5f9" }}>
+                <span className="text-[10px] mono" style={{ color: "#475569" }}>
                   {resources?.available ? fmtBytes(resources.diskBytes) : "—"}
                 </span>
-                {server?.ssd && <span className="text-xs" style={{ color: "#475569" }}>/ {server.ssd}</span>}
               </div>
-              <div className="h-2 rounded-full overflow-hidden mt-2" style={{ background: "rgba(255,255,255,0.06)" }}>
-                <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: "42%", background: "linear-gradient(90deg, #1d4ed8, #3b82f6)" }} />
-              </div>
-              {resources?.available && (
-                <div className="flex gap-3 mt-1.5">
-                  <span className="text-[9px] mono" style={{ color: "#334155" }}>↓ {(resources.netRxBytes / 1048576).toFixed(1)} MB</span>
-                  <span className="text-[9px] mono" style={{ color: "#334155" }}>↑ {(resources.netTxBytes / 1048576).toFixed(1)} MB</span>
-                </div>
-              )}
             </div>
-          </div>
 
-          {/* Server Health / TPS */}
-          <div className="p-5 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-30" style={{
-              background: "radial-gradient(ellipse at 100% 0%, rgba(74,222,128,0.06) 0%, transparent 60%)"
-            }} />
-            <div className="relative">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                  style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.18)" }}>
-                  <Activity size={13} style={{ color: "#4ade80" }} />
-                </div>
-                <span className="text-[10px] mono uppercase tracking-wider" style={{ color: "#475569" }}>Server Health</span>
-              </div>
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-xl font-bold" style={{ color: isRunning ? "#4ade80" : "#475569" }}>
-                  {isRunning ? "20" : "—"}
+            {/* Uptime */}
+            {resources?.uptimeMs != null && resources.uptimeMs > 0 && (
+              <>
+                <div className="w-px h-3" style={{ background: "rgba(255,255,255,0.07)" }} />
+                <span className="text-[10px] mono flex items-center gap-1" style={{ color: "#334155" }}>
+                  <Clock size={9} /> {fmtUptime(resources.uptimeMs)}
                 </span>
-                {isRunning && <span className="text-xs" style={{ color: "#475569" }}>TPS</span>}
-              </div>
-              <div className="h-2 rounded-full overflow-hidden mt-2" style={{ background: "rgba(255,255,255,0.06)" }}>
-                <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: isRunning ? "100%" : "0%", background: "linear-gradient(90deg, #15803d, #22c55e)" }} />
-              </div>
-              <p className="text-[10px] mono mt-1.5" style={{ color: isRunning ? "#4ade80" : "#475569" }}>
-                {isRunning ? "Healthy" : "Server offline"}
-              </p>
-            </div>
+              </>
+            )}
+
+            <div className="w-px h-3" style={{ background: "rgba(255,255,255,0.07)" }} />
+
+            {/* DDoS badge */}
+            <span className="text-[10px] mono flex items-center gap-1" style={{ color: "#334155" }}>
+              <Shield size={9} style={{ color: "#60a5fa" }} /> Protected
+            </span>
           </div>
         </div>
 
-        {/* ── CONSOLE + SIDEBAR ROW — fills all remaining height, no page scroll ── */}
-        <div className="flex flex-1 overflow-hidden">
+        {/* ── Console + right sidebar ── */}
+        <div className="flex flex-1 min-h-0 overflow-hidden">
 
-          {/* ─── CONSOLE PANEL ─── */}
-          <div className="flex flex-col flex-1 min-w-0 overflow-hidden" style={{ borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+          {/* ── Console panel ── */}
+          <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
             {/* Console toolbar */}
-            <div className="flex items-center justify-between px-4 py-2 gap-2 flex-wrap"
-              style={{ background: "#0b0b14", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="shrink-0 flex items-center justify-between px-3 py-1.5 gap-2"
+              style={{ background: "#060608", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
 
               <div className="flex items-center gap-2">
-                {/* macOS dots */}
-                <div className="flex gap-1.5 mr-1">
-                  <div className="w-3 h-3 rounded-full" style={{ background: "#ef4444" }} />
-                  <div className="w-3 h-3 rounded-full" style={{ background: "#f59e0b" }} />
-                  <div className="w-3 h-3 rounded-full" style={{ background: "#22c55e" }} />
+                <div className="flex gap-1">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#f59e0b" }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
                 </div>
-                <span className="text-[10px] mono" style={{ color: "#334155" }}>{server?.name} — console</span>
+                <span className="text-[10px] mono hidden sm:block" style={{ color: "#1e293b" }}>{server?.name} — console</span>
               </div>
 
-              <div className="flex items-center gap-1.5">
-                {/* Search */}
+              <div className="flex items-center gap-1">
+                {/* Search input */}
                 <AnimatePresence>
                   {searchOpen && (
-                    <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 152, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }} className="overflow-hidden flex items-center rounded-lg"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                      <Search size={10} className="ml-2 shrink-0" style={{ color: "#475569" }} />
+                    <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 140, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.18 }} className="overflow-hidden flex items-center rounded-md"
+                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <Search size={9} className="ml-2 shrink-0" style={{ color: "#334155" }} />
                       <input autoFocus type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                         placeholder="Search…"
-                        className="flex-1 bg-transparent outline-none px-2 py-1 mono text-[11px]"
+                        className="flex-1 bg-transparent outline-none px-2 py-1 mono text-[10px]"
                         style={{ color: "#e2e8f0" }} />
                     </motion.div>
                   )}
                 </AnimatePresence>
 
                 {[
-                  { icon: Search, title: "Search", active: searchOpen, onClick: () => { setSearchOpen(o => !o); if (searchOpen) setSearchQuery(""); } },
-                  { icon: X, title: "Clear console", active: false, onClick: () => setLogs([]) },
-                  { icon: Download, title: "Download log", active: false, onClick: downloadLogs },
+                  { icon: Search,     title: "Search",       active: searchOpen,  onClick: () => { setSearchOpen(o => !o); if (searchOpen) setSearchQuery(""); } },
+                  { icon: X,          title: "Clear",        active: false,       onClick: () => setLogs([]) },
+                  { icon: Download,   title: "Download log", active: false,       onClick: downloadLogs },
                   { icon: autoScroll ? ChevronDown : ChevronUp, title: "Auto-scroll", active: autoScroll, onClick: () => setAutoScroll(a => !a) },
                 ].map(({ icon: Icon, title, active, onClick }) => (
                   <button key={title} title={title} onClick={onClick}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-80"
+                    className="w-6 h-6 flex items-center justify-center rounded transition-all hover:opacity-80"
                     style={{
-                      background: active ? "rgba(139,92,246,0.15)" : "rgba(255,255,255,0.04)",
-                      color: active ? "#a78bfa" : "#475569",
-                      border: active ? "1px solid rgba(139,92,246,0.25)" : "1px solid rgba(255,255,255,0.06)",
+                      background: active ? "rgba(124,58,237,0.12)" : "transparent",
+                      color: active ? "#a78bfa" : "#334155",
                     }}>
-                    <Icon size={12} />
+                    <Icon size={11} />
                   </button>
                 ))}
 
-                {/* WS status */}
+                {/* WS status chip */}
                 {wsStatus === "connected" ? (
-                  <span className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] mono"
-                    style={{ background: "rgba(74,222,128,0.08)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.18)" }}>
-                    <Wifi size={9} /> Live
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] mono ml-1"
+                    style={{ background: "rgba(74,222,128,0.08)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.15)" }}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> Live
                   </span>
                 ) : wsStatus === "connecting" ? (
-                  <span className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] mono"
-                    style={{ background: "rgba(251,191,36,0.08)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.18)" }}>
-                    <Loader2 size={9} className="animate-spin" /> Connecting
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] mono ml-1"
+                    style={{ background: "rgba(251,191,36,0.06)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.15)" }}>
+                    <Loader2 size={8} className="animate-spin" /> …
                   </span>
                 ) : (
                   <button onClick={connect}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] mono transition-all hover:opacity-80"
-                    style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.18)" }}>
-                    <WifiOff size={9} /> Reconnect
+                    className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] mono ml-1 transition-all hover:opacity-80"
+                    style={{ background: "rgba(239,68,68,0.06)", color: "#f87171", border: "1px solid rgba(239,68,68,0.15)" }}>
+                    <WifiOff size={8} /> Reconnect
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Log output — fills remaining height, only this scrolls */}
+            {/* Log output */}
             <div ref={logsRef} onScroll={handleConsoleScroll} onClick={() => inputRef.current?.focus()}
-              className="flex-1 overflow-y-auto cursor-text mono text-[12px] leading-[1.7]"
-              style={{ background: "#060608", padding: "16px 20px" }}>
+              className="flex-1 overflow-y-auto cursor-text font-mono text-[11.5px] leading-relaxed"
+              style={{ background: "#060608", padding: "14px 18px" }}>
 
-              {/* Header line */}
-              <div className="mb-4 pb-3 select-none" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                <span className="font-bold" style={{ color: "#a855f7" }}>NetherNodes</span>
+              <div className="mb-3 pb-2.5 select-none" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                <span style={{ color: "#6d28d9" }} className="font-bold">NetherNodes</span>
                 <span style={{ color: "#1e293b" }}> — Minecraft Server Console</span>
                 <br />
                 <span style={{ color: "#1e293b", fontSize: 10 }}>{server?.plan} plan · {server?.ram} RAM</span>
@@ -834,10 +708,10 @@ export default function ServerConsole() {
                 filteredLogs.map(line => {
                   const s = LINE_STYLE[line.type];
                   return (
-                    <div key={line.id} className="flex items-start gap-2 mb-0.5 group">
+                    <div key={line.id} className="flex items-start gap-1.5 mb-px">
                       {s.badge && (
-                        <span className="shrink-0 text-[9px] mono font-bold px-1.5 py-0.5 rounded mt-0.5"
-                          style={{ color: s.color, background: s.badgeBg, minWidth: 34, textAlign: "center", lineHeight: 1.4 }}>
+                        <span className="shrink-0 text-[8px] font-bold px-1 py-px rounded mt-0.5"
+                          style={{ color: s.color, background: s.badgeBg, minWidth: 28, textAlign: "center" }}>
                           {s.badge}
                         </span>
                       )}
@@ -850,128 +724,91 @@ export default function ServerConsole() {
             </div>
 
             {/* Command input */}
-            <div className="flex items-center shrink-0"
-              style={{ background: "#0d0d18", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-              {/* Prompt */}
-              <div className="flex items-center px-4 select-none shrink-0">
-                <span className="text-sm font-bold mono" style={{ color: "#7c3aed" }}>›</span>
+            <div className="shrink-0 flex items-center"
+              style={{ background: "#0a0a12", borderTop: "1px solid rgba(255,255,255,0.06)", minHeight: 44 }}>
+              <div className="flex items-center px-3 select-none shrink-0 gap-1">
+                <span className="text-base font-bold mono" style={{ color: "#7c3aed" }}>›</span>
                 {input === "" && (
-                  <span className="inline-block w-1.5 h-[13px] ml-1 rounded-sm transition-opacity"
-                    style={{ background: "#7c3aed", opacity: blink ? 0.7 : 0 }} />
+                  <span className="inline-block w-1.5 h-3 rounded-sm"
+                    style={{ background: "#7c3aed", opacity: blink ? 0.6 : 0, transition: "opacity 0.1s" }} />
                 )}
               </div>
               <input ref={inputRef} type="text" value={input}
                 onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder={wsStatus === "connected" ? "Enter command…" : "Not connected"}
                 disabled={wsStatus !== "connected"}
-                className="flex-1 bg-transparent outline-none py-3 mono text-[12px]"
-                style={{ color: "#e2e8f0", caretColor: "transparent" }}
-              />
-              {history.length > 0 && (
-                <span className="hidden sm:block text-[9px] mono px-3 select-none" style={{ color: "#1e293b" }}>↑↓</span>
-              )}
+                className="flex-1 bg-transparent outline-none py-3 font-mono text-[12px] disabled:opacity-40"
+                style={{ color: "#e2e8f0", caretColor: "transparent" }} />
               <button onClick={sendCommand} disabled={!input.trim() || wsStatus !== "connected"}
-                className="px-5 py-3 text-xs font-bold transition-all hover:opacity-90 disabled:opacity-30 shrink-0"
-                style={{
-                  background: "linear-gradient(135deg, #6d28d9, #7c3aed)",
-                  color: "white",
-                  borderLeft: "1px solid rgba(139,92,246,0.3)",
-                }}>
+                className="px-4 py-3 text-xs font-bold shrink-0 transition-all hover:opacity-90 disabled:opacity-25"
+                style={{ background: "rgba(109,40,217,0.5)", color: "#c4b5fd", borderLeft: "1px solid rgba(109,40,217,0.3)" }}>
                 RUN
               </button>
             </div>
           </div>
 
-          {/* ─── RIGHT SIDEBAR PANEL ─── */}
-          <div className="hidden lg:flex flex-col shrink-0 overflow-y-auto" style={{ width: 260, background: "#09090f" }}>
+          {/* ── Right sidebar ── */}
+          <div className="hidden lg:flex flex-col shrink-0 overflow-y-auto"
+            style={{ width: 232, background: "#09090f", borderLeft: "1px solid rgba(255,255,255,0.05)" }}>
 
-            {/* Server Address */}
-            <div className="p-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <p className="text-[9px] mono uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: "#334155" }}>
-                <Globe size={9} /> Server Address
-              </p>
+            {/* Address + copy */}
+            <div className="p-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              <p className="text-[9px] mono uppercase tracking-widest mb-2" style={{ color: "#1e293b" }}>Address</p>
               {displayAddr ? (
                 <button onClick={() => copyAddr(displayAddr)}
-                  className="w-full group flex items-center justify-between gap-2 p-2.5 rounded-xl transition-all"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                  <span className="text-[11px] mono truncate" style={{ color: "#4ade80" }}>{displayAddr}</span>
-                  {copied ? <Check size={12} style={{ color: "#4ade80" }} /> : <Copy size={12} style={{ color: "#334155" }} />}
+                  className="w-full flex items-center justify-between gap-2 p-2 rounded-lg transition-all hover:opacity-80"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <span className="text-[10px] mono truncate" style={{ color: "#4ade80" }}>{displayAddr}</span>
+                  {copied ? <Check size={10} style={{ color: "#4ade80" }} /> : <Copy size={10} style={{ color: "#1e293b" }} />}
                 </button>
               ) : (
-                <p className="text-[10px] mono" style={{ color: "#334155" }}>Not assigned yet</p>
+                <p className="text-[10px] mono" style={{ color: "#1e293b" }}>Not assigned yet</p>
               )}
-            </div>
 
-            {/* Players Online */}
-            <div className="p-4 flex items-center gap-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.15)" }}>
-                <UsersIcon size={16} style={{ color: "#4ade80" }} />
-              </div>
-              <div>
-                <p className="text-[9px] mono uppercase tracking-widest" style={{ color: "#334155" }}>Players Online</p>
-                <p className="text-lg font-bold mt-0.5" style={{ color: "#f1f5f9" }}>{isRunning ? "0" : "—"}</p>
-              </div>
-            </div>
-
-            {/* Uptime */}
-            <div className="p-4 flex items-center gap-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "rgba(251,191,36,0.07)", border: "1px solid rgba(251,191,36,0.14)" }}>
-                <Clock size={16} style={{ color: "#fbbf24" }} />
-              </div>
-              <div>
-                <p className="text-[9px] mono uppercase tracking-widest" style={{ color: "#334155" }}>Uptime</p>
-                <p className="text-sm font-bold mt-0.5" style={{ color: "#f1f5f9" }}>
-                  {resources?.uptimeMs && resources.uptimeMs > 0 ? fmtUptime(resources.uptimeMs) : "—"}
-                </p>
-              </div>
-            </div>
-
-            {/* DDoS Protection */}
-            <div className="p-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <div className="rounded-xl p-3 flex items-center gap-3"
-                style={{ background: "rgba(96,165,250,0.05)", border: "1px solid rgba(96,165,250,0.12)" }}>
-                <Shield size={18} style={{ color: "#60a5fa" }} />
-                <div>
-                  <p className="text-xs font-semibold" style={{ color: "#93c5fd" }}>DDoS Protection</p>
-                  <p className="text-[10px] mono mt-0.5" style={{ color: "#334155" }}>Cloudflare · Active</p>
+              {/* Players + Uptime inline under address */}
+              <div className="flex gap-3 mt-2.5">
+                <div className="flex-1 rounded-lg p-2" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <p className="text-[8px] mono uppercase tracking-wider mb-0.5" style={{ color: "#1e293b" }}>Players</p>
+                  <p className="text-sm font-bold" style={{ color: isRunning ? "#f1f5f9" : "#334155" }}>{isRunning ? "0" : "—"}</p>
                 </div>
-                <div className="ml-auto w-2 h-2 rounded-full bg-green-400" style={{ boxShadow: "0 0 6px #4ade80" }} />
+                <div className="flex-1 rounded-lg p-2" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <p className="text-[8px] mono uppercase tracking-wider mb-0.5" style={{ color: "#1e293b" }}>Uptime</p>
+                  <p className="text-xs font-semibold" style={{ color: resources?.uptimeMs && resources.uptimeMs > 0 ? "#f1f5f9" : "#334155" }}>
+                    {resources?.uptimeMs && resources.uptimeMs > 0 ? fmtUptime(resources.uptimeMs) : "—"}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Custom Domain */}
-            <div className="p-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[9px] mono uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#334155" }}>
-                  <Globe size={9} /> Custom Domain
-                </p>
+            {/* Custom domain */}
+            <div className="p-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[9px] mono uppercase tracking-widest" style={{ color: "#1e293b" }}>Custom Domain</p>
                 {server?.hostname && !showHnForm && (
                   <button onClick={() => { setShowHnForm(true); setHnEdit(server.hostname ?? ""); setHnAvail(null); setHnError(""); }}
-                    className="transition-colors hover:text-purple-400" style={{ color: "#334155" }}>
-                    <Edit3 size={11} />
+                    style={{ color: "#334155" }} className="hover:text-purple-400 transition-colors">
+                    <Edit3 size={10} />
                   </button>
                 )}
               </div>
 
               {server?.hostname && !showHnForm ? (
-                <div className="rounded-xl p-2.5" style={{ background: "rgba(139,92,246,0.07)", border: "1px solid rgba(139,92,246,0.15)" }}>
-                  <div className="flex items-center gap-1.5 mb-1">
+                <div className="rounded-lg p-2" style={{ background: "rgba(124,58,237,0.07)", border: "1px solid rgba(124,58,237,0.14)" }}>
+                  <div className="flex items-center gap-1.5 mb-0.5">
                     <span className={`w-1.5 h-1.5 rounded-full ${server.hostnameStatus === "active" ? "bg-green-400" : "bg-yellow-400"}`} />
                     <span className="text-[9px] mono" style={{ color: "#475569" }}>
                       {server.hostnameStatus === "active" ? "Active" : "Activating…"}
                     </span>
                   </div>
-                  <p className="text-[11px] mono break-all" style={{ color: "#c4b5fd" }}>{server.customAddress}</p>
+                  <p className="text-[10px] mono break-all" style={{ color: "#c4b5fd" }}>{server.customAddress}</p>
                 </div>
               ) : showHnForm ? (
-                <div className="space-y-2">
-                  <div className="flex items-center rounded-xl overflow-hidden"
-                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <div className="space-y-1.5">
+                  <div className="flex items-center rounded-lg overflow-hidden"
+                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
                     <input type="text" value={hnEdit}
                       onChange={e => {
-                        const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 32);
+                        const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0, 32);
                         setHnEdit(v); setHnAvail(null);
                         if (v.length >= 3) {
                           clearTimeout((window as any)._hn2);
@@ -988,17 +825,16 @@ export default function ServerConsole() {
                         }
                       }}
                       placeholder="yourname"
-                      className="flex-1 bg-transparent outline-none px-2.5 py-1.5 mono text-[11px] min-w-0"
-                      style={{ color: "#e2e8f0" }}
-                    />
-                    {hnChecking && <Loader2 size={10} className="animate-spin mr-2" style={{ color: "#475569" }} />}
-                    {!hnChecking && hnAvail === true && <Check size={10} className="mr-2" style={{ color: "#4ade80" }} />}
+                      className="flex-1 bg-transparent outline-none px-2 py-1.5 mono text-[10px] min-w-0"
+                      style={{ color: "#e2e8f0" }} />
+                    {hnChecking && <Loader2 size={9} className="animate-spin mr-2" style={{ color: "#475569" }} />}
+                    {!hnChecking && hnAvail === true && <Check size={9} className="mr-2" style={{ color: "#4ade80" }} />}
                   </div>
                   {hnError && <p className="text-[9px] mono" style={{ color: "#f87171" }}>{hnError}</p>}
                   <div className="flex gap-1.5">
                     <button onClick={() => { setShowHnForm(false); setHnError(""); }}
-                      className="flex-1 h-7 rounded-lg text-[10px] transition-colors"
-                      style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#475569" }}>Cancel</button>
+                      className="flex-1 h-6 rounded-lg text-[9px] transition-colors"
+                      style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#475569" }}>Cancel</button>
                     <button disabled={hnSubmitting || !hnAvail || hnEdit.length < 3}
                       onClick={async () => {
                         setHnSubmitting(true); setHnError("");
@@ -1008,124 +844,97 @@ export default function ServerConsole() {
                             method, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
                             body: JSON.stringify({ name: hnEdit }),
                           });
-                          let d: any = {};
-                          try { d = await r.json(); } catch {}
-                          if (!r.ok) { setHnError(d.error || `Failed (${r.status}).`); return; }
+                          let d: any = {}; try { d = await r.json(); } catch {}
+                          if (!r.ok) { setHnError(d.error || `Failed.`); return; }
                           setServer(p => p ? { ...p, hostname: d.hostname, hostnameStatus: d.hostnameStatus, customAddress: d.customAddress } : p);
                           setShowHnForm(false);
-                        } catch (err: any) {
-                          setHnError(err?.message && !err.message.includes("fetch")
-                            ? err.message : "Could not reach the server. Check your connection.");
-                        }
+                        } catch (err: any) { setHnError(err?.message || "Network error."); }
                         finally { setHnSubmitting(false); }
                       }}
-                      className="flex-1 h-7 rounded-lg text-[10px] font-semibold disabled:opacity-30 transition-all hover:opacity-90"
+                      className="flex-1 h-6 rounded-lg text-[9px] font-semibold disabled:opacity-30"
                       style={{ background: "#7c3aed", color: "white" }}>
-                      {hnSubmitting ? <Loader2 size={10} className="animate-spin mx-auto" /> : "Save"}
+                      {hnSubmitting ? <Loader2 size={9} className="animate-spin mx-auto" /> : "Save"}
                     </button>
                   </div>
                 </div>
               ) : (
                 <button onClick={() => { setShowHnForm(true); setHnEdit(""); setHnAvail(null); setHnError(""); }}
-                  className="w-full h-9 flex items-center justify-center gap-2 rounded-xl text-[11px] font-medium transition-all hover:opacity-80"
-                  style={{ background: "rgba(124,58,237,0.1)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.2)" }}>
-                  <Globe size={12} /> Set Custom Address
+                  className="w-full h-7 flex items-center justify-center gap-1.5 rounded-lg text-[10px] font-medium transition-all hover:opacity-80"
+                  style={{ background: "rgba(124,58,237,0.08)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.16)" }}>
+                  <Globe size={10} /> Set Custom Address
                 </button>
               )}
             </div>
 
-            {/* Quick Actions header */}
-            <div className="px-4 pt-4 pb-2">
-              <p className="text-[9px] mono uppercase tracking-widest" style={{ color: "#334155" }}>Quick Actions</p>
+            {/* Quick Actions */}
+            <div className="py-1">
+              <p className="text-[9px] mono uppercase tracking-widest px-3 py-2" style={{ color: "#1e293b" }}>Quick Actions</p>
+              {([
+                { icon: Package,    label: "Install Plugin",   color: "#a78bfa", to: `/server/${id}/installer` },
+                { icon: UploadCloud,label: "Upload World",     color: "#60a5fa", action: () => { setShowUploadWorld(true); setWorldFile(null); setUploadWorldErr(""); setUploadWorldMsg(""); } },
+                { icon: HardDrive,  label: "Create Backup",    color: "#fbbf24", action: () => { setShowBackup(true); setBackupName(""); setBackupErr(""); setBackupMsg(""); } },
+                { icon: Calendar,   label: "Schedules",        color: "#4ade80", to: `/server/${id}/schedules` },
+                { icon: List,       label: "Whitelist",        color: "#f87171", action: () => { setShowWhitelist(true); setWlPlayer(""); setWlErr(""); setWlMsg(""); } },
+                { icon: Zap,        label: "Custom Address",   color: "#c084fc", action: () => { setShowHnForm(true); setHnEdit(server?.hostname ?? ""); setHnAvail(null); setHnError(""); } },
+              ] as const).map(item => {
+                const Comp: any = (item as any).to ? Link : "button";
+                const extra = (item as any).to ? { to: (item as any).to } : { onClick: (item as any).action };
+                return (
+                  <Comp key={item.label} {...extra}
+                    className="flex items-center gap-2.5 px-3 py-2 w-full text-left transition-all"
+                    onMouseEnter={(e: any) => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+                    onMouseLeave={(e: any) => e.currentTarget.style.background = "transparent"}>
+                    <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: `${item.color}10`, border: `1px solid ${item.color}1a` }}>
+                      <item.icon size={11} style={{ color: item.color }} />
+                    </div>
+                    <span className="text-[11px] font-medium" style={{ color: "#94a3b8" }}>{item.label}</span>
+                  </Comp>
+                );
+              })}
             </div>
-
-            {/* Action list */}
-            {([
-              { icon: Package, label: "Install Plugin", sub: "Browse Modrinth", color: "#a78bfa", to: `/server/${id}/installer` },
-              { icon: UploadCloud, label: "Upload World", sub: "Drop world files", color: "#60a5fa", action: () => { setShowUploadWorld(true); setWorldFile(null); setUploadWorldErr(""); setUploadWorldMsg(""); } },
-              { icon: HardDrive, label: "Create Backup", sub: "Snapshot now", color: "#fbbf24", action: () => { setShowBackup(true); setBackupName(""); setBackupErr(""); setBackupMsg(""); } },
-              { icon: Calendar, label: "Schedules", sub: "Automate actions", color: "#4ade80", to: `/server/${id}/schedules` },
-              { icon: List, label: "Whitelist Manager", sub: "Manage players", color: "#f87171", action: () => { setShowWhitelist(true); setWlPlayer(""); setWlErr(""); setWlMsg(""); } },
-              { icon: Zap, label: "Custom Address", sub: "Manage domain", color: "#c084fc", action: () => { setShowHnForm(true); setHnEdit(server?.hostname ?? ""); setHnAvail(null); setHnError(""); } },
-            ] as const).map(item => {
-              const Comp: any = (item as any).to ? Link : "button";
-              const extra = (item as any).to ? { to: (item as any).to } : { onClick: (item as any).action };
-              return (
-                <Comp key={item.label} {...extra}
-                  className="flex items-center gap-3 px-4 py-2.5 w-full text-left transition-all group"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}
-                  onMouseEnter={(e: any) => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
-                  onMouseLeave={(e: any) => e.currentTarget.style.background = "transparent"}>
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: `${item.color}12`, border: `1px solid ${item.color}22` }}>
-                    <item.icon size={14} style={{ color: item.color }} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium" style={{ color: "#cbd5e1" }}>{item.label}</p>
-                    <p className="text-[10px] mono" style={{ color: "#334155" }}>{item.sub}</p>
-                  </div>
-                </Comp>
-              );
-            })}
           </div>
-          {/* end right sidebar */}
         </div>
-        {/* end console + sidebar row */}
       </div>
-      {/* end main content */}
 
-      {/* ══════ CREATE BACKUP MODAL ══════ */}
+      {/* ══ MODALS ══════════════════════════════════════════════════════ */}
+
+      {/* Create Backup */}
       <AnimatePresence>
         {showBackup && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
             onClick={() => !creatingBackup && setShowBackup(false)}>
-            <motion.div initial={{ scale: 0.94, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.94, opacity: 0 }} transition={{ duration: 0.18 }}
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "linear-gradient(135deg,#0f0f1a,#0d0d18)", border: "1px solid rgba(251,191,36,0.25)", boxShadow: "0 24px 64px rgba(0,0,0,0.8)" }}>
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                    style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.25)" }}>
-                    <HardDrive size={16} style={{ color: "#fbbf24" }} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Create Backup</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>Snapshot your server files right now</p>
-                  </div>
+              style={{ background: "#0f0f1a", border: "1px solid rgba(251,191,36,0.2)" }}>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)" }}>
+                  <HardDrive size={14} style={{ color: "#fbbf24" }} />
                 </div>
-                <button onClick={() => setShowBackup(false)} style={{ color: "#475569" }}><X size={15} /></button>
+                <div className="flex-1">
+                  <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Create Backup</p>
+                  <p className="text-[10px]" style={{ color: "#475569" }}>Snapshot your server now</p>
+                </div>
+                <button onClick={() => setShowBackup(false)} style={{ color: "#334155" }}><X size={14} /></button>
               </div>
-              <div className="mb-4">
-                <label className="text-[9px] mono uppercase tracking-widest block mb-1.5" style={{ color: "#475569" }}>Backup Name (optional)</label>
-                <input value={backupName} onChange={e => setBackupName(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && createBackupNow()}
-                  placeholder={`Backup ${new Date().toLocaleDateString("en-IN")}`}
-                  className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none"
-                  style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#f1f5f9" }} />
-              </div>
-              {backupErr && (
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-xs"
-                  style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
-                  <AlertCircle size={12} className="shrink-0" /> {backupErr}
-                </div>
-              )}
-              {backupMsg && (
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-xs"
-                  style={{ background: "rgba(74,222,128,0.07)", border: "1px solid rgba(74,222,128,0.2)", color: "#4ade80" }}>
-                  <Check size={12} className="shrink-0" /> {backupMsg}
-                </div>
-              )}
+              <input value={backupName} onChange={e => setBackupName(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && createBackupNow()}
+                placeholder={`Backup ${new Date().toLocaleDateString("en-IN")}`}
+                className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mb-4"
+                style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#f1f5f9" }} />
+              {backupErr && <p className="text-xs mb-3" style={{ color: "#f87171" }}>{backupErr}</p>}
+              {backupMsg && <p className="text-xs mb-3" style={{ color: "#4ade80" }}>{backupMsg}</p>}
               <div className="flex gap-2">
                 <button onClick={() => setShowBackup(false)} disabled={creatingBackup}
-                  className="flex-1 h-10 rounded-xl text-xs disabled:opacity-40"
+                  className="flex-1 h-9 rounded-xl text-xs"
                   style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
                 <button onClick={createBackupNow} disabled={creatingBackup}
-                  className="flex-1 h-10 flex items-center justify-center gap-2 rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-30"
+                  className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
                   style={{ background: "linear-gradient(135deg,#92400e,#d97706)", color: "white" }}>
-                  {creatingBackup ? <><Loader2 size={13} className="animate-spin" /> Creating…</> : <><HardDrive size={13} /> Create Backup</>}
+                  {creatingBackup ? <><Loader2 size={12} className="animate-spin" /> Creating…</> : "Create Backup"}
                 </button>
               </div>
             </motion.div>
@@ -1133,62 +942,42 @@ export default function ServerConsole() {
         )}
       </AnimatePresence>
 
-      {/* ══════ WHITELIST MANAGER MODAL ══════ */}
+      {/* Whitelist */}
       <AnimatePresence>
         {showWhitelist && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
             onClick={() => !wlAdding && setShowWhitelist(false)}>
-            <motion.div initial={{ scale: 0.94, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.94, opacity: 0 }} transition={{ duration: 0.18 }}
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "linear-gradient(135deg,#0f0f1a,#0d0d18)", border: "1px solid rgba(239,68,68,0.25)", boxShadow: "0 24px 64px rgba(0,0,0,0.8)" }}>
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                    style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
-                    <List size={16} style={{ color: "#f87171" }} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Whitelist Player</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>Add a Minecraft player to your whitelist</p>
-                  </div>
+              style={{ background: "#0f0f1a", border: "1px solid rgba(239,68,68,0.2)" }}>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                  <List size={14} style={{ color: "#f87171" }} />
                 </div>
-                <button onClick={() => setShowWhitelist(false)} style={{ color: "#475569" }}><X size={15} /></button>
+                <div className="flex-1">
+                  <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Whitelist Player</p>
+                  <p className="text-[10px]" style={{ color: "#475569" }}>Add a Minecraft player</p>
+                </div>
+                <button onClick={() => setShowWhitelist(false)} style={{ color: "#334155" }}><X size={14} /></button>
               </div>
-              <div className="mb-4">
-                <label className="text-[9px] mono uppercase tracking-widest block mb-1.5" style={{ color: "#475569" }}>Minecraft Username</label>
-                <input value={wlPlayer} onChange={e => setWlPlayer(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && addToWhitelist()}
-                  placeholder="e.g. Notch"
-                  autoFocus
-                  className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mono"
-                  style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#f1f5f9" }} />
-                <p className="text-[10px] mt-1.5" style={{ color: "#334155" }}>
-                  Make sure the server is running for the whitelist to update live.
-                </p>
-              </div>
-              {wlErr && (
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-xs"
-                  style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
-                  <AlertCircle size={12} className="shrink-0" /> {wlErr}
-                </div>
-              )}
-              {wlMsg && (
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-xs"
-                  style={{ background: "rgba(74,222,128,0.07)", border: "1px solid rgba(74,222,128,0.2)", color: "#4ade80" }}>
-                  <Check size={12} className="shrink-0" /> {wlMsg}
-                </div>
-              )}
+              <input value={wlPlayer} onChange={e => setWlPlayer(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && addToWhitelist()}
+                placeholder="e.g. Notch" autoFocus
+                className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mono mb-3"
+                style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#f1f5f9" }} />
+              {wlErr && <p className="text-xs mb-3" style={{ color: "#f87171" }}>{wlErr}</p>}
+              {wlMsg && <p className="text-xs mb-3" style={{ color: "#4ade80" }}>{wlMsg}</p>}
               <div className="flex gap-2">
                 <button onClick={() => setShowWhitelist(false)} disabled={wlAdding}
-                  className="flex-1 h-10 rounded-xl text-xs disabled:opacity-40"
+                  className="flex-1 h-9 rounded-xl text-xs"
                   style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
                 <button onClick={addToWhitelist} disabled={wlAdding || !wlPlayer.trim()}
-                  className="flex-1 h-10 flex items-center justify-center gap-2 rounded-xl text-sm font-bold hover:opacity-90 disabled:opacity-30"
+                  className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
                   style={{ background: "linear-gradient(135deg,#991b1b,#dc2626)", color: "white" }}>
-                  {wlAdding ? <><Loader2 size={13} className="animate-spin" /> Adding…</> : <><UsersIcon size={13} /> Add to Whitelist</>}
+                  {wlAdding ? <><Loader2 size={12} className="animate-spin" /> Adding…</> : "Add Player"}
                 </button>
               </div>
             </motion.div>
@@ -1196,121 +985,65 @@ export default function ServerConsole() {
         )}
       </AnimatePresence>
 
-      {/* ══════ UPLOAD WORLD MODAL ══════ */}
+      {/* Upload World */}
       <AnimatePresence>
         {showUploadWorld && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
             onClick={() => !uploadingWorld && setShowUploadWorld(false)}>
-            <motion.div initial={{ scale: 0.94, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.94, opacity: 0 }} transition={{ duration: 0.18 }}
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               className="rounded-2xl p-6 max-w-md w-full" onClick={e => e.stopPropagation()}
-              style={{
-                background: "linear-gradient(135deg, #0f0f1a, #0d0d18)",
-                border: "1px solid rgba(96,165,250,0.25)",
-                boxShadow: "0 24px 64px rgba(0,0,0,0.8)",
-              }}>
-
-              {/* Header */}
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                    style={{ background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.25)" }}>
-                    <UploadCloud size={16} style={{ color: "#60a5fa" }} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Upload World</p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>Upload a world folder or zip to your server</p>
-                  </div>
+              style={{ background: "#0f0f1a", border: "1px solid rgba(96,165,250,0.2)" }}>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.2)" }}>
+                  <UploadCloud size={14} style={{ color: "#60a5fa" }} />
                 </div>
-                <button onClick={() => setShowUploadWorld(false)} style={{ color: "#475569" }}>
-                  <X size={15} />
-                </button>
+                <div className="flex-1">
+                  <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Upload World</p>
+                  <p className="text-[10px]" style={{ color: "#475569" }}>Upload a world folder or zip</p>
+                </div>
+                <button onClick={() => setShowUploadWorld(false)} style={{ color: "#334155" }}><X size={14} /></button>
               </div>
-
-              {/* Hidden file input */}
-              <input
-                ref={worldInputRef}
-                type="file"
-                className="hidden"
+              <input ref={worldInputRef} type="file" className="hidden"
                 accept=".zip,.tar,.gz,.rar,.7z,.json,.dat,.mca,.mcworld"
-                onChange={e => {
-                  const f = e.target.files?.[0];
-                  if (f) { setWorldFile(f); setUploadWorldErr(""); setUploadWorldMsg(""); }
-                  e.target.value = "";
-                }}
-              />
-
-              {/* Drop zone */}
-              <div
-                onClick={() => worldInputRef.current?.click()}
+                onChange={e => { const f = e.target.files?.[0]; if (f) { setWorldFile(f); setUploadWorldErr(""); setUploadWorldMsg(""); } e.target.value = ""; }} />
+              <div onClick={() => worldInputRef.current?.click()}
                 onDragOver={e => { e.preventDefault(); setWorldDragOver(true); }}
                 onDragLeave={() => setWorldDragOver(false)}
-                onDrop={e => {
-                  e.preventDefault(); setWorldDragOver(false);
-                  const f = e.dataTransfer.files[0];
-                  if (f) { setWorldFile(f); setUploadWorldErr(""); setUploadWorldMsg(""); }
-                }}
-                className="rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-8 cursor-pointer transition-all mb-4"
+                onDrop={e => { e.preventDefault(); setWorldDragOver(false); const f = e.dataTransfer.files[0]; if (f) { setWorldFile(f); setUploadWorldErr(""); setUploadWorldMsg(""); } }}
+                className="rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-7 cursor-pointer mb-4 transition-all"
                 style={{
-                  borderColor: worldDragOver ? "#60a5fa" : worldFile ? "rgba(74,222,128,0.4)" : "rgba(255,255,255,0.1)",
-                  background: worldDragOver ? "rgba(96,165,250,0.06)" : worldFile ? "rgba(74,222,128,0.04)" : "rgba(255,255,255,0.02)",
+                  borderColor: worldDragOver ? "#60a5fa" : worldFile ? "rgba(74,222,128,0.35)" : "rgba(255,255,255,0.08)",
+                  background: worldDragOver ? "rgba(96,165,250,0.05)" : worldFile ? "rgba(74,222,128,0.03)" : "rgba(255,255,255,0.02)",
                 }}>
                 {worldFile ? (
                   <>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
-                      style={{ background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.25)" }}>
-                      <Check size={18} style={{ color: "#4ade80" }} />
-                    </div>
+                    <Check size={20} className="mb-2" style={{ color: "#4ade80" }} />
                     <p className="text-sm font-semibold" style={{ color: "#4ade80" }}>{worldFile.name}</p>
-                    <p className="text-[10px] mt-1" style={{ color: "#475569" }}>
-                      {(worldFile.size / 1048576).toFixed(2)} MB — click to change
-                    </p>
+                    <p className="text-[10px] mt-1" style={{ color: "#475569" }}>{(worldFile.size/1048576).toFixed(2)} MB — click to change</p>
                   </>
                 ) : (
                   <>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
-                      style={{ background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.18)" }}>
-                      <UploadCloud size={18} style={{ color: worldDragOver ? "#60a5fa" : "#475569" }} />
-                    </div>
-                    <p className="text-sm font-semibold" style={{ color: "#94a3b8" }}>
+                    <UploadCloud size={20} className="mb-2" style={{ color: worldDragOver ? "#60a5fa" : "#334155" }} />
+                    <p className="text-sm font-semibold" style={{ color: worldDragOver ? "#60a5fa" : "#64748b" }}>
                       {worldDragOver ? "Drop it!" : "Click or drag & drop"}
                     </p>
-                    <p className="text-[10px] mt-1" style={{ color: "#334155" }}>
-                      Supports .zip, .dat, .mca, .mcworld files
-                    </p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "#1e293b" }}>Supports .zip, .dat, .mca, .mcworld</p>
                   </>
                 )}
               </div>
-
-              {/* Status messages */}
-              {uploadWorldErr && (
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-xs"
-                  style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
-                  <AlertCircle size={12} className="shrink-0" /> {uploadWorldErr}
-                </div>
-              )}
-              {uploadWorldMsg && (
-                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-xs"
-                  style={{ background: "rgba(74,222,128,0.07)", border: "1px solid rgba(74,222,128,0.2)", color: "#4ade80" }}>
-                  <Check size={12} className="shrink-0" /> {uploadWorldMsg}
-                </div>
-              )}
-
-              {/* Actions */}
+              {uploadWorldErr && <p className="text-xs mb-3" style={{ color: "#f87171" }}>{uploadWorldErr}</p>}
+              {uploadWorldMsg && <p className="text-xs mb-3" style={{ color: "#4ade80" }}>{uploadWorldMsg}</p>}
               <div className="flex gap-2">
                 <button onClick={() => setShowUploadWorld(false)} disabled={uploadingWorld}
-                  className="flex-1 h-10 rounded-xl text-xs disabled:opacity-40 transition-colors"
-                  style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>
-                  Cancel
-                </button>
+                  className="flex-1 h-9 rounded-xl text-xs"
+                  style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
                 <button onClick={uploadWorld} disabled={!worldFile || uploadingWorld}
-                  className="flex-1 h-10 flex items-center justify-center gap-2 rounded-xl text-sm font-bold transition-all hover:opacity-90 disabled:opacity-30"
-                  style={{ background: "linear-gradient(135deg, #1d4ed8, #3b82f6)", color: "white" }}>
-                  {uploadingWorld
-                    ? <><Loader2 size={13} className="animate-spin" /> Uploading…</>
-                    : <><UploadCloud size={13} /> Upload World</>}
+                  className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
+                  style={{ background: "linear-gradient(135deg,#1d4ed8,#3b82f6)", color: "white" }}>
+                  {uploadingWorld ? <><Loader2 size={12} className="animate-spin" /> Uploading…</> : "Upload World"}
                 </button>
               </div>
             </motion.div>
@@ -1318,54 +1051,45 @@ export default function ServerConsole() {
         )}
       </AnimatePresence>
 
-      {/* ══════ DELETE MODAL ══════ */}
+      {/* Delete server */}
       <AnimatePresence>
         {showDelete && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{ background: "rgba(0,0,0,0.9)", backdropFilter: "blur(8px)" }}
             onClick={() => !deleting && setShowDelete(false)}>
-            <motion.div initial={{ scale: 0.94, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.94, opacity: 0 }} transition={{ duration: 0.18 }}
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{
-                background: "linear-gradient(135deg, #0f0f1a, #110d1d)",
-                border: "1px solid rgba(239,68,68,0.25)",
-                boxShadow: "0 24px 64px rgba(0,0,0,0.8), 0 0 0 1px rgba(239,68,68,0.08)",
-              }}>
+              style={{ background: "#0f0f1a", border: "1px solid rgba(239,68,68,0.22)" }}>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
-                  <Trash2 size={18} style={{ color: "#f87171" }} />
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.22)" }}>
+                  <Trash2 size={15} style={{ color: "#f87171" }} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Delete server?</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>
-                    Destroys <span style={{ color: "#f1f5f9" }}>{server?.name}</span> permanently
-                  </p>
+                  <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Delete Server?</p>
+                  <p className="text-[10px]" style={{ color: "#475569" }}>This cannot be undone</p>
                 </div>
               </div>
-              <div className="rounded-xl px-3 py-2 mb-4 text-xs"
-                style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)", color: "#fca5a5" }}>
-                ⚠ Cannot be undone. All files and data will be deleted.
-              </div>
+              <p className="text-xs mb-3 px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.14)", color: "#fca5a5" }}>
+                All files and data will be permanently deleted.
+              </p>
               <label className="text-[9px] mono uppercase tracking-wider block mb-1.5" style={{ color: "#475569" }}>
-                Type <span style={{ color: "#f1f5f9", fontWeight: 700 }}>{server?.name}</span> to confirm
+                Type <strong style={{ color: "#f1f5f9" }}>{server?.name}</strong> to confirm
               </label>
               <input type="text" value={deleteInput} onChange={e => setDeleteInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && deleteInput === server?.name && deleteServer()}
                 autoFocus placeholder={server?.name}
-                className="w-full rounded-xl px-3 py-2 text-sm bg-transparent outline-none mb-4 mono"
-                style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#f1f5f9" }} />
+                className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mb-4 mono"
+                style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#f1f5f9" }} />
               <div className="flex gap-2">
                 <button onClick={() => setShowDelete(false)} disabled={deleting}
-                  className="flex-1 h-9 rounded-xl text-xs transition-colors disabled:opacity-40"
-                  style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#64748b" }}>Cancel</button>
+                  className="flex-1 h-9 rounded-xl text-xs"
+                  style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
                 <button onClick={deleteServer} disabled={deleting || deleteInput !== server?.name}
-                  className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all hover:opacity-90 disabled:opacity-30"
-                  style={{ background: "linear-gradient(135deg, #991b1b, #dc2626)", color: "white" }}>
-                  {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                  {deleting ? "Deleting…" : "Delete Forever"}
+                  className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
+                  style={{ background: "linear-gradient(135deg,#991b1b,#dc2626)", color: "white" }}>
+                  {deleting ? <Loader2 size={12} className="animate-spin" /> : "Delete Forever"}
                 </button>
               </div>
             </motion.div>
