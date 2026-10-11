@@ -133,32 +133,10 @@
 .float      { animation: float 6s ease-in-out infinite; }
 .float-slow { animation: float 9s ease-in-out infinite; }
 
-/* Depth shimmer on primary buttons */
+/* Depth shimmer on primary buttons — removed */
 .nether-glow {
   position: relative;
   overflow: hidden;
-}
-
-.nether-glow::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -75%;
-  width: 50%;
-  height: 200%;
-  background: linear-gradient(
-    105deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.18) 50%,
-    transparent 60%
-  );
-  transform: skewX(-15deg);
-  transition: left 0.5s ease;
-  pointer-events: none;
-}
-
-.nether-glow:hover::before {
-  left: 125%;
 }
 
 /* ── Sale banner animations ─────────────────────────────────────────── */

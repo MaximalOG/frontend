@@ -53,11 +53,12 @@ const ScrollToTop = () => {
   return null;
 };
 
-// Hide sale banner and chatbot on admin routes
+// Hide sale banner and chatbot on admin routes and all server management pages
 const AdminGuard = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
-  const isAdmin = pathname.startsWith("/admin");
-  return isAdmin ? null : <>{children}</>;
+  const isAdmin  = pathname.startsWith("/admin");
+  const isServer = pathname.startsWith("/server/");
+  return (isAdmin || isServer) ? null : <>{children}</>;
 };
 
 const queryClient = new QueryClient();

@@ -73,18 +73,18 @@ function parseRamMB(ram?: string) {
 /* ─── Constants ──────────────────────────────────────────────────────── */
 const LINE_STYLE: Record<LogLine["type"], { color: string; badge?: string }> = {
   error:   { color: "#ef4444", badge: "ERR" },
-  warn:    { color: "#f59e0b", badge: "WARN" },
+  warn:    { color: "#0ea5e9", badge: "WARN" },
   success: { color: "#22c55e", badge: "INFO" },
   info:    { color: "#6b7280" },
   input:   { color: "#60a5fa", badge: "CMD" },
-  system:  { color: "#f59e0b", badge: "SYS" },
+  system:  { color: "#0ea5e9", badge: "SYS" },
 };
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
   running:    { label: "RUNNING",    color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
   stopped:    { label: "STOPPED",   color: "#6b7280", bg: "rgba(107,114,128,0.12)" },
-  starting:   { label: "STARTING",  color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
-  stopping:   { label: "STOPPING",  color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
+  starting:   { label: "STARTING",  color: "#0ea5e9", bg: "rgba(14,165,233,0.12)" },
+  stopping:   { label: "STOPPING",  color: "#0ea5e9", bg: "rgba(14,165,233,0.12)" },
   installing: { label: "INSTALLING",color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
   suspended:  { label: "SUSPENDED", color: "#ef4444", bg: "rgba(239,68,68,0.12)" },
 };
@@ -642,88 +642,12 @@ export default function ServerConsole() {
             <div className="flex items-center gap-2 shrink-0">
               <PowerBtn label="Start" signal="start" icon={Play} color="#22c55e"
                 disabled={isRunning || server?.status === "starting"} loading={powerLoading === "start"} onPower={sendPower} />
-              <PowerBtn label="Restart" signal="restart" icon={RotateCcw} color="#f59e0b"
+              <PowerBtn label="Restart" signal="restart" icon={RotateCcw} color="#0ea5e9"
                 disabled={!isRunning} loading={powerLoading === "restart"} onPower={sendPower} />
               <PowerBtn label="Stop" signal="stop" icon={Square} color="#ef4444"
                 disabled={!isRunning} loading={powerLoading === "stop"} onPower={sendPower} />
               <PowerBtn label="Kill" signal="kill" icon={X} color="#ef4444"
                 disabled={false} loading={powerLoading === "kill"} onPower={sendPower} variant="ghost" />
-            </div>
-          </div>
-        </div>
-
-        {/* ── Metrics row 1: 4 summary cards ── */}
-        <div className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3 px-4 mb-3">
-          {/* CPU */}
-          <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
-            <div className="flex items-center gap-2 mb-2">
-              <Cpu size={13} style={{ color: mutedText }} />
-              <span className="text-xs font-medium" style={{ color: mutedText }}>CPU</span>
-            </div>
-            <p className="text-2xl font-bold mb-0.5" style={{ color: headingText }}>
-              {resources?.available ? `${cpuPct.toFixed(1)}%` : "0.0%"}
-            </p>
-            <p className="text-[11px]" style={{ color: mutedText }}>of {server?.cpu ?? "—"}</p>
-          </div>
-
-          {/* Memory */}
-          <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
-            <div className="flex items-center gap-2 mb-2">
-              <MemoryStick size={13} style={{ color: mutedText }} />
-              <span className="text-xs font-medium" style={{ color: mutedText }}>Memory</span>
-            </div>
-            <p className="text-2xl font-bold mb-0.5" style={{ color: headingText }}>
-              {resources?.available ? `${ramUsedMB.toFixed(0)} MB` : "0 MB"}
-            </p>
-            <p className="text-[11px]" style={{ color: mutedText }}>of {server?.ram ?? "—"}</p>
-          </div>
-
-          {/* Disk */}
-          <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
-            <div className="flex items-center gap-2 mb-2">
-              <HardDrive size={13} style={{ color: mutedText }} />
-              <span className="text-xs font-medium" style={{ color: mutedText }}>Disk</span>
-            </div>
-            <p className="text-2xl font-bold mb-0.5" style={{ color: headingText }}>
-              {resources?.available ? fmtBytes(resources.diskBytes) : "0 MB"}
-            </p>
-            <p className="text-[11px]" style={{ color: mutedText }}>of {server?.ssd ?? "—"}</p>
-          </div>
-
-          {/* Network */}
-          <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
-            <div className="flex items-center gap-2 mb-1">
-              <WifiIcon size={13} style={{ color: mutedText }} />
-              <span className="text-xs font-medium" style={{ color: mutedText }}>Network</span>
-            </div>
-            <div className="flex items-end gap-4 mb-1">
-              <div>
-                <p className="text-lg font-bold" style={{ color: headingText }}>
-                  {resources?.available ? fmtBytesShort(Math.max(0, resources.netRxBytes - prevRxRef.current)) + "/s" : "0 B/s"}
-                </p>
-                <p className="text-[10px]" style={{ color: mutedText }}>↓ In</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold" style={{ color: headingText }}>
-                  {resources?.available ? fmtBytesShort(Math.max(0, resources.netTxBytes - prevTxRef.current)) + "/s" : "0 B/s"}
-                </p>
-                <p className="text-[10px]" style={{ color: mutedText }}>↑ Out</p>
-              </div>
-            </div>
-            {/* tiny sparkline */}
-            <div style={{ height: 24 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={netRxHistory} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="netG" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <Area type="monotone" dataKey="v" stroke="#22c55e" strokeWidth={1.5} fill="url(#netG)" dot={false} isAnimationActive={false} />
-                  <Tooltip content={() => null} />
-                </AreaChart>
-              </ResponsiveContainer>
             </div>
           </div>
         </div>
@@ -898,8 +822,10 @@ export default function ServerConsole() {
                 { label: "RAM", value: server?.ram ?? "—" },
                 { label: "CPU", value: server?.cpu ?? "—" },
                 { label: "Disk", value: server?.ssd ?? "—" },
+                { label: "Network ↓", value: resources?.available ? fmtBytesShort(resources.netRxBytes) : "—" },
+                { label: "Network ↑", value: resources?.available ? fmtBytesShort(resources.netTxBytes) : "—" },
               ].map(({ label, value }) => (
-                <div key={label} className="flex items-center justify-between px-4 py-2.5">
+                <div key={label} className="flex items-center justify-between px-4 py-2">
                   <span className="text-xs" style={{ color: mutedText }}>{label}</span>
                   {typeof value === "string"
                     ? <span className="text-xs font-medium" style={{ color: labelText }}>{value}</span>
@@ -908,26 +834,26 @@ export default function ServerConsole() {
               ))}
             </div>
 
-            {/* Quick actions */}
-            <div className="px-4 py-3" style={{ borderTop: "1px solid #2a2218" }}>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: mutedText }}>Quick Actions</p>
-              <div className="grid grid-cols-2 gap-1.5">
+            {/* Quick actions — full-size buttons, visible */}
+            <div className="px-4 py-4" style={{ borderTop: "1px solid #2a2218" }}>
+              <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: mutedText }}>Quick Actions</p>
+              <div className="grid grid-cols-2 gap-2">
                 {([
-                  { icon: Package,     label: "Plugins",  color: "#f59e0b", to: `/server/${id}/installer` },
-                  { icon: UploadCloud, label: "Upload",   color: "#3b82f6", action: () => { setShowUploadWorld(true); setWorldFile(null); setUploadWorldErr(""); setUploadWorldMsg(""); } },
-                  { icon: HardDrive,   label: "Backup",   color: "#f59e0b", action: () => { setShowBackup(true); setBackupName(""); setBackupErr(""); setBackupMsg(""); } },
-                  { icon: List,        label: "Whitelist",color: "#ef4444", action: () => { setShowWhitelist(true); setWlPlayer(""); setWlErr(""); setWlMsg(""); } },
-                  { icon: Calendar,    label: "Schedules",color: "#22c55e", to: `/server/${id}/schedules` },
-                  { icon: Globe,       label: "Domain",   color: "#fbbf24", action: () => { setShowHnForm(true); setHnEdit(server?.hostname ?? ""); setHnAvail(null); setHnError(""); } },
+                  { icon: Package,     label: "Plugins",   color: "#0ea5e9", to: `/server/${id}/installer` },
+                  { icon: HardDrive,   label: "Backup",    color: "#22c55e", action: () => { setShowBackup(true); setBackupName(""); setBackupErr(""); setBackupMsg(""); } },
+                  { icon: UploadCloud, label: "Upload",    color: "#0ea5e9", action: () => { setShowUploadWorld(true); setWorldFile(null); setUploadWorldErr(""); setUploadWorldMsg(""); } },
+                  { icon: List,        label: "Whitelist", color: "#22c55e", action: () => { setShowWhitelist(true); setWlPlayer(""); setWlErr(""); setWlMsg(""); } },
+                  { icon: Calendar,    label: "Schedules", color: "#0ea5e9", to: `/server/${id}/schedules` },
+                  { icon: Globe,       label: "Domain",    color: "#22c55e", action: () => { setShowHnForm(true); setHnEdit(server?.hostname ?? ""); setHnAvail(null); setHnError(""); } },
                 ] as const).map(item => {
                   const Comp: any = (item as any).to ? Link : "button";
                   const extra = (item as any).to ? { to: (item as any).to } : { onClick: (item as any).action };
                   return (
                     <Comp key={item.label} {...extra}
-                      className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg w-full text-left transition-all hover:brightness-110"
-                      style={{ background: `${item.color}12`, border: `1px solid ${item.color}25` }}>
-                      <item.icon size={11} style={{ color: item.color }} />
-                      <span className="text-[11px] font-medium" style={{ color: item.color }}>{item.label}</span>
+                      className="flex items-center gap-2 px-3 py-2.5 rounded-lg w-full text-left transition-all hover:brightness-110 active:scale-95"
+                      style={{ background: `${item.color}15`, border: `1px solid ${item.color}30` }}>
+                      <item.icon size={13} style={{ color: item.color }} />
+                      <span className="text-xs font-semibold" style={{ color: item.color }}>{item.label}</span>
                     </Comp>
                   );
                 })}
@@ -944,7 +870,7 @@ export default function ServerConsole() {
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#f59e0b" }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#0ea5e9" }} />
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
                 </div>
                 <span className="text-[11px]" style={{ color: "#374151" }}>{server?.name} — console</span>
@@ -970,14 +896,14 @@ export default function ServerConsole() {
                 ].map(({ icon: Icon, title, active, onClick }) => (
                   <button key={title} title={title} onClick={onClick}
                     className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-white/5"
-                    style={{ color: active ? "#f59e0b" : "#374151" }}>
+                    style={{ color: active ? "#0ea5e9" : "#374151" }}>
                     <Icon size={11} />
                   </button>
                 ))}
                 <button onClick={analyzeLog} disabled={analyzing || logs.length === 0}
                   title="Analyze logs with AI"
                   className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] ml-1 transition-all hover:opacity-90 disabled:opacity-30"
-                  style={{ background: "rgba(229,57,53,0.12)", color: "#fbbf24", border: "1px solid rgba(229,57,53,0.2)" }}>
+                  style={{ background: "rgba(229,57,53,0.12)", color: "#22c55e", border: "1px solid rgba(229,57,53,0.2)" }}>
                   {analyzing ? <><Loader2 size={9} className="animate-spin" /> Analyzing…</> : <><Sparkles size={9} /> Analyze</>}
                 </button>
                 {wsStatus === "connected" ? (
@@ -987,7 +913,7 @@ export default function ServerConsole() {
                   </span>
                 ) : wsStatus === "connecting" ? (
                   <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1"
-                    style={{ background: "rgba(245,158,11,0.08)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>
+                    style={{ background: "rgba(14,165,233,0.08)", color: "#0ea5e9", border: "1px solid rgba(14,165,233,0.2)" }}>
                     <Loader2 size={8} className="animate-spin" /> …
                   </span>
                 ) : (
@@ -1014,10 +940,10 @@ export default function ServerConsole() {
                   ) : analysis && (() => {
                     const SEV = {
                       healthy:  { color: "#22c55e", label: "✓ Healthy" },
-                      warning:  { color: "#f59e0b", label: "⚠ Warning" },
+                      warning:  { color: "#0ea5e9", label: "⚠ Warning" },
                       error:    { color: "#ef4444", label: "✗ Error" },
                       critical: { color: "#ef4444", label: "🔴 Critical" },
-                    }[analysis.severity] ?? { color: "#f59e0b", label: "Analysis" };
+                    }[analysis.severity] ?? { color: "#0ea5e9", label: "Analysis" };
                     return (
                       <div className="px-4 py-3">
                         <div className="flex items-start justify-between gap-3 mb-2">
@@ -1082,10 +1008,10 @@ export default function ServerConsole() {
             <div className="shrink-0 flex items-center"
               style={{ background: "#141210", borderTop: "1px solid #2a2218", minHeight: 44 }}>
               <div className="flex items-center px-3 select-none shrink-0 gap-1">
-                <span className="text-base font-bold mono" style={{ color: "#f59e0b" }}>›</span>
+                <span className="text-base font-bold mono" style={{ color: "#0ea5e9" }}>›</span>
                 {input === "" && (
                   <span className="inline-block w-1.5 h-3 rounded-sm ml-0.5"
-                    style={{ background: "#f59e0b", opacity: blink ? 0.7 : 0, transition: "opacity 0.1s" }} />
+                    style={{ background: "#0ea5e9", opacity: blink ? 0.7 : 0, transition: "opacity 0.1s" }} />
                 )}
               </div>
               <input ref={inputRef} type="text" value={input}
@@ -1111,11 +1037,11 @@ export default function ServerConsole() {
               style={{ borderBottom: "1px solid #2a2218", background: "#141210" }}>
               <div className="w-6 h-6 rounded-lg flex items-center justify-center"
                 style={{ background: "rgba(229,57,53,0.15)", border: "1px solid rgba(229,57,53,0.3)" }}>
-                <Sparkles size={12} style={{ color: "#fbbf24" }} />
+                <Sparkles size={12} style={{ color: "#22c55e" }} />
               </div>
               <span className="text-xs font-semibold" style={{ color: labelText }}>NetherNodes AI</span>
               <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded"
-                style={{ background: "rgba(229,57,53,0.1)", color: "#f59e0b", border: "1px solid rgba(229,57,53,0.2)" }}>
+                style={{ background: "rgba(229,57,53,0.1)", color: "#0ea5e9", border: "1px solid rgba(229,57,53,0.2)" }}>
                 Beta
               </span>
             </div>
@@ -1124,7 +1050,7 @@ export default function ServerConsole() {
             <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2" style={{ minHeight: 0 }}>
               {aiMessages.length === 0 ? (
                 <div className="text-center py-6">
-                  <Sparkles size={22} className="mx-auto mb-3 opacity-20" style={{ color: "#f59e0b" }} />
+                  <Sparkles size={22} className="mx-auto mb-3 opacity-20" style={{ color: "#0ea5e9" }} />
                   <p className="text-xs font-medium mb-1" style={{ color: labelText }}>NetherNodes AI</p>
                   <p className="text-[11px]" style={{ color: mutedText }}>Ask about your server, plugins, errors, or hosting.</p>
                   <div className="mt-4 space-y-1.5">
@@ -1151,9 +1077,9 @@ export default function ServerConsole() {
                 <div className="flex justify-start">
                   <div className="rounded-xl px-3 py-2 flex items-center gap-1.5"
                     style={{ background: "rgba(229,57,53,0.08)", border: "1px solid rgba(229,57,53,0.18)" }}>
-                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#f59e0b", animationDelay: "0ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#f59e0b", animationDelay: "150ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#f59e0b", animationDelay: "300ms" }} />
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#0ea5e9", animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#0ea5e9", animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#0ea5e9", animationDelay: "300ms" }} />
                   </div>
                 </div>
               )}
@@ -1172,7 +1098,7 @@ export default function ServerConsole() {
                 <button onClick={sendAiMessage} disabled={!aiInput.trim() || aiLoading}
                   className="w-6 h-6 flex items-center justify-center rounded-lg transition-all hover:opacity-90 disabled:opacity-30 shrink-0"
                   style={{ background: "rgba(229,57,53,0.2)", border: "1px solid rgba(229,57,53,0.3)" }}>
-                  <Send size={11} style={{ color: "#fbbf24" }} />
+                  <Send size={11} style={{ color: "#22c55e" }} />
                 </button>
               </div>
             </div>
@@ -1184,7 +1110,7 @@ export default function ServerConsole() {
 
       {/* Create Backup */}
       <Modal show={showBackup} onClose={() => !creatingBackup && setShowBackup(false)}>
-        <ModalHeader icon={<HardDrive size={15} />} iconColor="#f59e0b" title="Create Backup" sub="Snapshot your server now" onClose={() => setShowBackup(false)} />
+        <ModalHeader icon={<HardDrive size={15} />} iconColor="#0ea5e9" title="Create Backup" sub="Snapshot your server now" onClose={() => setShowBackup(false)} />
         <input value={backupName} onChange={e => setBackupName(e.target.value)}
           onKeyDown={e => e.key === "Enter" && createBackupNow()}
           placeholder={`Backup ${new Date().toLocaleDateString("en-IN")}`}
@@ -1194,7 +1120,7 @@ export default function ServerConsole() {
         {backupMsg && <p className="text-xs mb-3" style={{ color: "#22c55e" }}>{backupMsg}</p>}
         <ModalActions onCancel={() => setShowBackup(false)} cancelDisabled={creatingBackup}
           onConfirm={createBackupNow} confirmDisabled={creatingBackup}
-          confirmLabel={creatingBackup ? "Creating…" : "Create Backup"} confirmColor="#f59e0b" loading={creatingBackup} />
+          confirmLabel={creatingBackup ? "Creating…" : "Create Backup"} confirmColor="#0ea5e9" loading={creatingBackup} />
       </Modal>
 
       {/* Whitelist */}
@@ -1270,7 +1196,7 @@ export default function ServerConsole() {
             <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
               className="rounded-2xl p-5 w-full max-w-sm" onClick={e => e.stopPropagation()}
               style={{ background: "#1a1612", border: "1px solid #332a1f" }}>
-              <ModalHeader icon={<Globe size={15} />} iconColor="#f59e0b" title="Custom Domain" sub="Set a custom subdomain" onClose={() => setShowHnForm(false)} />
+              <ModalHeader icon={<Globe size={15} />} iconColor="#0ea5e9" title="Custom Domain" sub="Set a custom subdomain" onClose={() => setShowHnForm(false)} />
               {server?.hostname && !showHnForm ? (
                 <div className="rounded-xl p-3 mb-4" style={{ background: "rgba(229,57,53,0.08)", border: "1px solid rgba(229,57,53,0.2)" }}>
                   <p className="text-xs" style={{ color: "#fcd34d" }}>{server.customAddress}</p>
@@ -1323,7 +1249,7 @@ export default function ServerConsole() {
                   finally { setHnSubmitting(false); }
                 }}
                 confirmDisabled={hnSubmitting || !hnAvail || hnEdit.length < 3}
-                confirmLabel={hnSubmitting ? "Saving…" : "Save"} confirmColor="#f59e0b" loading={hnSubmitting} />
+                confirmLabel={hnSubmitting ? "Saving…" : "Save"} confirmColor="#0ea5e9" loading={hnSubmitting} />
             </motion.div>
           </motion.div>
         )}
@@ -1396,7 +1322,7 @@ function SidebarContent({ id, server, sendPower, powerLoading, setShowDelete, se
         <div className="grid grid-cols-3 gap-1.5">
           {[
             { label: "Start", signal: "start" as const, icon: Play,      color: "#22c55e", disabled: isRunning || server?.status === "starting" },
-            { label: "Restart", signal: "restart" as const, icon: RotateCcw, color: "#f59e0b", disabled: !isRunning },
+            { label: "Restart", signal: "restart" as const, icon: RotateCcw, color: "#0ea5e9", disabled: !isRunning },
             { label: "Stop",  signal: "stop" as const,  icon: Square,    color: "#ef4444", disabled: !isRunning },
           ].map(btn => (
             <button key={btn.label}
