@@ -157,7 +157,7 @@ export default function ServerBackups() {
 
   if (authLoading || loadingServer) return (
     <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
-      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#f59e0b" }} />
+      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#94a3b8" }} />
     </div>
   );
 
@@ -167,8 +167,8 @@ export default function ServerBackups() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.22)" }}>
-            <HardDrive size={16} style={{ color: "#fbbf24" }} />
+            style={{ background: "rgba(14,165,233,0.1)", border: "1px solid rgba(14,165,233,0.22)" }}>
+            <HardDrive size={16} style={{ color: "#38bdf8" }} />
           </div>
           <div>
             <h1 className="text-base font-bold" style={{ color: "#f1f5f9" }}>Backups</h1>
@@ -185,7 +185,7 @@ export default function ServerBackups() {
           </button>
           <button onClick={createBackup} disabled={creating}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-40"
-            style={{ background: "rgba(251,191,36,0.12)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.25)" }}>
+            style={{ background: "rgba(14,165,233,0.1)", color: "#38bdf8", border: "1px solid rgba(14,165,233,0.22)" }}>
             {creating ? <Loader2 size={12} className="animate-spin" /> : <Plus size={13} />}
             Create Backup
           </button>
@@ -273,7 +273,7 @@ export default function ServerBackups() {
                 )}
                 <button title="Restore" onClick={() => { setRestoreTarget(b); setRestoreError(""); }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-80"
-                  style={{ background: "rgba(229,57,53,0.1)", color: "#fbbf24", border: "1px solid rgba(229,57,53,0.2)" }}>
+                  style={{ background: "rgba(14,165,233,0.08)", color: "#38bdf8", border: "1px solid rgba(14,165,233,0.2)" }}>
                   <RotateCcw size={11} />
                 </button>
                 {!b.isLocked && (
@@ -339,7 +339,7 @@ export default function ServerBackups() {
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ background: "rgba(229,57,53,0.1)", border: "1px solid rgba(229,57,53,0.25)" }}>
-                  <RotateCcw size={16} style={{ color: "#fbbf24" }} />
+                  <RotateCcw size={16} style={{ color: "#38bdf8" }} />
                 </div>
                 <div>
                   <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Restore backup?</p>
@@ -347,7 +347,7 @@ export default function ServerBackups() {
                 </div>
               </div>
               <div className="rounded-xl px-3 py-2.5 mb-4 flex items-start gap-2"
-                style={{ background: "rgba(251,191,36,0.07)", border: "1px solid rgba(251,191,36,0.18)" }}>
+                style={{ background: "rgba(14,165,233,0.07)", border: "1px solid rgba(14,165,233,0.18)" }}>
                 <AlertTriangle size={12} className="mt-0.5 shrink-0" style={{ color: "#fbbf24" }} />
                 <p className="text-xs" style={{ color: "#92400e" }}>
                   This will overwrite all current server files. The server will restart automatically.

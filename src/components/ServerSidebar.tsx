@@ -139,12 +139,12 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
             disabled={!!powerLoading || !isRunning}
             title="Restart server"
             className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl font-semibold transition-all disabled:opacity-25 disabled:cursor-not-allowed"
-            style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.2)" }}
-            onMouseEnter={e => { if (!e.currentTarget.disabled) (e.currentTarget as HTMLElement).style.background = "rgba(251,191,36,0.18)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(251,191,36,0.08)"; }}>
+            style={{ background: "rgba(14,165,233,0.08)", border: "1px solid rgba(14,165,233,0.2)" }}
+            onMouseEnter={e => { if (!e.currentTarget.disabled) (e.currentTarget as HTMLElement).style.background = "rgba(14,165,233,0.18)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(14,165,233,0.08)"; }}>
             {powerLoading === "restart"
               ? <Loader2 size={14} className="animate-spin" style={{ color: "#fbbf24" }} />
-              : <RotateCcw size={14} style={{ color: "#fbbf24" }} />}
+              : <RotateCcw size={14} style={{ color: "#38bdf8" }} />}
             <span className="text-[9px] mono uppercase tracking-wider" style={{ color: "#fbbf24" }}>Restart</span>
           </button>
 

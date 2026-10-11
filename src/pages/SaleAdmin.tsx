@@ -528,9 +528,9 @@ export default function SaleAdmin() {
                                           <button onClick={() => { updateCode(i, "freeType", "months"); if (!c.freeMonths) updateCode(i, "freeMonths", 3); }}
                                             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold transition-all"
                                             style={{
-                                              background: c.freeType === "months" ? "rgba(251,191,36,0.12)" : "rgba(255,255,255,0.04)",
+                                              background: c.freeType === "months" ? "rgba(14,165,233,0.12)" : "rgba(255,255,255,0.04)",
                                               color:      c.freeType === "months" ? "#fbbf24" : "#64748b",
-                                              border:     `1px solid ${c.freeType === "months" ? "rgba(251,191,36,0.28)" : "rgba(255,255,255,0.08)"}`,
+                                              border:     `1px solid ${c.freeType === "months" ? "rgba(14,165,233,0.28)" : "rgba(255,255,255,0.08)"}`,
                                             }}>
                                             <Calendar size={13} />
                                             Limited Months
@@ -543,8 +543,8 @@ export default function SaleAdmin() {
                                             initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
                                             className="mt-3 flex items-center gap-3">
                                             <div className="flex-1 rounded-xl px-4 py-2.5 flex items-center gap-3"
-                                              style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.2)" }}>
-                                              <Calendar size={13} style={{ color: "#fbbf24", flexShrink: 0 }} />
+                                              style={{ background: "rgba(14,165,233,0.08)", border: "1px solid rgba(14,165,233,0.2)" }}>
+                                              <Calendar size={13} style={{ color: "#38bdf8", flexShrink: 0 }} />
                                               <input
                                                 type="number" min={1} max={120}
                                                 value={c.freeMonths ?? 3}

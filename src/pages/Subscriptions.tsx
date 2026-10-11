@@ -59,7 +59,7 @@ function daysUntil(iso: string | null): number | null {
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string; border: string }> = {
   active:          { label: "Active",          color: "#4ade80", bg: "rgba(74,222,128,0.08)",   border: "rgba(74,222,128,0.25)" },
   created:         { label: "Pending",         color: "#60a5fa", bg: "rgba(96,165,250,0.08)",   border: "rgba(96,165,250,0.25)" },
-  pending_payment: { label: "Payment Due",     color: "#fbbf24", bg: "rgba(251,191,36,0.08)",   border: "rgba(251,191,36,0.25)" },
+  pending_payment: { label: "Payment Due",     color: "#fbbf24", bg: "rgba(14,165,233,0.08)",   border: "rgba(14,165,233,0.25)" },
   halted:          { label: "Halted",          color: "#f87171", bg: "rgba(248,113,113,0.08)",  border: "rgba(248,113,113,0.25)" },
   cancelled:       { label: "Cancelled",       color: "#64748b", bg: "rgba(100,116,139,0.08)",  border: "rgba(100,116,139,0.25)" },
 };
@@ -380,7 +380,7 @@ function SubCard({
                 </div>
               </div>
               <div className="rounded-xl px-3 py-2.5 mb-4 text-xs"
-                style={{ background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.18)", color: "#92400e" }}>
+                style={{ background: "rgba(14,165,233,0.06)", border: "1px solid rgba(14,165,233,0.18)", color: "#92400e" }}>
                 Your server stays active until <strong style={{ color: "#fbbf24" }}>{fmtDate(sub.currentPeriodEnd)}</strong>, then gets suspended. You can re-subscribe any time.
               </div>
               {cancelErr && <p className="text-xs mb-3" style={{ color: "#f87171" }}>{cancelErr}</p>}

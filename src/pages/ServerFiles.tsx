@@ -501,7 +501,7 @@ const ServerFiles = () => {
 
   if (authLoading || loadingServer) return (
     <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
-      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#f59e0b" }} />
+      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#94a3b8" }} />
     </div>
   );
 
@@ -716,7 +716,7 @@ const ServerFiles = () => {
               <div className="flex items-center justify-between px-5 py-3.5 shrink-0"
                 style={{ background: "#0d0d1a", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <FileText size={14} style={{ color: "#fbbf24", flexShrink: 0 }} />
+                  <FileText size={14} style={{ color: "#38bdf8", flexShrink: 0 }} />
                   <span className="text-sm font-medium mono truncate" style={{ color: "#f1f5f9" }}>{editingFile}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-3">
@@ -736,7 +736,7 @@ const ServerFiles = () => {
               </div>
               {editLoading
                 ? <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#f59e0b" }} />
+                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#94a3b8" }} />
                   </div>
                 : (() => {
                     const ext = editingFile?.split(".").pop()?.toLowerCase() ?? "";

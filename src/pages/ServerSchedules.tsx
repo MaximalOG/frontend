@@ -36,7 +36,7 @@ const PRESET_CRONS = [
 ];
 
 const ACTION_CFG = {
-  restart: { color: "#fbbf24", bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.2)",  label: "Restart" },
+  restart: { color: "#fbbf24", bg: "rgba(14,165,233,0.1)",  border: "rgba(14,165,233,0.2)",  label: "Restart" },
   stop:    { color: "#f87171", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.2)",   label: "Stop" },
   start:   { color: "#4ade80", bg: "rgba(74,222,128,0.1)",  border: "rgba(74,222,128,0.2)",  label: "Start" },
   command: { color: "#fbbf24", bg: "rgba(229,57,53,0.1)",  border: "rgba(229,57,53,0.2)",  label: "Command" },
@@ -137,7 +137,7 @@ export default function ServerSchedules() {
 
   if (authLoading || loadingServer) return (
     <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
-      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#f59e0b" }} />
+      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#94a3b8" }} />
     </div>
   );
 
@@ -148,7 +148,7 @@ export default function ServerSchedules() {
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center"
             style={{ background: "rgba(229,57,53,0.12)", border: "1px solid rgba(229,57,53,0.25)" }}>
-            <Calendar size={16} style={{ color: "#fbbf24" }} />
+            <Calendar size={16} style={{ color: "#38bdf8" }} />
           </div>
           <div>
             <h1 className="text-base font-bold" style={{ color: "#f1f5f9" }}>Schedules</h1>
@@ -346,7 +346,7 @@ export default function ServerSchedules() {
 
       {/* Note */}
       <div className="mt-4 flex items-start gap-2 px-3 py-2.5 rounded-xl"
-        style={{ background: "rgba(251,191,36,0.05)", border: "1px solid rgba(251,191,36,0.12)" }}>
+        style={{ background: "rgba(14,165,233,0.05)", border: "1px solid rgba(14,165,233,0.12)" }}>
         <AlertTriangle size={12} className="mt-0.5 shrink-0" style={{ color: "#fbbf24" }} />
         <p className="text-[10px]" style={{ color: "#92400e" }}>
           Schedules are stored locally in your browser. They will execute actions via the server console when your panel is open.

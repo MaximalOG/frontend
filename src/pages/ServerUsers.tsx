@@ -191,7 +191,7 @@ const ServerUsers = () => {
 
   if (authLoading || loadingServer) return (
     <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
-      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#f59e0b" }} />
+      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#94a3b8" }} />
     </div>
   );
 
@@ -213,7 +213,7 @@ const ServerUsers = () => {
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center"
               style={{ background: "rgba(229,57,53,0.12)", border: "1px solid rgba(229,57,53,0.25)" }}>
-              <Shield size={16} style={{ color: "#fbbf24" }} />
+              <Shield size={16} style={{ color: "#38bdf8" }} />
             </div>
             <div>
               <h2 className="text-base font-bold" style={{ color: "#f1f5f9" }}>Server Users</h2>
@@ -237,7 +237,7 @@ const ServerUsers = () => {
                 style={{ background: "linear-gradient(135deg,rgba(229,57,53,0.07),rgba(59,130,246,0.03))" }}>
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold flex items-center gap-2" style={{ color: "#f1f5f9" }}>
-                    <UserPlus size={14} style={{ color: "#fbbf24" }} /> Invite a user
+                    <UserPlus size={14} style={{ color: "#38bdf8" }} /> Invite a user
                   </p>
                   <button onClick={() => setShowAdd(false)} style={{ color: "#475569" }}><X size={14} /></button>
                 </div>
@@ -367,7 +367,7 @@ const ServerUsers = () => {
                 <div className="flex items-center justify-end gap-1.5">
                   <button onClick={() => { setEditTarget(u); setEditPerms([...u.permissions]); setSaveError(""); }}
                     className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all hover:opacity-80"
-                    style={{ background: "rgba(229,57,53,0.1)", color: "#fbbf24", border: "1px solid rgba(229,57,53,0.2)" }}>
+                    style={{ background: "rgba(14,165,233,0.08)", color: "#38bdf8", border: "1px solid rgba(14,165,233,0.2)" }}>
                     <Shield size={9} /> Edit
                   </button>
                   <button onClick={() => setDeleteTarget(u)}

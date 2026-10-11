@@ -500,15 +500,22 @@ export default function ServerConsole() {
     setAiInput(""); setAiLoading(true);
     setTimeout(() => aiChatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     try {
+      // Prepend server context so the AI gives relevant, formatted responses
+      const contextPrefix = server
+        ? `[Server context: ${server.name}, ${server.serverType ?? "unknown"} ${server.mcVersion ?? ""}, ${server.ram} RAM, status: ${server.status}]\n\n`
+        : "";
       const res = await apiFetch("/api/chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: msg, history: aiMessages.slice(-6) }),
+        body: JSON.stringify({
+          message: contextPrefix + msg,
+          history: aiMessages.slice(-8).map(m => ({ role: m.role, content: m.content })),
+        }),
       });
       let data: any = {}; try { data = await res.json(); } catch {}
       const reply = data.message || (res.ok ? "No response." : (data.error || "Error."));
       setAiMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch {
-      setAiMessages(prev => [...prev, { role: "assistant", content: "Could not reach AI." }]);
+      setAiMessages(prev => [...prev, { role: "assistant", content: "Could not reach AI. Check your connection." }]);
     } finally {
       setAiLoading(false);
       setTimeout(() => aiChatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
@@ -1065,21 +1072,26 @@ export default function ServerConsole() {
                 </div>
               ) : aiMessages.map((m, i) => (
                 <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className="max-w-[92%] rounded-xl px-3 py-2 text-[12px] leading-relaxed"
-                    style={m.role === "user"
-                      ? { background: "#221d17", border: "1px solid #332a1f", color: "#d1d5db" }
-                      : { background: "rgba(229,57,53,0.08)", border: "1px solid rgba(229,57,53,0.18)", color: "#fcd34d" }}>
-                    {m.content}
-                  </div>
+                  {m.role === "user" ? (
+                    <div className="max-w-[88%] rounded-xl px-3 py-2 text-[12px] leading-relaxed"
+                      style={{ background: "#221d17", border: "1px solid #332a1f", color: "#d1d5db" }}>
+                      {m.content}
+                    </div>
+                  ) : (
+                    <div className="max-w-[96%] rounded-xl px-3 py-2.5 text-[12px]"
+                      style={{ background: "#1a1612", border: "1px solid #2a2218", color: "#d1d5db" }}>
+                      <AiMarkdown text={m.content} />
+                    </div>
+                  )}
                 </div>
               ))}
               {aiLoading && (
                 <div className="flex justify-start">
                   <div className="rounded-xl px-3 py-2 flex items-center gap-1.5"
-                    style={{ background: "rgba(229,57,53,0.08)", border: "1px solid rgba(229,57,53,0.18)" }}>
-                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#0ea5e9", animationDelay: "0ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#0ea5e9", animationDelay: "150ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#0ea5e9", animationDelay: "300ms" }} />
+                    style={{ background: "#1a1612", border: "1px solid #2a2218" }}>
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#94a3b8", animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#94a3b8", animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#94a3b8", animationDelay: "300ms" }} />
                   </div>
                 </div>
               )}
@@ -1438,4 +1450,112 @@ function ModalActions({ onCancel, cancelDisabled, onConfirm, confirmDisabled, co
       </button>
     </div>
   );
+}
+
+/* ─── AI Markdown Renderer ───────────────────────────────────────────────────
+ * Renders the AI response with proper formatting:
+ * - ## Heading  → bold section header
+ * - **bold**    → bold
+ * - `code`      → inline code
+ * - - bullet    → bullet list item
+ * - 1. item     → numbered list item
+ * - blank line  → paragraph break
+ */
+function AiMarkdown({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const els: React.ReactNode[] = [];
+  let i = 0;
+
+  const renderInline = (s: string): React.ReactNode => {
+    // Split on **bold** and `code` patterns
+    const parts = s.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+    return parts.map((p, idx) => {
+      if (p.startsWith("**") && p.endsWith("**"))
+        return <strong key={idx} style={{ color: "#f3f4f6", fontWeight: 600 }}>{p.slice(2, -2)}</strong>;
+      if (p.startsWith("`") && p.endsWith("`"))
+        return (
+          <code key={idx} className="font-mono text-[11px] px-1 py-0.5 rounded"
+            style={{ background: "#2a2218", color: "#22c55e" }}>
+            {p.slice(1, -1)}
+          </code>
+        );
+      return p;
+    });
+  };
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Blank line — small spacer
+    if (!trimmed) { els.push(<div key={i} className="h-2" />); i++; continue; }
+
+    // Heading ## or ###
+    if (/^#{1,3}\s/.test(trimmed)) {
+      const text2 = trimmed.replace(/^#+\s/, "");
+      els.push(
+        <p key={i} className="text-[12px] font-bold mt-2 mb-1" style={{ color: "#f3f4f6" }}>
+          {renderInline(text2)}
+        </p>
+      );
+      i++; continue;
+    }
+
+    // Bullet list — collect consecutive bullets
+    if (/^[-*•]\s/.test(trimmed)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[-*•]\s/.test(lines[i].trim())) {
+        items.push(lines[i].trim().replace(/^[-*•]\s/, ""));
+        i++;
+      }
+      els.push(
+        <ul key={`ul-${i}`} className="space-y-1 my-1.5 ml-1">
+          {items.map((item, idx) => (
+            <li key={idx} className="flex items-start gap-2 text-[12px]" style={{ color: "#c9c0b5" }}>
+              <span className="mt-1.5 w-1 h-1 rounded-full shrink-0" style={{ background: "#4b5563" }} />
+              <span>{renderInline(item)}</span>
+            </li>
+          ))}
+        </ul>
+      );
+      continue;
+    }
+
+    // Numbered list — collect consecutive
+    if (/^\d+\.\s/.test(trimmed)) {
+      const items: string[] = [];
+      let n = 1;
+      while (i < lines.length && /^\d+\.\s/.test(lines[i].trim())) {
+        items.push(lines[i].trim().replace(/^\d+\.\s/, ""));
+        i++;
+      }
+      els.push(
+        <ol key={`ol-${i}`} className="space-y-1 my-1.5 ml-1">
+          {items.map((item, idx) => (
+            <li key={idx} className="flex items-start gap-2 text-[12px]" style={{ color: "#c9c0b5" }}>
+              <span className="text-[10px] font-bold shrink-0 mt-0.5" style={{ color: "#6b7280", minWidth: 14 }}>{idx + 1}.</span>
+              <span>{renderInline(item)}</span>
+            </li>
+          ))}
+        </ol>
+      );
+      continue;
+    }
+
+    // Horizontal rule ---
+    if (/^---+$/.test(trimmed)) {
+      els.push(<hr key={i} className="my-2" style={{ borderColor: "#2a2218" }} />);
+      i++; continue;
+    }
+
+    // Regular paragraph line
+    els.push(
+      <p key={i} className="text-[12px] leading-relaxed" style={{ color: "#c9c0b5" }}>
+        {renderInline(trimmed)}
+      </p>
+    );
+    i++;
+  }
+
+  return <div className="space-y-0.5">{els}</div>;
 }

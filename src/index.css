@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -19,7 +19,7 @@
     --primary: 350 85% 50%;        /* #e53935 NetherNodes red */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 38 92% 50%;       /* #f59e0b amber */
+    --secondary: 221 83% 74%;     /* #818cf8 slate-violet */
     --secondary-foreground: 20 8% 4%;
 
     --muted: 22 8% 13%;            /* #231f1b warm muted */
@@ -47,7 +47,7 @@
     --sidebar-ring: 350 85% 50%;
 
     --nether-glow: 0 0 20px hsla(350, 85%, 50%, 0.3);
-    --amber-glow:  0 0 20px hsla(38, 92%, 50%, 0.25);
+    --indigo-glow: 0 0 20px hsla(221, 83%, 74%, 0.2);
   }
 }
 

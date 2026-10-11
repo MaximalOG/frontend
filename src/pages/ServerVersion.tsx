@@ -19,7 +19,7 @@ const SERVER_TYPES = [
   { id: "paper",      label: "Paper",       desc: "High-performance, plugin-ready (recommended)", color: "#4ade80" },
   { id: "vanilla",    label: "Vanilla",     desc: "Pure Minecraft — no plugins or mods",            color: "#60a5fa" },
   { id: "forge",      label: "Forge",       desc: "Full mod support via Minecraft Forge",            color: "#fb923c" },
-  { id: "bungeecord", label: "BungeeCord",  desc: "Multi-server network proxy",                     color: "#fbbf24" },
+  { id: "bungeecord", label: "BungeeCord",  desc: "Multi-server network proxy",                     color: "#38bdf8" },
   { id: "sponge",     label: "Sponge",      desc: "Vanilla server with SpongeAPI mod support",       color: "#fbbf24" },
 ];
 
@@ -160,7 +160,7 @@ export default function ServerVersion() {
 
   if (authLoading || loadingServer) return (
     <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
-      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#f59e0b" }} />
+      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#94a3b8" }} />
     </div>
   );
 
@@ -185,7 +185,7 @@ export default function ServerVersion() {
           {/* ── Running warning ── */}
           {isRunning && (
             <div className="flex items-center gap-2 px-4 py-3 rounded-xl mb-5 text-xs"
-              style={{ background: "rgba(251,191,36,0.07)", border: "1px solid rgba(251,191,36,0.2)", color: "#fbbf24" }}>
+              style={{ background: "rgba(14,165,233,0.07)", border: "1px solid rgba(14,165,233,0.2)", color: "#fbbf24" }}>
               <AlertTriangle size={13} className="shrink-0" />
               Stop the server before making changes.
             </div>
@@ -342,7 +342,7 @@ export default function ServerVersion() {
                                       {v.label}
                                       {v.tag && (
                                         <span className="text-[8px] px-1 rounded font-bold"
-                                          style={{ background: v.tag === "Recommended" ? "rgba(74,222,128,0.15)" : "rgba(251,191,36,0.15)",
+                                          style={{ background: v.tag === "Recommended" ? "rgba(74,222,128,0.15)" : "rgba(14,165,233,0.15)",
                                                    color: v.tag === "Recommended" ? "#4ade80" : "#fbbf24" }}>
                                           {v.tag}
                                         </span>
