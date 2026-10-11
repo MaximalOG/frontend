@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ServerPageShell
  * Shared layout wrapper for all server management pages.
  * Provides the desktop left-sidebar + mobile hamburger drawer pattern.
@@ -52,7 +52,7 @@ export default function ServerPageShell({
   );
 
   return (
-    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#080810" }}>
+    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#0c0a08" }}>
 
       {/* ── Mobile drawer backdrop ── */}
       <AnimatePresence>
@@ -70,7 +70,7 @@ export default function ServerPageShell({
               initial={{ x: -270 }} animate={{ x: 0 }} exit={{ x: -270 }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
               className="fixed top-0 left-0 h-full z-50 flex flex-col md:hidden px-4 py-5 overflow-y-auto"
-              style={{ width: 260, background: "#0b0b14", borderRight: "1px solid rgba(255,255,255,0.08)" }}>
+              style={{ width: 260, background: "#100e0b", borderRight: "1px solid rgba(255,255,255,0.08)" }}>
               {/* close button */}
               <button onClick={() => setDrawerOpen(false)}
                 className="self-end mb-4 w-8 h-8 flex items-center justify-center rounded-lg"
@@ -85,7 +85,7 @@ export default function ServerPageShell({
 
       {/* ── Desktop sidebar ── */}
       <div className="hidden md:flex flex-col h-full overflow-y-auto shrink-0 px-4 py-5"
-        style={{ width: 236, background: "#0b0b14", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+        style={{ width: 236, background: "#100e0b", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
         {sidebarContent}
       </div>
 
@@ -94,7 +94,7 @@ export default function ServerPageShell({
 
         {/* Mobile header strip */}
         <div className="flex md:hidden items-center gap-3 px-4 py-3 shrink-0"
-          style={{ background: "#0b0b14", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          style={{ background: "#100e0b", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <button onClick={() => setDrawerOpen(true)}
             className="w-9 h-9 flex items-center justify-center rounded-xl shrink-0"
             style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)" }}>

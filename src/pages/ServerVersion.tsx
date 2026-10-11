@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -19,7 +19,7 @@ const SERVER_TYPES = [
   { id: "paper",      label: "Paper",       desc: "High-performance, plugin-ready (recommended)", color: "#4ade80" },
   { id: "vanilla",    label: "Vanilla",     desc: "Pure Minecraft — no plugins or mods",            color: "#60a5fa" },
   { id: "forge",      label: "Forge",       desc: "Full mod support via Minecraft Forge",            color: "#fb923c" },
-  { id: "bungeecord", label: "BungeeCord",  desc: "Multi-server network proxy",                     color: "#a78bfa" },
+  { id: "bungeecord", label: "BungeeCord",  desc: "Multi-server network proxy",                     color: "#fbbf24" },
   { id: "sponge",     label: "Sponge",      desc: "Vanilla server with SpongeAPI mod support",       color: "#fbbf24" },
 ];
 
@@ -159,8 +159,8 @@ export default function ServerVersion() {
   };
 
   if (authLoading || loadingServer) return (
-    <div className="flex items-center justify-center h-screen" style={{ background: "#080810" }}>
-      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#a855f7" }} />
+    <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
+      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#f59e0b" }} />
     </div>
   );
 
@@ -236,7 +236,7 @@ export default function ServerVersion() {
             {/* ── Left: Server Software (2/5) ── */}
             <div className="lg:col-span-2">
               <div className="rounded-2xl overflow-hidden"
-                style={{ background: "linear-gradient(135deg,#0d0d18,#0f0d1c)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                style={{ background: "linear-gradient(135deg,#120f0b,#0f0d1c)", border: "1px solid rgba(255,255,255,0.07)" }}>
                 <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                   <p className="text-[9px] mono uppercase tracking-widest" style={{ color: "#475569" }}>Server Software</p>
                 </div>
@@ -274,7 +274,7 @@ export default function ServerVersion() {
             {/* ── Right: Version picker (3/5) ── */}
             <div className="lg:col-span-3">
               <div className="rounded-2xl overflow-hidden"
-                style={{ background: "linear-gradient(135deg,#0d0d18,#0f0d1c)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                style={{ background: "linear-gradient(135deg,#120f0b,#0f0d1c)", border: "1px solid rgba(255,255,255,0.07)" }}>
 
                 {/* Selected version chip */}
                 <div className="px-4 py-3 flex items-center justify-between"
@@ -282,7 +282,7 @@ export default function ServerVersion() {
                   <p className="text-[9px] mono uppercase tracking-widest" style={{ color: "#475569" }}>Minecraft Version</p>
                   <div className="flex items-center gap-2">
                     <span className="px-2.5 py-1 rounded-lg text-xs font-bold mono"
-                      style={{ background: "rgba(139,92,246,0.12)", color: "#c4b5fd", border: "1px solid rgba(139,92,246,0.22)" }}>
+                      style={{ background: "rgba(229,57,53,0.12)", color: "#fcd34d", border: "1px solid rgba(229,57,53,0.22)" }}>
                       {mcVersion}
                     </span>
                     <span className="text-[10px]" style={{ color: "#475569" }}>{javaVersion}</span>
@@ -310,7 +310,7 @@ export default function ServerVersion() {
                             </span>
                             {hasSelected && (
                               <span className="px-1.5 py-0.5 rounded-md text-[9px] mono font-bold"
-                                style={{ background: "rgba(139,92,246,0.15)", color: "#a78bfa" }}>
+                                style={{ background: "rgba(229,57,53,0.15)", color: "#fbbf24" }}>
                                 selected
                               </span>
                             )}
@@ -334,10 +334,10 @@ export default function ServerVersion() {
                                       disabled={isRunning}
                                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40"
                                       style={{
-                                        background: sel ? "rgba(139,92,246,0.18)" : "rgba(255,255,255,0.04)",
-                                        color: sel ? "#c4b5fd" : "#64748b",
-                                        border: `1px solid ${sel ? "rgba(139,92,246,0.3)" : "rgba(255,255,255,0.07)"}`,
-                                        boxShadow: sel ? "0 0 8px rgba(139,92,246,0.15)" : "none",
+                                        background: sel ? "rgba(229,57,53,0.18)" : "rgba(255,255,255,0.04)",
+                                        color: sel ? "#fcd34d" : "#64748b",
+                                        border: `1px solid ${sel ? "rgba(229,57,53,0.3)" : "rgba(255,255,255,0.07)"}`,
+                                        boxShadow: sel ? "0 0 8px rgba(229,57,53,0.15)" : "none",
                                       }}>
                                       {v.label}
                                       {v.tag && (
@@ -416,7 +416,7 @@ export default function ServerVersion() {
             <motion.div initial={{ scale:0.95, opacity:0 }} animate={{ scale:1, opacity:1 }}
               exit={{ scale:0.95, opacity:0 }}
               className="rounded-2xl p-6 max-w-sm w-full"
-              style={{ background: "linear-gradient(135deg,#0f0f1a,#110d1d)", border: "1px solid rgba(239,68,68,0.25)" }}
+              style={{ background: "linear-gradient(135deg,#141008,"hsl(38 92% 45%)")", border: "1px solid rgba(239,68,68,0.25)" }}
               onClick={e => e.stopPropagation()}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { DollarSign, Save, RotateCcw, ArrowLeft, Star, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,7 +17,7 @@ interface PlanSpec {
 
 const TIER_COLOR: Record<string, string> = {
   Entry:     "hsl(200 70% 55%)",
-  Community: "hsl(270 70% 60%)",
+  Community: "hsl(38 92% 50%)",
   Advanced:  "hsl(350 85% 60%)",
 };
 

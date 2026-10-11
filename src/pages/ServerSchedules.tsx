@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -39,7 +39,7 @@ const ACTION_CFG = {
   restart: { color: "#fbbf24", bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.2)",  label: "Restart" },
   stop:    { color: "#f87171", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.2)",   label: "Stop" },
   start:   { color: "#4ade80", bg: "rgba(74,222,128,0.1)",  border: "rgba(74,222,128,0.2)",  label: "Start" },
-  command: { color: "#a78bfa", bg: "rgba(139,92,246,0.1)",  border: "rgba(139,92,246,0.2)",  label: "Command" },
+  command: { color: "#fbbf24", bg: "rgba(229,57,53,0.1)",  border: "rgba(229,57,53,0.2)",  label: "Command" },
 };
 
 
@@ -136,8 +136,8 @@ export default function ServerSchedules() {
   };
 
   if (authLoading || loadingServer) return (
-    <div className="flex items-center justify-center h-screen" style={{ background: "#080810" }}>
-      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#a855f7" }} />
+    <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
+      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#f59e0b" }} />
     </div>
   );
 
@@ -147,8 +147,8 @@ export default function ServerSchedules() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.25)" }}>
-            <Calendar size={16} style={{ color: "#a78bfa" }} />
+            style={{ background: "rgba(229,57,53,0.12)", border: "1px solid rgba(229,57,53,0.25)" }}>
+            <Calendar size={16} style={{ color: "#fbbf24" }} />
           </div>
           <div>
             <h1 className="text-base font-bold" style={{ color: "#f1f5f9" }}>Schedules</h1>
@@ -157,7 +157,7 @@ export default function ServerSchedules() {
         </div>
         <button onClick={() => { setShowCreate(true); setCreateError(""); }}
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90"
-          style={{ background: "rgba(139,92,246,0.15)", color: "#c4b5fd", border: "1px solid rgba(139,92,246,0.25)" }}>
+          style={{ background: "rgba(229,57,53,0.15)", color: "#fcd34d", border: "1px solid rgba(229,57,53,0.25)" }}>
           <Plus size={13} /> New Schedule
         </button>
       </div>
@@ -167,7 +167,7 @@ export default function ServerSchedules() {
         {showCreate && (
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
             className="rounded-2xl p-5 mb-5 space-y-4"
-            style={{ background: "linear-gradient(135deg,#0f0d1c,#0d0d18)", border: "1px solid rgba(139,92,246,0.25)" }}>
+            style={{ background: "linear-gradient(135deg,#0f0d1c,#120f0b)", border: "1px solid rgba(229,57,53,0.25)" }}>
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>New Schedule</p>
               <button onClick={() => setShowCreate(false)} style={{ color: "#475569" }}><X size={15} /></button>
@@ -189,9 +189,9 @@ export default function ServerSchedules() {
                   <button key={p.cron} onClick={() => setNewCronPreset(p.cron)}
                     className="px-3 py-2 rounded-xl text-xs font-medium transition-all text-left"
                     style={{
-                      background: newCronPreset === p.cron ? "rgba(139,92,246,0.18)" : "rgba(255,255,255,0.04)",
-                      color: newCronPreset === p.cron ? "#c4b5fd" : "#64748b",
-                      border: `1px solid ${newCronPreset === p.cron ? "rgba(139,92,246,0.3)" : "rgba(255,255,255,0.07)"}`,
+                      background: newCronPreset === p.cron ? "rgba(229,57,53,0.18)" : "rgba(255,255,255,0.04)",
+                      color: newCronPreset === p.cron ? "#fcd34d" : "#64748b",
+                      border: `1px solid ${newCronPreset === p.cron ? "rgba(229,57,53,0.3)" : "rgba(255,255,255,0.07)"}`,
                     }}>
                     {p.label}
                   </button>
@@ -231,7 +231,7 @@ export default function ServerSchedules() {
                 <label className="text-[9px] mono uppercase tracking-widest block mb-1.5" style={{ color: "#475569" }}>Command</label>
                 <input value={newCommand} onChange={e => setNewCommand(e.target.value)} placeholder="say Server restarting in 1 minute"
                   className="w-full rounded-xl px-3 py-2 text-sm bg-transparent outline-none mono"
-                  style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#c4b5fd" }} />
+                  style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#fcd34d" }} />
               </div>
             )}
 
@@ -243,7 +243,7 @@ export default function ServerSchedules() {
                 style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
               <button onClick={createSchedule} disabled={creating}
                 className="flex-1 h-9 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-40"
-                style={{ background: "linear-gradient(135deg,#5b21b6,#7c3aed)", color: "white" }}>
+                style={{ background: "linear-gradient(135deg,#b91c1c,#e53935)", color: "white" }}>
                 {creating ? <Loader2 size={12} className="animate-spin mx-auto" /> : "Create Schedule"}
               </button>
             </div>
@@ -261,7 +261,7 @@ export default function ServerSchedules() {
         </div>
       ) : (
         <div className="rounded-2xl overflow-hidden"
-          style={{ border: "1px solid rgba(255,255,255,0.07)", background: "#0b0b14" }}>
+          style={{ border: "1px solid rgba(255,255,255,0.07)", background: "#100e0b" }}>
           {schedules.map((s, i) => {
             const ac = ACTION_CFG[s.action];
             const isOpen = expandedId === s.id;
@@ -307,14 +307,14 @@ export default function ServerSchedules() {
                     <motion.div key="exp" initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }}
                       style={{ overflow: "hidden" }}>
                       <div className="px-4 pb-4 pt-2 space-y-3"
-                        style={{ background: "rgba(139,92,246,0.04)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                        style={{ background: "rgba(229,57,53,0.04)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="rounded-xl px-3 py-2.5"
                             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
                             <p className="text-[9px] mono uppercase tracking-widest mb-1" style={{ color: "#475569" }}>
                               <Clock size={8} className="inline mr-1" />Cron Expression
                             </p>
-                            <p className="text-sm mono font-bold" style={{ color: "#c4b5fd" }}>{s.cron}</p>
+                            <p className="text-sm mono font-bold" style={{ color: "#fcd34d" }}>{s.cron}</p>
                           </div>
                           <div className="rounded-xl px-3 py-2.5"
                             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
@@ -324,7 +324,7 @@ export default function ServerSchedules() {
                         </div>
                         {s.command && (
                           <div className="rounded-xl px-3 py-2.5"
-                            style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.15)" }}>
+                            style={{ background: "rgba(229,57,53,0.06)", border: "1px solid rgba(229,57,53,0.15)" }}>
                             <p className="text-[9px] mono uppercase tracking-widest mb-1" style={{ color: "#475569" }}>Command</p>
                             <p className="text-sm mono" style={{ color: "#e2e8f0" }}>{s.command}</p>
                           </div>

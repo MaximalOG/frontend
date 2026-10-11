@@ -6,47 +6,48 @@
 
 @layer base {
   :root {
-    --background: 260 15% 4%;
-    --foreground: 0 0% 98%;
+    /* ── Fire palette: warm near-black + red primary + amber accent ── */
+    --background: 20 8% 4%;        /* #0c0a08 warm near-black */
+    --foreground: 30 15% 96%;      /* #f5f0e8 warm white */
 
-    --card: 260 12% 7%;
-    --card-foreground: 0 0% 98%;
+    --card: 22 10% 7%;             /* #141210 warm dark card */
+    --card-foreground: 30 15% 96%;
 
-    --popover: 260 12% 7%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 22 10% 7%;
+    --popover-foreground: 30 15% 96%;
 
-    --primary: 350 85% 50%;
+    --primary: 350 85% 50%;        /* #e53935 NetherNodes red */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 270 70% 60%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 38 92% 50%;       /* #f59e0b amber */
+    --secondary-foreground: 20 8% 4%;
 
-    --muted: 260 10% 15%;
-    --muted-foreground: 260 5% 55%;
+    --muted: 22 8% 13%;            /* #231f1b warm muted */
+    --muted-foreground: 28 12% 52%; /* #9a8878 warm grey */
 
-    --accent: 270 70% 60%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 38 92% 50%;          /* amber accent replaces purple */
+    --accent-foreground: 20 8% 4%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 260 10% 12%;
-    --input: 260 10% 15%;
-    --ring: 350 85% 50%;
+    --border: 24 10% 14%;          /* #271f1a warm dark border */
+    --input: 22 8% 13%;
+    --ring: 350 85% 50%;           /* red focus ring */
 
     --radius: 0.25rem;
 
-    --sidebar-background: 260 15% 6%;
-    --sidebar-foreground: 0 0% 98%;
+    --sidebar-background: 20 10% 6%; /* #141008 warm sidebar */
+    --sidebar-foreground: 30 15% 96%;
     --sidebar-primary: 350 85% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 260 10% 15%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 260 10% 12%;
+    --sidebar-accent: 22 8% 13%;
+    --sidebar-accent-foreground: 30 15% 96%;
+    --sidebar-border: 24 10% 14%;
     --sidebar-ring: 350 85% 50%;
 
     --nether-glow: 0 0 20px hsla(350, 85%, 50%, 0.3);
-    --portal-glow: 0 0 40px hsla(270, 70%, 60%, 0.2);
+    --amber-glow:  0 0 20px hsla(38, 92%, 50%, 0.25);
   }
 }
 
@@ -71,17 +72,22 @@
     box-shadow: var(--nether-glow);
   }
 
+  .amber-glow {
+    box-shadow: var(--amber-glow);
+  }
+
+  /* legacy alias kept for backward compat */
   .portal-glow {
-    box-shadow: var(--portal-glow);
+    box-shadow: var(--amber-glow);
   }
 
   .nether-border {
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.07);
   }
 
   .nether-border-hover {
     @apply transition-colors duration-200;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.07);
   }
 
   .nether-border-hover:hover {
@@ -89,21 +95,23 @@
   }
 
   .glass-surface {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 240, 220, 0.025);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 220, 180, 0.07);
   }
 
   .glow-text-primary {
     text-shadow: 0 0 20px hsla(350, 85%, 50%, 0.5);
   }
 
+  /* amber glow replaces purple secondary glow */
   .glow-text-secondary {
-    text-shadow: 0 0 20px hsla(270, 70%, 60%, 0.5);
+    text-shadow: 0 0 20px hsla(38, 92%, 50%, 0.4);
   }
 
+  /* warm radial instead of purple portal */
   .gradient-portal {
-    background: radial-gradient(circle at center, hsla(270, 70%, 60%, 0.15), transparent 70%);
+    background: radial-gradient(circle at center, hsla(38, 92%, 50%, 0.1), transparent 70%);
   }
 
   .gradient-nether {
@@ -115,21 +123,15 @@
   }
 }
 
-/* ── 3D / Immersive effects ─────────────────────────────────────────────────── */
+/* ── Animations ─────────────────────────────────────────────────────── */
 
-/* Floating animation for ambient elements */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-10px); }
 }
 
-.float {
-  animation: float 6s ease-in-out infinite;
-}
-
-.float-slow {
-  animation: float 9s ease-in-out infinite;
-}
+.float      { animation: float 6s ease-in-out infinite; }
+.float-slow { animation: float 9s ease-in-out infinite; }
 
 /* Depth shimmer on primary buttons */
 .nether-glow {
@@ -159,7 +161,7 @@
   left: 125%;
 }
 
-/* ── Sale banner animations ─────────────────────────────────────────────────── */
+/* ── Sale banner animations ─────────────────────────────────────────── */
 @keyframes saleGradient {
   0%   { background-position: 0% 50%; }
   50%  { background-position: 100% 50%; }

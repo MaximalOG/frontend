@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Server, Play, Square, RefreshCw, AlertCircle, Cpu, MemoryStick, HardDrive, Settings, ExternalLink, Terminal, Users } from "lucide-react";
@@ -36,7 +36,7 @@ const STATUS_COLOR: Record<string, string> = {
   stopping:     "hsl(38 90% 60%)",
   installing:   "hsl(200 80% 55%)",
   suspended:    "hsl(350 85% 55%)",
-  pending_setup: "hsl(270 70% 65%)",
+  pending_setup: "hsl(38 92% 55%)",
   provisioning: "hsl(200 80% 55%)",
   unknown:      "hsl(38 90% 60%)",
 };
@@ -167,7 +167,7 @@ const Dashboard = () => {
                     border: srv.shared
                       ? "1px solid hsl(210 70% 30%)"
                       : srv.pendingSetup
-                      ? "1px solid hsl(270 70% 35%)"
+                      ? "1px solid hsl(38 92% 30%)"
                       : "1px solid hsl(0 0% 16%)",
                     boxShadow: srv.pendingSetup ? "0 0 20px hsl(270 70% 20% / 0.3)" : undefined,
                   }}
@@ -175,14 +175,14 @@ const Dashboard = () => {
                   {/* Setup required banner — only for owned servers */}
                   {srv.pendingSetup && !srv.shared && (
                     <div className="rounded-sm px-3 py-2 mb-4 flex items-center justify-between gap-3"
-                      style={{ background: "hsl(270 70% 8%)", border: "1px solid hsl(270 70% 25%)" }}>
+                      style={{ background: "hsl(38 92% 5%)", border: "1px solid hsl(38 92% 20%)" }}>
                       <div className="flex items-center gap-2">
-                        <Settings size={13} className="text-purple-400 shrink-0" />
-                        <span className="text-xs text-purple-300 font-medium">Setup required — configure your server to get started</span>
+                        <Settings size={13} className="text-amber-400 shrink-0" />
+                        <span className="text-xs text-amber-300 font-medium">Setup required — configure your server to get started</span>
                       </div>
                       <Link to={`/setup-server?server=${srv.id}`}
                         className="shrink-0 px-3 py-1 rounded-sm text-[11px] font-semibold transition-all hover:brightness-110"
-                        style={{ background: "hsl(270 70% 40%)", color: "white" }}>
+                        style={{ background: "hsl(38 92% 35%)", color: "white" }}>
                         Set Up Now
                       </Link>
                     </div>
@@ -276,7 +276,7 @@ const Dashboard = () => {
                       {srv.status === "pending_setup" && !srv.shared && (
                         <Link to={`/setup-server?server=${srv.id}`}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110"
-                          style={{ background: "hsl(270 70% 20%)", color: "hsl(270 70% 70%)", border: "1px solid hsl(270 70% 35%)" }}>
+                          style={{ background: "hsl(270 70% 20%)", color: "hsl(270 70% 70%)", border: "1px solid hsl(38 92% 30%)" }}>
                           <Settings size={11} /> Setup
                         </Link>
                       )}

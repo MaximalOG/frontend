@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+﻿import { Link, useLocation } from "react-router-dom";
 import {
   Terminal, FolderOpen, Users, ArrowLeft,
   Play, Square, RotateCcw, Loader2, Package, Settings2,
@@ -83,8 +83,8 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
       {/* ── Server identity card ── */}
       <div className="mb-5 rounded-xl p-3 relative overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(59,130,246,0.04) 100%)",
-          border: "1px solid rgba(139,92,246,0.18)",
+          background: "linear-gradient(135deg, rgba(229,57,53,0.08) 0%, rgba(59,130,246,0.04) 100%)",
+          border: "1px solid rgba(229,57,53,0.18)",
         }}>
         {/* subtle glow blob */}
         <div className="absolute -top-4 -left-4 w-16 h-16 rounded-full pointer-events-none"
@@ -181,10 +181,10 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
                     className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all"
                     style={{
                       background: active
-                        ? "linear-gradient(90deg, rgba(139,92,246,0.18), rgba(139,92,246,0.06))"
+                        ? "linear-gradient(90deg, rgba(229,57,53,0.18), rgba(229,57,53,0.06))"
                         : "transparent",
-                      color:  active ? "#c4b5fd" : "#64748b",
-                      border: active ? "1px solid rgba(139,92,246,0.25)" : "1px solid transparent",
+                      color:  active ? "#fcd34d" : "#64748b",
+                      border: active ? "1px solid rgba(229,57,53,0.25)" : "1px solid transparent",
                     }}
                     onMouseEnter={e => {
                       if (!active) {

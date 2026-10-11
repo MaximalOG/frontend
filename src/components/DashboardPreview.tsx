@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, FolderOpen, Terminal, Activity } from "lucide-react";
 
@@ -99,7 +99,7 @@ const FileManagerTab = () => {
 const ResourcesTab = () => {
   const bars = [
     { label: "CPU Usage",    value: 23, max: 100, unit: "%",  color: "hsl(350 85% 50%)" },
-    { label: "Memory",       value: 1.8, max: 4,  unit: "GB", color: "hsl(270 70% 60%)" },
+    { label: "Memory",       value: 1.8, max: 4,  unit: "GB", color: "hsl(38 92% 50%)" },
     { label: "Disk I/O",     value: 42,  max: 100, unit: "MB/s", color: "hsl(200 70% 55%)" },
     { label: "Network In",   value: 18,  max: 100, unit: "Mbps", color: "hsl(142 70% 50%)" },
     { label: "Network Out",  value: 7,   max: 100, unit: "Mbps", color: "hsl(38 90% 55%)" },

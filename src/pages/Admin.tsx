@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { Ticket, Tag, Users, LogOut, ChevronRight, Lock, Star, DollarSign } from "lucide-react";
@@ -32,8 +32,8 @@ const Admin = () => {
       icon: Tag,
       title: "Sale Manager",
       desc: "Create public banners or secret promo codes, set discounts, and control sale dates.",
-      color: "hsl(270 70% 55%)",
-      border: "hsl(270 70% 35%)",
+      color: "hsl(38 92% 45%)",
+      border: "hsl(38 92% 30%)",
       glow: "hsl(270 70% 50% / 0.3)",
       allowed: hasPermission("banner_sale") || hasPermission("promo_codes"),
     },

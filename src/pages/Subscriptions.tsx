@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -194,7 +194,7 @@ function SubCard({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl overflow-hidden"
-      style={{ background: "linear-gradient(135deg,#0d0d18,#0f0d1c)", border: "1px solid rgba(255,255,255,0.07)" }}
+      style={{ background: "linear-gradient(135deg,#120f0b,#0f0d1c)", border: "1px solid rgba(255,255,255,0.07)" }}
     >
       {/* Main row */}
       <div className="p-5">
@@ -368,7 +368,7 @@ function SubCard({
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "linear-gradient(135deg,#0f0f1a,#110d1d)", border: "1px solid rgba(239,68,68,0.25)" }}>
+              style={{ background: "linear-gradient(135deg,#141008,"hsl(38 92% 45%)")", border: "1px solid rgba(239,68,68,0.25)" }}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+﻿import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -52,7 +52,7 @@ function escHtml(s: string): string {
 // Shared color palette
 const C = {
   comment:   "color:#4ade80;opacity:0.55;font-style:italic",
-  key:       "color:#c084fc",
+  key:       "color:#fbbf24",
   eq:        "color:#475569",
   valTrue:   "color:#4ade80;font-weight:600",
   valFalse:  "color:#f87171;font-weight:600",
@@ -67,7 +67,7 @@ const C = {
   null_:     "color:#f87171;opacity:0.8",
   punct:     "color:#64748b",
   tag:       "color:#38bdf8",
-  attr:      "color:#c084fc",
+  attr:      "color:#fbbf24",
   heading:   "color:#f472b6;font-weight:700",
   bold:      "font-weight:700;color:#e2e8f0",
   italic_:   "font-style:italic;color:#e2e8f0",
@@ -500,8 +500,8 @@ const ServerFiles = () => {
   };
 
   if (authLoading || loadingServer) return (
-    <div className="flex items-center justify-center h-screen" style={{ background: "#080810" }}>
-      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#a855f7" }} />
+    <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
+      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#f59e0b" }} />
     </div>
   );
 
@@ -711,12 +711,12 @@ const ServerFiles = () => {
             <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
               className="flex flex-col rounded-2xl overflow-hidden w-full max-w-3xl"
-              style={{ maxHeight: "85vh", background: "#0a0a12", border: "1px solid rgba(139,92,246,0.3)", boxShadow: "0 24px 64px rgba(0,0,0,0.8)" }}
+              style={{ maxHeight: "85vh", background: "#0e0c09", border: "1px solid rgba(229,57,53,0.3)", boxShadow: "0 24px 64px rgba(0,0,0,0.8)" }}
               onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between px-5 py-3.5 shrink-0"
                 style={{ background: "#0d0d1a", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <FileText size={14} style={{ color: "#a78bfa", flexShrink: 0 }} />
+                  <FileText size={14} style={{ color: "#fbbf24", flexShrink: 0 }} />
                   <span className="text-sm font-medium mono truncate" style={{ color: "#f1f5f9" }}>{editingFile}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-3">
@@ -736,7 +736,7 @@ const ServerFiles = () => {
               </div>
               {editLoading
                 ? <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#a855f7" }} />
+                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#f59e0b" }} />
                   </div>
                 : (() => {
                     const ext = editingFile?.split(".").pop()?.toLowerCase() ?? "";
@@ -773,7 +773,7 @@ const ServerFiles = () => {
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "linear-gradient(135deg,#0f0f1a,#110d1d)", border: "1px solid rgba(239,68,68,0.25)" }}>
+              style={{ background: "linear-gradient(135deg,#141008,"hsl(38 92% 45%)")", border: "1px solid rgba(239,68,68,0.25)" }}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>

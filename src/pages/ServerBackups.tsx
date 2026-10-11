@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -156,8 +156,8 @@ export default function ServerBackups() {
   };
 
   if (authLoading || loadingServer) return (
-    <div className="flex items-center justify-center h-screen" style={{ background: "#080810" }}>
-      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#a855f7" }} />
+    <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
+      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#f59e0b" }} />
     </div>
   );
 
@@ -273,7 +273,7 @@ export default function ServerBackups() {
                 )}
                 <button title="Restore" onClick={() => { setRestoreTarget(b); setRestoreError(""); }}
                   className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-80"
-                  style={{ background: "rgba(139,92,246,0.1)", color: "#a78bfa", border: "1px solid rgba(139,92,246,0.2)" }}>
+                  style={{ background: "rgba(229,57,53,0.1)", color: "#fbbf24", border: "1px solid rgba(229,57,53,0.2)" }}>
                   <RotateCcw size={11} />
                 </button>
                 {!b.isLocked && (
@@ -298,7 +298,7 @@ export default function ServerBackups() {
             onClick={() => !deleting && setDeleteTarget(null)}>
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "linear-gradient(135deg,#0f0f1a,#110d1d)", border: "1px solid rgba(239,68,68,0.25)" }}>
+              style={{ background: "linear-gradient(135deg,#141008,#141008)", border: "1px solid rgba(239,68,68,0.25)" }}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
@@ -335,11 +335,11 @@ export default function ServerBackups() {
             onClick={() => !restoring && setRestoreTarget(null)}>
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "linear-gradient(135deg,#0f0f1a,#110d1d)", border: "1px solid rgba(139,92,246,0.25)" }}>
+              style={{ background: "linear-gradient(135deg,#141008,#141008)", border: "1px solid rgba(229,57,53,0.25)" }}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.25)" }}>
-                  <RotateCcw size={16} style={{ color: "#a78bfa" }} />
+                  style={{ background: "rgba(229,57,53,0.1)", border: "1px solid rgba(229,57,53,0.25)" }}>
+                  <RotateCcw size={16} style={{ color: "#fbbf24" }} />
                 </div>
                 <div>
                   <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Restore backup?</p>
@@ -360,7 +360,7 @@ export default function ServerBackups() {
                   style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#64748b" }}>Cancel</button>
                 <button onClick={restoreBackup} disabled={restoring}
                   className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
-                  style={{ background: "linear-gradient(135deg,#5b21b6,#7c3aed)", color: "white" }}>
+                  style={{ background: "linear-gradient(135deg,#b91c1c,#e53935)", color: "white" }}>
                   {restoring ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
                   {restoring ? "Restoring…" : "Restore"}
                 </button>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -137,8 +137,8 @@ export default function ServerWhitelist() {
   const filtered = players.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
 
   if (authLoading || loadingServer) return (
-    <div className="flex items-center justify-center h-screen" style={{ background: "#080810" }}>
-      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#a855f7" }} />
+    <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
+      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#f59e0b" }} />
     </div>
   );
 
@@ -192,7 +192,7 @@ export default function ServerWhitelist() {
 
       {/* Add player */}
       <div className="rounded-2xl p-4 mb-5"
-        style={{ background: "linear-gradient(135deg,#0f0d1c,#0d0d18)", border: "1px solid rgba(255,255,255,0.07)" }}>
+        style={{ background: "linear-gradient(135deg,#0f0d1c,#120f0b)", border: "1px solid rgba(255,255,255,0.07)" }}>
         <p className="text-[9px] mono uppercase tracking-widest mb-2" style={{ color: "#475569" }}>
           <UserPlus size={9} className="inline mr-1" />Add Player
         </p>
@@ -243,7 +243,7 @@ export default function ServerWhitelist() {
         </div>
       ) : (
         <div className="rounded-2xl overflow-hidden"
-          style={{ border: "1px solid rgba(255,255,255,0.07)", background: "#0b0b14" }}>
+          style={{ border: "1px solid rgba(255,255,255,0.07)", background: "#100e0b" }}>
           {filtered.map((p, i) => (
             <motion.div key={p.name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
               className="flex items-center gap-3 px-4 py-3 transition-colors"
@@ -283,7 +283,7 @@ export default function ServerWhitelist() {
             onClick={() => !deleting && setDeleteTarget(null)}>
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "linear-gradient(135deg,#0f0f1a,#110d1d)", border: "1px solid rgba(239,68,68,0.25)" }}>
+              style={{ background: "linear-gradient(135deg,#141008,"hsl(38 92% 45%)")", border: "1px solid rgba(239,68,68,0.25)" }}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>

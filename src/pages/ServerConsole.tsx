@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { AreaChart, Area, ResponsiveContainer, Tooltip } from "recharts";
+import { AreaChart, Area, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from "recharts";
 import {
   Loader2, AlertCircle, Wifi, WifiOff, Check, Copy,
   Globe, Edit3, Trash2, Shield, Clock, Users as UsersIcon,
   HardDrive, Cpu, MemoryStick, Download, Search, X,
   ChevronDown, ChevronUp, Package, Calendar, List, Zap,
-  Server, Activity, UploadCloud, Menu, ArrowLeft,
-  Sparkles, Send,
+  Server, Activity, UploadCloud, Menu, Play, Square,
+  RotateCcw, Terminal, FolderOpen, Settings2, ArrowLeft,
+  Sparkles, Send, Wifi as WifiIcon, ChevronRight,
 } from "lucide-react";
-import ServerSidebar from "@/components/ServerSidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
 
@@ -31,7 +31,7 @@ interface LogLine {
   type: "info" | "warn" | "error" | "success" | "input" | "system";
 }
 
-/* ─── Helpers ────────────────────────────────────────────────────────── */
+/* ─── Helpers ─────────────────────────────────────────────────────────── */
 let _lid = 0;
 const mkLine = (text: string, type: LogLine["type"] = "info"): LogLine => ({ id: ++_lid, text, type });
 
@@ -55,12 +55,13 @@ function classifyLine(text: string): LogLine["type"] {
   return "info";
 }
 function nowStr() { return new Date().toLocaleTimeString("en-IN",{ hour:"2-digit", minute:"2-digit", second:"2-digit" }); }
-function fmtBytes(b: number) { return b >= 1073741824 ? `${(b/1073741824).toFixed(1)}GB` : `${(b/1048576).toFixed(0)}MB`; }
+function fmtBytes(b: number) { return b >= 1073741824 ? `${(b/1073741824).toFixed(2)} GB` : b >= 1048576 ? `${(b/1048576).toFixed(0)} MB` : `${(b/1024).toFixed(0)} KB`; }
+function fmtBytesShort(b: number) { return b >= 1073741824 ? `${(b/1073741824).toFixed(1)}GB` : b >= 1048576 ? `${(b/1048576).toFixed(0)}MB` : `${(b/1024).toFixed(0)}KB`; }
 function fmtUptime(ms: number) {
-  if (ms <= 0) return "—";
+  if (ms <= 0) return "Not running";
   const s = Math.floor(ms/1000), m = Math.floor(s/60), h = Math.floor(m/60), d = Math.floor(h/24);
-  if (d > 0) return `${d}d ${h%24}h`;
-  if (h > 0) return `${h}h ${m%60}m`;
+  if (d > 0) return `${d}d ${h%24}h ${m%60}m`;
+  if (h > 0) return `${h}h ${m%60}m ${s%60}s`;
   return `${m}m ${s%60}s`;
 }
 function parseRamMB(ram?: string) {
@@ -70,24 +71,44 @@ function parseRamMB(ram?: string) {
 }
 
 /* ─── Constants ──────────────────────────────────────────────────────── */
-const LINE_STYLE: Record<LogLine["type"], { color: string; badge?: string; badgeBg?: string }> = {
-  error:   { color: "#f87171", badge: "ERR",  badgeBg: "rgba(239,68,68,0.12)" },
-  warn:    { color: "#fbbf24", badge: "WARN", badgeBg: "rgba(251,191,36,0.10)" },
-  success: { color: "#4ade80", badge: "OK",   badgeBg: "rgba(74,222,128,0.08)" },
-  info:    { color: "#64748b" },
-  input:   { color: "#7dd3fc", badge: "CMD",  badgeBg: "rgba(125,211,252,0.08)" },
-  system:  { color: "#a78bfa", badge: "SYS",  badgeBg: "rgba(167,139,250,0.08)" },
-};
-const STATUS_CFG: Record<string, { color: string; dot: string; label: string }> = {
-  running:    { color: "#4ade80", dot: "#22c55e", label: "Online" },
-  stopped:    { color: "#475569", dot: "#334155", label: "Offline" },
-  starting:   { color: "#fbbf24", dot: "#f59e0b", label: "Starting" },
-  stopping:   { color: "#fbbf24", dot: "#f59e0b", label: "Stopping" },
-  installing: { color: "#60a5fa", dot: "#3b82f6", label: "Installing" },
-  suspended:  { color: "#f87171", dot: "#ef4444", label: "Suspended" },
+const LINE_STYLE: Record<LogLine["type"], { color: string; badge?: string }> = {
+  error:   { color: "#ef4444", badge: "ERR" },
+  warn:    { color: "#f59e0b", badge: "WARN" },
+  success: { color: "#22c55e", badge: "INFO" },
+  info:    { color: "#6b7280" },
+  input:   { color: "#60a5fa", badge: "CMD" },
+  system:  { color: "#f59e0b", badge: "SYS" },
 };
 
-/* ═══════════════════════════ COMPONENT ════════════════════════════════ */
+const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
+  running:    { label: "RUNNING",    color: "#22c55e", bg: "rgba(34,197,94,0.12)" },
+  stopped:    { label: "STOPPED",   color: "#6b7280", bg: "rgba(107,114,128,0.12)" },
+  starting:   { label: "STARTING",  color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
+  stopping:   { label: "STOPPING",  color: "#f59e0b", bg: "rgba(245,158,11,0.12)" },
+  installing: { label: "INSTALLING",color: "#3b82f6", bg: "rgba(59,130,246,0.12)" },
+  suspended:  { label: "SUSPENDED", color: "#ef4444", bg: "rgba(239,68,68,0.12)" },
+};
+
+/* ─── Sidebar nav ────────────────────────────────────────────────────── */
+const NAV = [
+  { section: "ESSENTIALS", items: [
+    { to: "console",   label: "Console",   icon: Terminal },
+    { to: "files",     label: "Files",     icon: FolderOpen },
+    { to: "version",   label: "Startup",   icon: Settings2 },
+  ]},
+  { section: "MC UTILS", items: [
+    { to: "users",     label: "Players",   icon: UsersIcon },
+    { to: "installer", label: "Plugins",   icon: Package },
+    { to: "version",   label: "Version",   icon: Settings2 },
+    { to: "whitelist", label: "Whitelist", icon: List },
+  ]},
+  { section: "MANAGEMENT", items: [
+    { to: "schedules", label: "Schedules", icon: Calendar },
+    { to: "backups",   label: "Backups",   icon: HardDrive },
+  ]},
+];
+
+/* ═══════════════════════ COMPONENT ════════════════════════════════════ */
 export default function ServerConsole() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -99,13 +120,13 @@ export default function ServerConsole() {
     try { const r = sessionStorage.getItem(LOG_KEY); return r ? JSON.parse(r) as LogLine[] : []; } catch { return []; }
   };
 
-  /* ── state ── */
+  /* state */
   const [server, setServer]               = useState<ServerData | null>(null);
   const [loadingServer, setLoadingServer] = useState(true);
   const [serverError, setServerError]     = useState("");
   const [logs, setLogs]                   = useState<LogLine[]>(() => loadStoredLogs());
   const [input, setInput]                 = useState("");
-  const [history, setHistory]             = useState<string[]>([]);
+  const [cmdHistory, setCmdHistory]       = useState<string[]>([]);
   const [histIdx, setHistIdx]             = useState(-1);
   const [wsStatus, setWsStatus]           = useState<"disconnected"|"connecting"|"connected"|"error">("disconnected");
   const [autoScroll, setAutoScroll]       = useState(true);
@@ -146,25 +167,37 @@ export default function ServerConsole() {
     diskBytes: number; netRxBytes: number; netTxBytes: number; uptimeMs: number;
     limitMemoryMB: number | null; limitDiskMB: number | null; limitCpu: number | null;
   } | null>(null);
-  const [cpuHistory, setCpuHistory] = useState<{ t: number; v: number }[]>(
-    Array.from({ length: 30 }, (_, i) => ({ t: i, v: 0 }))
-  );
+  const [cpuHistory, setCpuHistory]   = useState<{ t: number; v: number }[]>(Array.from({ length: 20 }, (_, i) => ({ t: i, v: 0 })));
+  const [memHistory, setMemHistory]   = useState<{ t: number; v: number }[]>(Array.from({ length: 20 }, (_, i) => ({ t: i, v: 0 })));
+  const [netRxHistory, setNetRxHistory] = useState<{ t: number; v: number }[]>(Array.from({ length: 20 }, (_, i) => ({ t: i, v: 0 })));
+  const [netTxHistory, setNetTxHistory] = useState<{ t: number; v: number }[]>(Array.from({ length: 20 }, (_, i) => ({ t: i, v: 0 })));
 
-  /* ── AI chat state ── */
+  /* AI chat state */
   const [aiMessages, setAiMessages]     = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [aiInput, setAiInput]           = useState("");
   const [aiLoading, setAiLoading]       = useState(false);
   const aiChatEndRef                    = useRef<HTMLDivElement>(null);
 
-  /* ── refs ── */
-  const wsRef    = useRef<WebSocket | null>(null);
-  const logsRef  = useRef<HTMLDivElement>(null);
-  const logsEnd  = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const tokenRef = useRef("");
-  const tickRef  = useRef(30);
+  /* Log analysis state */
+  const [analysis, setAnalysis]   = useState<{
+    severity: "healthy"|"warning"|"error"|"critical";
+    summary: string; problem: string; cause: string; fixSteps: string[];
+  } | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeErr, setAnalyzeErr] = useState("");
 
-  /* ── effects ── */
+  /* refs */
+  const wsRef           = useRef<WebSocket | null>(null);
+  const logsRef         = useRef<HTMLDivElement>(null);
+  const logsEnd         = useRef<HTMLDivElement>(null);
+  const inputRef        = useRef<HTMLInputElement>(null);
+  const tokenRef        = useRef("");
+  const tickRef         = useRef(20);
+  const connStatusIdRef = useRef<number | null>(null);
+  const prevRxRef       = useRef(0);
+  const prevTxRef       = useRef(0);
+
+  /* effects */
   useEffect(() => { const t = setInterval(() => setBlink(b => !b), 500); return () => clearInterval(t); }, []);
   useEffect(() => {
     if (!authLoading && !user) navigate("/login", { state: { from: `/server/${id}/console` } });
@@ -203,18 +236,13 @@ export default function ServerConsole() {
     setAutoScroll(el.scrollHeight - el.scrollTop - el.clientHeight < 40);
   };
 
-  /* ── WebSocket ── */
-  const connStatusIdRef = useRef<number | null>(null); // tracks the single "Connecting…/Connected" log line
-
+  /* WebSocket */
   const updateConnLog = useCallback((text: string, type: LogLine["type"]) => {
-    // If we already have a connection status line, overwrite it in-place.
-    // This prevents spamming "Connecting… / Connected" on every reconnect.
     if (connStatusIdRef.current !== null) {
       const lid = connStatusIdRef.current;
       setLogs(prev => {
         const idx = prev.findIndex(l => l.id === lid);
         if (idx === -1) {
-          // Line was cleared — append fresh
           const fresh = mkLine(text, type);
           connStatusIdRef.current = fresh.id;
           const next = [...prev.slice(-1200), fresh];
@@ -306,7 +334,7 @@ export default function ServerConsole() {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [connect]);
 
-  /* ── Resource poll ── */
+  /* Resource poll */
   useEffect(() => {
     if (!user || !id) return;
     const poll = async () => {
@@ -317,7 +345,15 @@ export default function ServerConsole() {
           setResources(d);
           if (d.available) {
             const tick = tickRef.current++;
-            setCpuHistory(prev => [...prev.slice(1), { t: tick, v: d.cpu }]);
+            const memMB = d.memoryBytes / 1048576;
+            const rxDelta = Math.max(0, d.netRxBytes - prevRxRef.current);
+            const txDelta = Math.max(0, d.netTxBytes - prevTxRef.current);
+            prevRxRef.current = d.netRxBytes;
+            prevTxRef.current = d.netTxBytes;
+            setCpuHistory(prev  => [...prev.slice(1), { t: tick, v: d.cpu }]);
+            setMemHistory(prev  => [...prev.slice(1), { t: tick, v: memMB }]);
+            setNetRxHistory(prev => [...prev.slice(1), { t: tick, v: rxDelta / 1024 }]);
+            setNetTxHistory(prev => [...prev.slice(1), { t: tick, v: txDelta / 1024 }]);
             if (d.limitMemoryMB != null || d.limitDiskMB != null || d.limitCpu != null) {
               setServer(prev => {
                 if (!prev) return prev;
@@ -338,19 +374,19 @@ export default function ServerConsole() {
     return () => clearInterval(iv);
   }, [user, id, token]);
 
-  /* ── Handlers ── */
+  /* Handlers */
   const sendCommand = () => {
     const cmd = input.trim();
     if (!cmd || wsRef.current?.readyState !== WebSocket.OPEN) return;
     wsRef.current.send(JSON.stringify({ event: "send command", args: [cmd] }));
     addLog(`> ${cmd}`, "input");
-    setHistory(h => [cmd, ...h.slice(0, 49)]);
+    setCmdHistory(h => [cmd, ...h.slice(0, 49)]);
     setHistIdx(-1); setInput(""); setAutoScroll(true);
   };
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") { sendCommand(); return; }
-    if (e.key === "ArrowUp")   { e.preventDefault(); const n = Math.min(histIdx+1, history.length-1); setHistIdx(n); setInput(history[n]??""); }
-    if (e.key === "ArrowDown") { e.preventDefault(); const n = Math.max(histIdx-1, -1); setHistIdx(n); setInput(n===-1?"":history[n]??""); }
+    if (e.key === "ArrowUp")   { e.preventDefault(); const n = Math.min(histIdx+1, cmdHistory.length-1); setHistIdx(n); setInput(cmdHistory[n]??""); }
+    if (e.key === "ArrowDown") { e.preventDefault(); const n = Math.max(histIdx-1, -1); setHistIdx(n); setInput(n===-1?"":cmdHistory[n]??""); }
   };
   const sendPower = async (signal: "start"|"stop"|"restart"|"kill") => {
     setPowerLoading(signal);
@@ -438,388 +474,589 @@ export default function ServerConsole() {
     finally { setWlAdding(false); }
   };
 
-  /* ── AI chat send ── */
+  /* Log analyzer */
+  const analyzeLog = async () => {
+    const lines = logs.filter(l => l.type !== "input").slice(-80).map(l => l.text);
+    if (lines.length === 0) { setAnalyzeErr("No console output to analyze yet."); return; }
+    setAnalyzing(true); setAnalysis(null); setAnalyzeErr("");
+    try {
+      const res = await apiFetch(`/api/servers/${id}/analyze-log`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+        body: JSON.stringify({ lines }),
+      });
+      let data: any = {}; try { data = await res.json(); } catch {}
+      if (!res.ok) { setAnalyzeErr(data.error || "Analysis failed."); return; }
+      setAnalysis(data);
+    } catch { setAnalyzeErr("Network error. Please try again."); }
+    finally { setAnalyzing(false); }
+  };
+
+  /* AI chat send */
   const sendAiMessage = async () => {
     const msg = aiInput.trim();
     if (!msg || aiLoading) return;
-    const userMsg = { role: "user" as const, content: msg };
-    setAiMessages(prev => [...prev, userMsg]);
-    setAiInput("");
-    setAiLoading(true);
-    // scroll to bottom
+    setAiMessages(prev => [...prev, { role: "user", content: msg }]);
+    setAiInput(""); setAiLoading(true);
     setTimeout(() => aiChatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     try {
       const res = await apiFetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: msg,
-          history: aiMessages.slice(-6).map(m => ({ role: m.role, content: m.content })),
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg, history: aiMessages.slice(-6) }),
       });
-      let data: any = {};
-      try { data = await res.json(); } catch {}
+      let data: any = {}; try { data = await res.json(); } catch {}
       const reply = data.message || (res.ok ? "No response." : (data.error || "Error."));
       setAiMessages(prev => [...prev, { role: "assistant", content: reply }]);
     } catch {
-      setAiMessages(prev => [...prev, { role: "assistant", content: "Could not reach AI. Check your connection." }]);
+      setAiMessages(prev => [...prev, { role: "assistant", content: "Could not reach AI." }]);
     } finally {
       setAiLoading(false);
       setTimeout(() => aiChatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     }
   };
 
-  /* ── Derived values ── */
+  /* Derived */
   const filteredLogs = searchQuery ? logs.filter(l => l.text.toLowerCase().includes(searchQuery.toLowerCase())) : logs;
-  const cfg          = STATUS_CFG[server?.status ?? ""] ?? STATUS_CFG.stopped;
-  const isRunning    = server?.status === "running";
-  const displayAddr  = server?.customAddress ?? server?.host ?? null;
-  const ramLimitMB   = parseRamMB(server?.ram);
-  const ramUsedMB    = resources ? resources.memoryBytes / 1048576 : 0;
-  const ramPct       = ramLimitMB > 0 ? Math.min((ramUsedMB / ramLimitMB) * 100, 100) : 0;
-  const cpuPct       = resources?.cpu ?? 0;
-  const diskLimitMB  = resources?.limitDiskMB ?? (() => {
+  const st         = STATUS_MAP[server?.status ?? ""] ?? STATUS_MAP.stopped;
+  const isRunning  = server?.status === "running";
+  const displayAddr = server?.customAddress ?? server?.host ?? null;
+  const ramLimitMB  = parseRamMB(server?.ram);
+  const ramUsedMB   = resources ? resources.memoryBytes / 1048576 : 0;
+  const ramPct      = ramLimitMB > 0 ? Math.min((ramUsedMB / ramLimitMB) * 100, 100) : 0;
+  const cpuPct      = resources?.cpu ?? 0;
+  const diskLimitMB = resources?.limitDiskMB ?? (() => {
     const s = server?.ssd ?? ""; const n = parseFloat(s);
     if (!n) return 0;
     return s.toUpperCase().includes("GB") ? n * 1024 : n;
   })();
-  const diskUsedMB   = resources ? resources.diskBytes / 1048576 : 0;
-  const diskPct      = diskLimitMB > 0 ? Math.min((diskUsedMB / diskLimitMB) * 100, 100) : 0;
+  const diskUsedMB  = resources ? resources.diskBytes / 1048576 : 0;
+  const diskPct     = diskLimitMB > 0 ? Math.min((diskUsedMB / diskLimitMB) * 100, 100) : 0;
+  const diskFreeMB  = Math.max(0, diskLimitMB - diskUsedMB);
 
-  /* ── Loading / error states ── */
+  /* ── Loading / error ── */
   if (authLoading || loadingServer) return (
-    <div className="min-h-screen bg-background flex items-center justify-center" style={{ background: "#080810" }}>
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
-          style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)" }}>
-          <Loader2 className="w-4 h-4 animate-spin" style={{ color: "#a78bfa" }} />
-        </div>
-        <p className="text-xs mono" style={{ color: "#475569" }}>Connecting to console…</p>
-      </div>
+    <div className="h-screen flex items-center justify-center" style={{ background: "#0e0e10" }}>
+      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#6b7280" }} />
     </div>
   );
   if (serverError) return (
-    <div className="h-screen flex items-center justify-center" style={{ background: "#080810" }}>
+    <div className="h-screen flex items-center justify-center" style={{ background: "#0e0e10" }}>
       <div className="text-center px-4">
-        <AlertCircle className="w-8 h-8 mx-auto mb-3" style={{ color: "#f87171" }} />
-        <p className="text-sm font-semibold mb-1" style={{ color: "#f1f5f9" }}>Console unavailable</p>
-        <p className="text-xs mb-5" style={{ color: "#475569" }}>{serverError}</p>
-        <Link to="/dashboard" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold"
-          style={{ background: "#7c3aed", color: "white" }}>← Dashboard</Link>
+        <AlertCircle className="w-8 h-8 mx-auto mb-3" style={{ color: "#ef4444" }} />
+        <p className="text-sm mb-1" style={{ color: "#f3f4f6" }}>Console unavailable</p>
+        <p className="text-xs mb-5" style={{ color: "#6b7280" }}>{serverError}</p>
+        <Link to="/dashboard" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium"
+          style={{ background: "#221d17", border: "1px solid #332a1f", color: "#d1d5db" }}>← Dashboard</Link>
       </div>
     </div>
   );
 
-  /* ══════════════════════════ RENDER ═══════════════════════════════════ */
+  /* ══════════════════════════ RENDER ══════════════════════════════════ */
+  const sidebarBg    = "#141210";
+  const cardBg       = "#1a1612";
+  const border       = "1px solid #2a2218";
+  const mutedText    = "#6b7280";
+  const labelText    = "#9ca3af";
+  const headingText  = "#f3f4f6";
+
   return (
-    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#080810" }}>
+    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#0e0e10", fontFamily: "Inter, sans-serif" }}>
 
       {/* ── Mobile drawer ── */}
       <AnimatePresence>
         {mobileNavOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 md:hidden" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+              className="fixed inset-0 z-40 md:hidden" style={{ background: "rgba(0,0,0,0.7)" }}
               onClick={() => setMobileNavOpen(false)} />
             <motion.div initial={{ x: -260 }} animate={{ x: 0 }} exit={{ x: -260 }}
               transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="fixed top-0 left-0 h-full z-50 flex flex-col md:hidden px-3 py-4 overflow-y-auto"
-              style={{ width: 248, background: "#0a0a12", borderRight: "1px solid rgba(255,255,255,0.07)" }}>
-              {server && <ServerSidebar server={server} onPower={sendPower} powerLoading={powerLoading} />}
-              <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-                <button onClick={() => { setMobileNavOpen(false); setShowDelete(true); setDeleteInput(""); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
-                  style={{ color: "#f87171", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.14)" }}>
-                  <Trash2 size={11} /> Delete Server
-                </button>
-              </div>
+              className="fixed top-0 left-0 h-full z-50 flex flex-col md:hidden py-4 px-3 overflow-y-auto"
+              style={{ width: 240, background: sidebarBg, borderRight: border }}>
+              <SidebarContent id={id!} server={server} sendPower={sendPower} powerLoading={powerLoading}
+                setShowDelete={setShowDelete} setDeleteInput={setDeleteInput} onClose={() => setMobileNavOpen(false)} />
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* ── Left sidebar (desktop) ── */}
-      <div className="hidden md:flex flex-col h-full overflow-y-auto shrink-0 px-3 py-4"
-        style={{ width: 220, background: "#0a0a12", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
-        {server && <ServerSidebar server={server} onPower={sendPower} powerLoading={powerLoading} />}
-        <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-          <button onClick={() => { setShowDelete(true); setDeleteInput(""); }}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors hover:opacity-80"
-            style={{ color: "#f87171", background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.14)" }}>
-            <Trash2 size={11} /> Delete Server
-          </button>
-        </div>
+      {/* ── Left sidebar ── */}
+      <div className="hidden md:flex flex-col shrink-0 overflow-y-auto py-4 px-3"
+        style={{ width: 220, background: sidebarBg, borderRight: border }}>
+        <SidebarContent id={id!} server={server} sendPower={sendPower} powerLoading={powerLoading}
+          setShowDelete={setShowDelete} setDeleteInput={setDeleteInput} />
       </div>
 
-      {/* ── Main area ── */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      {/* ── Centre: scrollable main content ── */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-y-auto">
 
-        {/* ── Top header ── */}
-        <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-2.5"
-          style={{ background: "#0a0a12", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        {/* ── Server header card ── */}
+        <div className="shrink-0 mx-4 mt-4 mb-3 rounded-xl p-4"
+          style={{ background: cardBg, border }}>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
 
-          {/* Left */}
-          <div className="flex items-center gap-3 min-w-0">
-            <button onClick={() => setMobileNavOpen(true)}
-              className="md:hidden w-7 h-7 flex items-center justify-center rounded-lg"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <Menu size={14} style={{ color: "#64748b" }} />
-            </button>
-
-            {/* Avatar */}
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-[12px] font-bold"
-              style={{ background: `${cfg.color}18`, border: `1px solid ${cfg.color}30`, color: cfg.color }}>
-              {server?.name?.charAt(0)?.toUpperCase()}
-            </div>
-
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-semibold truncate" style={{ color: "#f1f5f9" }}>{server?.name}</span>
-
-                {/* Status dot + label */}
-                <span className="flex items-center gap-1.5 text-[11px] font-medium shrink-0">
-                  <span className="relative flex h-1.5 w-1.5">
-                    {isRunning && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60" style={{ background: cfg.dot }} />}
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: cfg.dot }} />
+            {/* Left: avatar + name + address */}
+            <div className="flex items-center gap-3 min-w-0">
+              <button onClick={() => setMobileNavOpen(true)}
+                className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg shrink-0"
+                style={{ background: "#221d17", border }}>
+                <Menu size={14} style={{ color: mutedText }} />
+              </button>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold"
+                style={{ background: "#221d17", border, color: headingText }}>
+                {server?.name?.charAt(0)?.toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold" style={{ color: headingText, fontSize: 15 }}>{server?.name}</span>
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold"
+                    style={{ background: st.bg, color: st.color }}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${isRunning ? "animate-pulse" : ""}`}
+                      style={{ background: st.color }} />
+                    {st.label}
                   </span>
-                  <span style={{ color: cfg.color }}>{cfg.label}</span>
-                </span>
-
-                {/* Plan */}
-                <span className="hidden sm:inline text-[10px] mono px-1.5 py-0.5 rounded"
-                  style={{ background: "rgba(124,58,237,0.1)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.18)" }}>
-                  {server?.plan}
-                </span>
-
-                {/* Version */}
-                {server?.mcVersion && (
-                  <span className="hidden md:inline text-[10px] mono px-1.5 py-0.5 rounded"
-                    style={{ background: "rgba(96,165,250,0.08)", color: "#7dd3fc", border: "1px solid rgba(96,165,250,0.15)" }}>
-                    {server.serverType && `${server.serverType} `}{server.mcVersion}
-                  </span>
+                  {server?.plan && (
+                    <span className="text-[11px] font-medium" style={{ color: mutedText }}>
+                      {server.plan}
+                    </span>
+                  )}
+                  {server?.mcVersion && (
+                    <span className="hidden sm:inline text-[11px]" style={{ color: mutedText }}>
+                      {server.serverType} {server.mcVersion}
+                    </span>
+                  )}
+                </div>
+                {displayAddr && (
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[12px]" style={{ color: mutedText }}>{displayAddr}</span>
+                    <button onClick={() => copyAddr(displayAddr)}
+                      className="text-[11px]" style={{ color: mutedText }}>
+                      {copied ? <Check size={11} style={{ color: "#22c55e" }} /> : <Copy size={11} />}
+                    </button>
+                  </div>
                 )}
               </div>
-
-              {/* Address inline */}
-              {displayAddr && (
-                <button onClick={() => copyAddr(displayAddr)}
-                  className="flex items-center gap-1 mt-0.5 group"
-                  title="Copy address">
-                  <span className="text-[11px] mono" style={{ color: "#334155" }}>{displayAddr}</span>
-                  {copied
-                    ? <Check size={9} style={{ color: "#4ade80" }} />
-                    : <Copy size={9} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#475569" }} />}
-                </button>
-              )}
             </div>
-          </div>
 
-          {/* Right: DDoS badge only — metrics moved below */}
-          <div className="hidden lg:flex items-center gap-3 shrink-0">
-            <span className="text-[11px] mono flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
-              style={{ background: "rgba(96,165,250,0.06)", color: "#475569", border: "1px solid rgba(96,165,250,0.12)" }}>
-              <Shield size={10} style={{ color: "#60a5fa" }} /> DDoS Protected
-            </span>
+            {/* Right: power buttons */}
+            <div className="flex items-center gap-2 shrink-0">
+              <PowerBtn label="Start" signal="start" icon={Play} color="#22c55e"
+                disabled={isRunning || server?.status === "starting"} loading={powerLoading === "start"} onPower={sendPower} />
+              <PowerBtn label="Restart" signal="restart" icon={RotateCcw} color="#f59e0b"
+                disabled={!isRunning} loading={powerLoading === "restart"} onPower={sendPower} />
+              <PowerBtn label="Stop" signal="stop" icon={Square} color="#ef4444"
+                disabled={!isRunning} loading={powerLoading === "stop"} onPower={sendPower} />
+              <PowerBtn label="Kill" signal="kill" icon={X} color="#ef4444"
+                disabled={false} loading={powerLoading === "kill"} onPower={sendPower} variant="ghost" />
+            </div>
           </div>
         </div>
 
-        {/* ── Metrics bar ── */}
-        {/* ── Metrics cards ── */}
-        <div className="shrink-0 hidden lg:flex gap-3 px-4 py-3"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "#080810" }}>
-
+        {/* ── Metrics row 1: 4 summary cards ── */}
+        <div className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3 px-4 mb-3">
           {/* CPU */}
-          <div className="flex-1 rounded-xl p-3 flex items-center gap-3"
-            style={{ background: "#0d0d18", border: `1px solid ${cpuPct > 80 ? "rgba(248,113,113,0.28)" : "rgba(251,191,36,0.16)"}` }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: cpuPct > 80 ? "rgba(248,113,113,0.12)" : "rgba(251,191,36,0.1)", border: `1px solid ${cpuPct > 80 ? "rgba(248,113,113,0.22)" : "rgba(251,191,36,0.2)"}` }}>
-              <Cpu size={16} style={{ color: cpuPct > 80 ? "#f87171" : "#fbbf24" }} />
+          <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Cpu size={13} style={{ color: mutedText }} />
+              <span className="text-xs font-medium" style={{ color: mutedText }}>CPU</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] mono uppercase tracking-wider" style={{ color: "#475569" }}>CPU</span>
-                <span className="text-sm font-bold mono" style={{ color: cpuPct > 80 ? "#f87171" : cpuPct > 50 ? "#fbbf24" : "#f1f5f9" }}>
-                  {resources?.available ? `${cpuPct.toFixed(1)}%` : "—"}
-                </span>
-              </div>
-              <div style={{ height: 24 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={cpuHistory} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="cpuG2" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={cpuPct > 80 ? "#f87171" : "#a78bfa"} stopOpacity={0.4} />
-                        <stop offset="100%" stopColor={cpuPct > 80 ? "#f87171" : "#a78bfa"} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <Area type="monotone" dataKey="v" stroke={cpuPct > 80 ? "#f87171" : cpuPct > 50 ? "#fbbf24" : "#7c3aed"}
-                      strokeWidth={1.5} fill="url(#cpuG2)" dot={false} isAnimationActive={false} />
-                    <Tooltip content={() => null} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            <p className="text-2xl font-bold mb-0.5" style={{ color: headingText }}>
+              {resources?.available ? `${cpuPct.toFixed(1)}%` : "0.0%"}
+            </p>
+            <p className="text-[11px]" style={{ color: mutedText }}>of {server?.cpu ?? "—"}</p>
           </div>
 
-          {/* RAM */}
-          <div className="flex-1 rounded-xl p-3 flex items-center gap-3"
-            style={{ background: "#0d0d18", border: `1px solid ${ramPct > 90 ? "rgba(248,113,113,0.28)" : "rgba(139,92,246,0.2)"}` }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.22)" }}>
-              <MemoryStick size={16} style={{ color: "#a78bfa" }} />
+          {/* Memory */}
+          <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
+            <div className="flex items-center gap-2 mb-2">
+              <MemoryStick size={13} style={{ color: mutedText }} />
+              <span className="text-xs font-medium" style={{ color: mutedText }}>Memory</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] mono uppercase tracking-wider" style={{ color: "#475569" }}>RAM</span>
-                <span className="text-sm font-bold mono" style={{ color: ramPct > 90 ? "#f87171" : "#f1f5f9" }}>
-                  {resources?.available ? `${ramUsedMB.toFixed(0)} MB` : "—"}
-                </span>
-              </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${ramPct}%`, background: ramPct > 90 ? "#ef4444" : "linear-gradient(90deg,#7c3aed,#a855f7)" }} />
-              </div>
-              <p className="text-[11px] mono mt-1" style={{ color: "#475569" }}>
-                {ramPct.toFixed(0)}% of {server?.ram ?? "?"}
-              </p>
-            </div>
+            <p className="text-2xl font-bold mb-0.5" style={{ color: headingText }}>
+              {resources?.available ? `${ramUsedMB.toFixed(0)} MB` : "0 MB"}
+            </p>
+            <p className="text-[11px]" style={{ color: mutedText }}>of {server?.ram ?? "—"}</p>
           </div>
 
           {/* Disk */}
-          <div className="flex-1 rounded-xl p-3 flex items-center gap-3"
-            style={{ background: "#0d0d18", border: "1px solid rgba(96,165,250,0.18)" }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.2)" }}>
-              <HardDrive size={16} style={{ color: "#60a5fa" }} />
+          <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
+            <div className="flex items-center gap-2 mb-2">
+              <HardDrive size={13} style={{ color: mutedText }} />
+              <span className="text-xs font-medium" style={{ color: mutedText }}>Disk</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] mono uppercase tracking-wider" style={{ color: "#475569" }}>Disk</span>
-                <span className="text-sm font-bold mono" style={{ color: "#f1f5f9" }}>
-                  {resources?.available ? fmtBytes(resources.diskBytes) : "—"}
-                </span>
-              </div>
-              <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                <div className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${diskPct}%`, background: "linear-gradient(90deg,#1d4ed8,#3b82f6)" }} />
-              </div>
-              <p className="text-[11px] mono mt-1" style={{ color: "#475569" }}>
-                {diskPct.toFixed(0)}% of {server?.ssd ?? "?"}
-              </p>
-            </div>
+            <p className="text-2xl font-bold mb-0.5" style={{ color: headingText }}>
+              {resources?.available ? fmtBytes(resources.diskBytes) : "0 MB"}
+            </p>
+            <p className="text-[11px]" style={{ color: mutedText }}>of {server?.ssd ?? "—"}</p>
           </div>
 
-          {/* Uptime */}
-          <div className="flex-1 rounded-xl p-3 flex items-center gap-3"
-            style={{ background: "#0d0d18", border: `1px solid ${isRunning ? "rgba(74,222,128,0.18)" : "rgba(71,85,105,0.2)"}` }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: isRunning ? "rgba(74,222,128,0.08)" : "rgba(71,85,105,0.08)", border: isRunning ? "1px solid rgba(74,222,128,0.2)" : "1px solid rgba(71,85,105,0.2)" }}>
-              <Activity size={16} style={{ color: isRunning ? "#4ade80" : "#475569" }} />
+          {/* Network */}
+          <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
+            <div className="flex items-center gap-2 mb-1">
+              <WifiIcon size={13} style={{ color: mutedText }} />
+              <span className="text-xs font-medium" style={{ color: mutedText }}>Network</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] mono uppercase tracking-wider" style={{ color: "#475569" }}>Uptime</span>
-                <span className="text-[11px] font-semibold" style={{ color: isRunning ? "#4ade80" : "#334155" }}>
-                  {isRunning ? "Online" : "Offline"}
-                </span>
-              </div>
-              <p className="text-sm font-bold mono" style={{ color: resources?.uptimeMs && resources.uptimeMs > 0 ? "#f1f5f9" : "#334155" }}>
-                {resources?.uptimeMs && resources.uptimeMs > 0 ? fmtUptime(resources.uptimeMs) : "—"}
-              </p>
-              {resources?.netRxBytes != null && (
-                <p className="text-[11px] mono mt-0.5" style={{ color: "#334155" }}>
-                  ↓{(resources.netRxBytes/1048576).toFixed(1)} ↑{(resources.netTxBytes/1048576).toFixed(1)} MB
+            <div className="flex items-end gap-4 mb-1">
+              <div>
+                <p className="text-lg font-bold" style={{ color: headingText }}>
+                  {resources?.available ? fmtBytesShort(Math.max(0, resources.netRxBytes - prevRxRef.current)) + "/s" : "0 B/s"}
                 </p>
-              )}
+                <p className="text-[10px]" style={{ color: mutedText }}>↓ In</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold" style={{ color: headingText }}>
+                  {resources?.available ? fmtBytesShort(Math.max(0, resources.netTxBytes - prevTxRef.current)) + "/s" : "0 B/s"}
+                </p>
+                <p className="text-[10px]" style={{ color: mutedText }}>↑ Out</p>
+              </div>
+            </div>
+            {/* tiny sparkline */}
+            <div style={{ height: 24 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={netRxHistory} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="netG" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="v" stroke="#22c55e" strokeWidth={1.5} fill="url(#netG)" dot={false} isAnimationActive={false} />
+                  <Tooltip content={() => null} />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
 
-        {/* ── Console + right sidebar ── */}
-        <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* ── Metrics row 2: CPU chart + Memory chart + Disk donut ── */}
+        <div className="shrink-0 grid grid-cols-1 lg:grid-cols-3 gap-3 px-4 mb-3">
 
-          {/* ── Console panel ── */}
-          <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+          {/* CPU history chart */}
+          <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Cpu size={12} style={{ color: mutedText }} />
+                <span className="text-xs font-medium" style={{ color: mutedText }}>CPU</span>
+              </div>
+              <span className="text-xs font-bold" style={{ color: headingText }}>
+                {cpuPct.toFixed(1)}%
+              </span>
+              <span className="text-[10px]" style={{ color: mutedText }}>of {server?.cpu ?? "—"}</span>
+            </div>
+            <div style={{ height: 80 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={cpuHistory} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="cpuH" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#e53935" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#e53935" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="v" stroke="#e53935" strokeWidth={1.5} fill="url(#cpuH)" dot={false} isAnimationActive={false} />
+                  <Tooltip content={() => null} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            {/* mini history rows */}
+            <div className="mt-3 space-y-1">
+              {cpuHistory.slice(-4).map((p, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "#221d17" }}>
+                    <div style={{ width: `${p.v}%`, height: "100%", background: "#e53935", borderRadius: 999 }} />
+                  </div>
+                  <span className="text-[10px] w-8 text-right" style={{ color: mutedText }}>{p.v.toFixed(1)}%</span>
+                </div>
+              ))}
+              <p className="text-[10px] mt-1" style={{ color: mutedText }}>
+                Last 4 readings · peak {Math.max(...cpuHistory.map(p => p.v)).toFixed(1)}%
+              </p>
+            </div>
+          </div>
 
-            {/* Console toolbar */}
-            <div className="shrink-0 flex items-center justify-between px-3 py-1.5 gap-2"
-              style={{ background: "#060608", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+          {/* Memory history chart */}
+          <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <MemoryStick size={12} style={{ color: mutedText }} />
+                <span className="text-xs font-medium" style={{ color: mutedText }}>Memory</span>
+              </div>
+              <span className="text-xs font-bold" style={{ color: headingText }}>
+                {resources?.available ? `${ramUsedMB.toFixed(0)} MB` : "— MB"}
+              </span>
+              <span className="text-[10px]" style={{ color: mutedText }}>of {server?.ram ?? "—"}</span>
+            </div>
+            <div style={{ height: 80 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={memHistory} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="memH" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="v" stroke="#3b82f6" strokeWidth={1.5} fill="url(#memH)" dot={false} isAnimationActive={false} />
+                  <Tooltip content={() => null} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-3 space-y-1">
+              {memHistory.slice(-4).map((p, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "#221d17" }}>
+                    <div style={{ width: `${ramLimitMB > 0 ? (p.v / ramLimitMB) * 100 : 0}%`, height: "100%", background: "#3b82f6", borderRadius: 999 }} />
+                  </div>
+                  <span className="text-[10px] w-12 text-right" style={{ color: mutedText }}>{p.v.toFixed(0)} MB</span>
+                </div>
+              ))}
+              <p className="text-[10px] mt-1" style={{ color: mutedText }}>
+                Last 4 readings · peak {Math.max(...memHistory.map(p => p.v)).toFixed(0)} MB
+              </p>
+            </div>
+          </div>
 
+          {/* Disk donut */}
+          <div className="rounded-xl p-4 flex gap-4" style={{ background: cardBg, border }}>
+            <div className="flex items-center gap-2 mb-3">
+              <HardDrive size={12} style={{ color: mutedText }} />
+              <span className="text-xs font-medium" style={{ color: mutedText }}>Disk usage</span>
+            </div>
+            <div className="flex items-center gap-4 mt-1">
+              {/* Donut */}
+              <div className="relative shrink-0" style={{ width: 80, height: 80 }}>
+                <PieChart width={80} height={80}>
+                  <Pie data={[
+                    { value: diskPct },
+                    { value: Math.max(0, 100 - diskPct) },
+                  ]} cx={35} cy={35} innerRadius={26} outerRadius={38} dataKey="value" startAngle={90} endAngle={-270} strokeWidth={0}>
+                    <Cell fill="#3b82f6" />
+                    <Cell fill="#221d17" />
+                  </Pie>
+                </PieChart>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-xs font-bold" style={{ color: headingText }}>{diskPct.toFixed(0)}%</span>
+                </div>
+                <p className="text-[9px] text-center mt-0.5" style={{ color: mutedText }}>Used</p>
+              </div>
+
+              {/* Stats */}
+              <div className="space-y-2 flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs" style={{ color: labelText }}>
+                    <span className="w-2 h-2 rounded-sm" style={{ background: "#3b82f6" }} /> Used
+                  </span>
+                  <span className="text-xs font-semibold" style={{ color: headingText }}>
+                    {resources?.available ? fmtBytes(resources.diskBytes) : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs" style={{ color: labelText }}>
+                    <span className="w-2 h-2 rounded-sm" style={{ background: "#221d17", border: "1px solid #374151" }} /> Free
+                  </span>
+                  <span className="text-xs font-semibold" style={{ color: headingText }}>
+                    {diskLimitMB > 0 ? fmtBytes(diskFreeMB * 1048576) : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs" style={{ color: labelText }}>
+                    <span className="w-2 h-2 rounded-sm opacity-0" /> Limit
+                  </span>
+                  <span className="text-xs font-semibold" style={{ color: headingText }}>{server?.ssd ?? "—"}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Server Info card + Console side by side ── */}
+        <div className="flex gap-3 px-4 pb-4 min-h-0 flex-1">
+
+          {/* Server Info card */}
+          <div className="w-72 shrink-0 rounded-xl overflow-hidden" style={{ background: cardBg, border }}>
+            <div className="px-4 py-3" style={{ borderBottom: "1px solid #2a2218" }}>
+              <div className="flex items-center gap-2">
+                <Server size={12} style={{ color: mutedText }} />
+                <span className="text-xs font-semibold" style={{ color: labelText }}>Server Info</span>
+              </div>
+            </div>
+            <div className="divide-y" style={{ borderColor: "#221d17" }}>
+              {[
+                { label: "Status", value: (
+                  <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: st.color }}>
+                    <span className={`w-2 h-2 rounded-full ${isRunning ? "animate-pulse" : ""}`} style={{ background: st.color }} />
+                    {st.label}
+                  </span>
+                )},
+                { label: "Uptime", value: resources?.uptimeMs && resources.uptimeMs > 0 ? fmtUptime(resources.uptimeMs) : "Not running" },
+                { label: "Hostname", value: displayAddr ? (
+                  <button onClick={() => copyAddr(displayAddr)} className="flex items-center gap-1 group" style={{ color: labelText }}>
+                    <span className="text-xs truncate max-w-[120px]">{displayAddr}</span>
+                    {copied ? <Check size={10} style={{ color: "#22c55e" }} /> : <Copy size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
+                  </button>
+                ) : "—" },
+                { label: "Node", value: "India" },
+                { label: "Plan", value: server?.plan ?? "—" },
+                { label: "RAM", value: server?.ram ?? "—" },
+                { label: "CPU", value: server?.cpu ?? "—" },
+                { label: "Disk", value: server?.ssd ?? "—" },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex items-center justify-between px-4 py-2.5">
+                  <span className="text-xs" style={{ color: mutedText }}>{label}</span>
+                  {typeof value === "string"
+                    ? <span className="text-xs font-medium" style={{ color: labelText }}>{value}</span>
+                    : value}
+                </div>
+              ))}
+            </div>
+
+            {/* Quick actions */}
+            <div className="px-4 py-3" style={{ borderTop: "1px solid #2a2218" }}>
+              <p className="text-[10px] font-semibold uppercase tracking-widest mb-2" style={{ color: mutedText }}>Quick Actions</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {([
+                  { icon: Package,     label: "Plugins",  color: "#f59e0b", to: `/server/${id}/installer` },
+                  { icon: UploadCloud, label: "Upload",   color: "#3b82f6", action: () => { setShowUploadWorld(true); setWorldFile(null); setUploadWorldErr(""); setUploadWorldMsg(""); } },
+                  { icon: HardDrive,   label: "Backup",   color: "#f59e0b", action: () => { setShowBackup(true); setBackupName(""); setBackupErr(""); setBackupMsg(""); } },
+                  { icon: List,        label: "Whitelist",color: "#ef4444", action: () => { setShowWhitelist(true); setWlPlayer(""); setWlErr(""); setWlMsg(""); } },
+                  { icon: Calendar,    label: "Schedules",color: "#22c55e", to: `/server/${id}/schedules` },
+                  { icon: Globe,       label: "Domain",   color: "#fbbf24", action: () => { setShowHnForm(true); setHnEdit(server?.hostname ?? ""); setHnAvail(null); setHnError(""); } },
+                ] as const).map(item => {
+                  const Comp: any = (item as any).to ? Link : "button";
+                  const extra = (item as any).to ? { to: (item as any).to } : { onClick: (item as any).action };
+                  return (
+                    <Comp key={item.label} {...extra}
+                      className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg w-full text-left transition-all hover:brightness-110"
+                      style={{ background: `${item.color}12`, border: `1px solid ${item.color}25` }}>
+                      <item.icon size={11} style={{ color: item.color }} />
+                      <span className="text-[11px] font-medium" style={{ color: item.color }}>{item.label}</span>
+                    </Comp>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Console panel */}
+          <div className="flex flex-col flex-1 min-w-0 rounded-xl overflow-hidden" style={{ background: cardBg, border }}>
+
+            {/* Toolbar */}
+            <div className="shrink-0 flex items-center justify-between px-3 py-2 gap-2"
+              style={{ borderBottom: "1px solid #2a2218", background: "#141210" }}>
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#f59e0b" }} />
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
                 </div>
-                <span className="text-[11px] mono hidden sm:block" style={{ color: "#1e293b" }}>{server?.name} — console</span>
+                <span className="text-[11px]" style={{ color: "#374151" }}>{server?.name} — console</span>
               </div>
-
               <div className="flex items-center gap-1">
-                {/* Search input */}
                 <AnimatePresence>
                   {searchOpen && (
-                    <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 140, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
-                      transition={{ duration: 0.18 }} className="overflow-hidden flex items-center rounded-md"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                      <Search size={9} className="ml-2 shrink-0" style={{ color: "#334155" }} />
+                    <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 130, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.15 }} className="overflow-hidden flex items-center rounded-md"
+                      style={{ background: "#221d17", border: "1px solid #332a1f" }}>
+                      <Search size={9} className="ml-2 shrink-0" style={{ color: mutedText }} />
                       <input autoFocus type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                        placeholder="Search…"
-                        className="flex-1 bg-transparent outline-none px-2 py-1 mono text-[11px]"
-                        style={{ color: "#e2e8f0" }} />
+                        placeholder="Search…" className="flex-1 bg-transparent outline-none px-2 py-1 mono text-[11px]"
+                        style={{ color: "#d1d5db" }} />
                     </motion.div>
                   )}
                 </AnimatePresence>
-
                 {[
-                  { icon: Search,     title: "Search",       active: searchOpen,  onClick: () => { setSearchOpen(o => !o); if (searchOpen) setSearchQuery(""); } },
-                  { icon: X,          title: "Clear",        active: false,       onClick: () => setLogs([]) },
-                  { icon: Download,   title: "Download log", active: false,       onClick: downloadLogs },
+                  { icon: Search,   title: "Search",       active: searchOpen,  onClick: () => { setSearchOpen(o => !o); if (searchOpen) setSearchQuery(""); } },
+                  { icon: X,        title: "Clear",        active: false,       onClick: () => setLogs([]) },
+                  { icon: Download, title: "Download log", active: false,       onClick: downloadLogs },
                   { icon: autoScroll ? ChevronDown : ChevronUp, title: "Auto-scroll", active: autoScroll, onClick: () => setAutoScroll(a => !a) },
                 ].map(({ icon: Icon, title, active, onClick }) => (
                   <button key={title} title={title} onClick={onClick}
-                    className="w-6 h-6 flex items-center justify-center rounded transition-all hover:opacity-80"
-                    style={{
-                      background: active ? "rgba(124,58,237,0.12)" : "transparent",
-                      color: active ? "#a78bfa" : "#334155",
-                    }}>
+                    className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-white/5"
+                    style={{ color: active ? "#f59e0b" : "#374151" }}>
                     <Icon size={11} />
                   </button>
                 ))}
-
-                {/* WS status chip */}
+                <button onClick={analyzeLog} disabled={analyzing || logs.length === 0}
+                  title="Analyze logs with AI"
+                  className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] ml-1 transition-all hover:opacity-90 disabled:opacity-30"
+                  style={{ background: "rgba(229,57,53,0.12)", color: "#fbbf24", border: "1px solid rgba(229,57,53,0.2)" }}>
+                  {analyzing ? <><Loader2 size={9} className="animate-spin" /> Analyzing…</> : <><Sparkles size={9} /> Analyze</>}
+                </button>
                 {wsStatus === "connected" ? (
                   <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1"
-                    style={{ background: "rgba(74,222,128,0.08)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.15)" }}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> Live
+                    style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
+                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#22c55e" }} /> Live
                   </span>
                 ) : wsStatus === "connecting" ? (
                   <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1"
-                    style={{ background: "rgba(251,191,36,0.06)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.15)" }}>
+                    style={{ background: "rgba(245,158,11,0.08)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>
                     <Loader2 size={8} className="animate-spin" /> …
                   </span>
                 ) : (
                   <button onClick={connect}
                     className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1 transition-all hover:opacity-80"
-                    style={{ background: "rgba(239,68,68,0.06)", color: "#f87171", border: "1px solid rgba(239,68,68,0.15)" }}>
+                    style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
                     <WifiOff size={8} /> Reconnect
                   </button>
                 )}
               </div>
             </div>
 
+            {/* Analysis panel */}
+            <AnimatePresence>
+              {(analysis || analyzeErr) && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.18 }}
+                  className="shrink-0 overflow-hidden" style={{ borderBottom: "1px solid #2a2218" }}>
+                  {analyzeErr ? (
+                    <div className="flex items-center gap-2 px-4 py-2.5 text-xs" style={{ color: "#ef4444" }}>
+                      <AlertCircle size={12} /> {analyzeErr}
+                      <button onClick={() => setAnalyzeErr("")} className="ml-auto"><X size={11} /></button>
+                    </div>
+                  ) : analysis && (() => {
+                    const SEV = {
+                      healthy:  { color: "#22c55e", label: "✓ Healthy" },
+                      warning:  { color: "#f59e0b", label: "⚠ Warning" },
+                      error:    { color: "#ef4444", label: "✗ Error" },
+                      critical: { color: "#ef4444", label: "🔴 Critical" },
+                    }[analysis.severity] ?? { color: "#f59e0b", label: "Analysis" };
+                    return (
+                      <div className="px-4 py-3">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold px-2 py-0.5 rounded"
+                              style={{ background: `${SEV.color}15`, color: SEV.color, border: `1px solid ${SEV.color}30` }}>
+                              {SEV.label}
+                            </span>
+                            <span className="text-xs" style={{ color: labelText }}>{analysis.summary}</span>
+                          </div>
+                          <button onClick={() => setAnalysis(null)} style={{ color: mutedText }}><X size={12} /></button>
+                        </div>
+                        {analysis.problem && analysis.problem !== "No issues detected" && (
+                          <p className="text-[11px] mb-1"><span style={{ color: mutedText }}>Problem: </span><span style={{ color: labelText }}>{analysis.problem}</span></p>
+                        )}
+                        {analysis.cause && analysis.cause !== "N/A" && (
+                          <p className="text-[11px] mb-1"><span style={{ color: mutedText }}>Cause: </span><span style={{ color: labelText }}>{analysis.cause}</span></p>
+                        )}
+                        <div className="space-y-0.5 mt-1">
+                          {analysis.fixSteps.map((step, i) => (
+                            <div key={i} className="flex items-start gap-2">
+                              <span className="text-[10px] font-bold shrink-0" style={{ color: SEV.color }}>{i + 1}.</span>
+                              <span className="text-[11px] font-mono" style={{ color: labelText }}>{step}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Log output */}
             <div ref={logsRef} onScroll={handleConsoleScroll} onClick={() => inputRef.current?.focus()}
-              className="flex-1 overflow-y-auto cursor-text font-mono text-[13px] leading-relaxed"
-              style={{ background: "#060608", padding: "14px 18px" }}>
-
-              <div className="mb-3 pb-2.5 select-none" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                <span style={{ color: "#6d28d9" }} className="font-bold">NetherNodes</span>
-                <span style={{ color: "#1e293b" }}> — Minecraft Server Console</span>
-                <br />
-                <span style={{ color: "#1e293b", fontSize: 10 }}>{server?.plan} plan · {server?.ram} RAM</span>
-              </div>
-
+              className="flex-1 overflow-y-auto cursor-text font-mono text-[12.5px] leading-relaxed"
+              style={{ background: "#0f0d0a", padding: "12px 16px" }}>
               {filteredLogs.length === 0 ? (
-                <span className="select-none" style={{ color: "#1e293b" }}>
+                <span className="select-none" style={{ color: "#374151" }}>
                   {searchQuery ? "No matching lines." : "Waiting for output…"}
                 </span>
               ) : (
@@ -828,8 +1065,8 @@ export default function ServerConsole() {
                   return (
                     <div key={line.id} className="flex items-start gap-1.5 mb-px">
                       {s.badge && (
-                        <span className="shrink-0 text-[10px] font-bold px-1 py-px rounded mt-0.5"
-                          style={{ color: s.color, background: s.badgeBg, minWidth: 28, textAlign: "center" }}>
+                        <span className="shrink-0 text-[9px] font-bold px-1 py-px rounded mt-0.5"
+                          style={{ color: s.color, background: `${s.color}15`, minWidth: 28, textAlign: "center" }}>
                           {s.badge}
                         </span>
                       )}
@@ -843,12 +1080,12 @@ export default function ServerConsole() {
 
             {/* Command input */}
             <div className="shrink-0 flex items-center"
-              style={{ background: "#0a0a12", borderTop: "1px solid rgba(255,255,255,0.06)", minHeight: 44 }}>
+              style={{ background: "#141210", borderTop: "1px solid #2a2218", minHeight: 44 }}>
               <div className="flex items-center px-3 select-none shrink-0 gap-1">
-                <span className="text-base font-bold mono" style={{ color: "#7c3aed" }}>›</span>
+                <span className="text-base font-bold mono" style={{ color: "#f59e0b" }}>›</span>
                 {input === "" && (
-                  <span className="inline-block w-1.5 h-3 rounded-sm"
-                    style={{ background: "#7c3aed", opacity: blink ? 0.6 : 0, transition: "opacity 0.1s" }} />
+                  <span className="inline-block w-1.5 h-3 rounded-sm ml-0.5"
+                    style={{ background: "#f59e0b", opacity: blink ? 0.7 : 0, transition: "opacity 0.1s" }} />
                 )}
               </div>
               <input ref={inputRef} type="text" value={input}
@@ -856,74 +1093,192 @@ export default function ServerConsole() {
                 placeholder={wsStatus === "connected" ? "Enter command…" : "Not connected"}
                 disabled={wsStatus !== "connected"}
                 className="flex-1 bg-transparent outline-none py-3 font-mono text-[13px] disabled:opacity-40"
-                style={{ color: "#e2e8f0", caretColor: "transparent" }} />
+                style={{ color: "#d1d5db", caretColor: "transparent" }} />
               <button onClick={sendCommand} disabled={!input.trim() || wsStatus !== "connected"}
-                className="px-4 py-3 text-xs font-bold shrink-0 transition-all hover:opacity-90 disabled:opacity-25"
-                style={{ background: "rgba(109,40,217,0.5)", color: "#c4b5fd", borderLeft: "1px solid rgba(109,40,217,0.3)" }}>
+                className="px-4 py-3 text-xs font-bold shrink-0 transition-all hover:opacity-90 disabled:opacity-30"
+                style={{ background: "#221d17", color: "#9ca3af", borderLeft: "1px solid #2a2218" }}>
                 RUN
               </button>
             </div>
           </div>
 
-          {/* ── Right sidebar ── */}
-          <div className="hidden lg:flex flex-col shrink-0 overflow-hidden"
-            style={{ width: 232, background: "#09090f", borderLeft: "1px solid rgba(255,255,255,0.05)" }}>
+          {/* ── AI Chat right panel ── */}
+          <div className="hidden xl:flex flex-col shrink-0 rounded-xl overflow-hidden"
+            style={{ width: 280, background: cardBg, border }}>
 
-            {/* Address + copy */}
-            <div className="p-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-              <p className="text-[10px] mono uppercase tracking-widest mb-2" style={{ color: "#1e293b" }}>Address</p>
-              {displayAddr ? (
-                <button onClick={() => copyAddr(displayAddr)}
-                  className="w-full flex items-center justify-between gap-2 p-2 rounded-lg transition-all hover:opacity-80"
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <span className="text-[11px] mono truncate" style={{ color: "#4ade80" }}>{displayAddr}</span>
-                  {copied ? <Check size={10} style={{ color: "#4ade80" }} /> : <Copy size={10} style={{ color: "#1e293b" }} />}
-                </button>
-              ) : (
-                <p className="text-[11px] mono" style={{ color: "#1e293b" }}>Not assigned yet</p>
-              )}
-
-              {/* Players + Uptime inline under address */}
-              <div className="flex gap-3 mt-2.5">
-                <div className="flex-1 rounded-lg p-2" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                  <p className="text-[10px] mono uppercase tracking-wider mb-0.5" style={{ color: "#1e293b" }}>Players</p>
-                  <p className="text-sm font-bold" style={{ color: isRunning ? "#f1f5f9" : "#334155" }}>{isRunning ? "0" : "—"}</p>
-                </div>
-                <div className="flex-1 rounded-lg p-2" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                  <p className="text-[10px] mono uppercase tracking-wider mb-0.5" style={{ color: "#1e293b" }}>Uptime</p>
-                  <p className="text-xs font-semibold" style={{ color: resources?.uptimeMs && resources.uptimeMs > 0 ? "#f1f5f9" : "#334155" }}>
-                    {resources?.uptimeMs && resources.uptimeMs > 0 ? fmtUptime(resources.uptimeMs) : "—"}
-                  </p>
-                </div>
+            {/* Header */}
+            <div className="flex items-center gap-2 px-4 py-3 shrink-0"
+              style={{ borderBottom: "1px solid #2a2218", background: "#141210" }}>
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center"
+                style={{ background: "rgba(229,57,53,0.15)", border: "1px solid rgba(229,57,53,0.3)" }}>
+                <Sparkles size={12} style={{ color: "#fbbf24" }} />
               </div>
+              <span className="text-xs font-semibold" style={{ color: labelText }}>NetherNodes AI</span>
+              <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded"
+                style={{ background: "rgba(229,57,53,0.1)", color: "#f59e0b", border: "1px solid rgba(229,57,53,0.2)" }}>
+                Beta
+              </span>
             </div>
 
-            {/* Custom domain */}
-            <div className="p-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[10px] mono uppercase tracking-widest" style={{ color: "#1e293b" }}>Custom Domain</p>
-                {server?.hostname && !showHnForm && (
-                  <button onClick={() => { setShowHnForm(true); setHnEdit(server.hostname ?? ""); setHnAvail(null); setHnError(""); }}
-                    style={{ color: "#334155" }} className="hover:text-purple-400 transition-colors">
-                    <Edit3 size={10} />
-                  </button>
-                )}
-              </div>
-
-              {server?.hostname && !showHnForm ? (
-                <div className="rounded-lg p-2" style={{ background: "rgba(124,58,237,0.07)", border: "1px solid rgba(124,58,237,0.14)" }}>
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className={`w-1.5 h-1.5 rounded-full ${server.hostnameStatus === "active" ? "bg-green-400" : "bg-yellow-400"}`} />
-                    <span className="text-[10px] mono" style={{ color: "#475569" }}>
-                      {server.hostnameStatus === "active" ? "Active" : "Activating…"}
-                    </span>
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2" style={{ minHeight: 0 }}>
+              {aiMessages.length === 0 ? (
+                <div className="text-center py-6">
+                  <Sparkles size={22} className="mx-auto mb-3 opacity-20" style={{ color: "#f59e0b" }} />
+                  <p className="text-xs font-medium mb-1" style={{ color: labelText }}>NetherNodes AI</p>
+                  <p className="text-[11px]" style={{ color: mutedText }}>Ask about your server, plugins, errors, or hosting.</p>
+                  <div className="mt-4 space-y-1.5">
+                    {["Why is my server lagging?", "How do I install Essentials?", "What does this error mean?"].map(q => (
+                      <button key={q} onClick={() => { setAiInput(q); }}
+                        className="w-full text-left px-2.5 py-2 rounded-lg text-[11px] transition-all hover:brightness-110"
+                        style={{ background: "#221d17", border: "1px solid #332a1f", color: labelText }}>
+                        {q}
+                      </button>
+                    ))}
                   </div>
-                  <p className="text-[11px] mono break-all" style={{ color: "#c4b5fd" }}>{server.customAddress}</p>
                 </div>
-              ) : showHnForm ? (
-                <div className="space-y-1.5">
-                  <div className="flex items-center rounded-lg overflow-hidden"
-                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              ) : aiMessages.map((m, i) => (
+                <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className="max-w-[92%] rounded-xl px-3 py-2 text-[12px] leading-relaxed"
+                    style={m.role === "user"
+                      ? { background: "#221d17", border: "1px solid #332a1f", color: "#d1d5db" }
+                      : { background: "rgba(229,57,53,0.08)", border: "1px solid rgba(229,57,53,0.18)", color: "#fcd34d" }}>
+                    {m.content}
+                  </div>
+                </div>
+              ))}
+              {aiLoading && (
+                <div className="flex justify-start">
+                  <div className="rounded-xl px-3 py-2 flex items-center gap-1.5"
+                    style={{ background: "rgba(229,57,53,0.08)", border: "1px solid rgba(229,57,53,0.18)" }}>
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#f59e0b", animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#f59e0b", animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#f59e0b", animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              )}
+              <div ref={aiChatEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="shrink-0 p-3" style={{ borderTop: "1px solid #2a2218" }}>
+              <div className="flex items-center gap-2 rounded-xl px-3 py-2"
+                style={{ background: "#221d17", border: "1px solid #332a1f" }}>
+                <input value={aiInput} onChange={e => setAiInput(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendAiMessage()}
+                  placeholder="Ask AI…"
+                  className="flex-1 bg-transparent outline-none text-[12px]"
+                  style={{ color: "#d1d5db" }} />
+                <button onClick={sendAiMessage} disabled={!aiInput.trim() || aiLoading}
+                  className="w-6 h-6 flex items-center justify-center rounded-lg transition-all hover:opacity-90 disabled:opacity-30 shrink-0"
+                  style={{ background: "rgba(229,57,53,0.2)", border: "1px solid rgba(229,57,53,0.3)" }}>
+                  <Send size={11} style={{ color: "#fbbf24" }} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ══ MODALS ══════════════════════════════════════════════════════ */}
+
+      {/* Create Backup */}
+      <Modal show={showBackup} onClose={() => !creatingBackup && setShowBackup(false)}>
+        <ModalHeader icon={<HardDrive size={15} />} iconColor="#f59e0b" title="Create Backup" sub="Snapshot your server now" onClose={() => setShowBackup(false)} />
+        <input value={backupName} onChange={e => setBackupName(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && createBackupNow()}
+          placeholder={`Backup ${new Date().toLocaleDateString("en-IN")}`}
+          className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mb-4"
+          style={{ border: "1px solid #332a1f", color: "#f3f4f6" }} />
+        {backupErr && <p className="text-xs mb-3" style={{ color: "#ef4444" }}>{backupErr}</p>}
+        {backupMsg && <p className="text-xs mb-3" style={{ color: "#22c55e" }}>{backupMsg}</p>}
+        <ModalActions onCancel={() => setShowBackup(false)} cancelDisabled={creatingBackup}
+          onConfirm={createBackupNow} confirmDisabled={creatingBackup}
+          confirmLabel={creatingBackup ? "Creating…" : "Create Backup"} confirmColor="#f59e0b" loading={creatingBackup} />
+      </Modal>
+
+      {/* Whitelist */}
+      <Modal show={showWhitelist} onClose={() => !wlAdding && setShowWhitelist(false)}>
+        <ModalHeader icon={<List size={15} />} iconColor="#ef4444" title="Whitelist Player" sub="Add a Minecraft player" onClose={() => setShowWhitelist(false)} />
+        <input value={wlPlayer} onChange={e => setWlPlayer(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && addToWhitelist()}
+          placeholder="e.g. Notch" autoFocus
+          className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mono mb-3"
+          style={{ border: "1px solid #332a1f", color: "#f3f4f6" }} />
+        {wlErr && <p className="text-xs mb-3" style={{ color: "#ef4444" }}>{wlErr}</p>}
+        {wlMsg && <p className="text-xs mb-3" style={{ color: "#22c55e" }}>{wlMsg}</p>}
+        <ModalActions onCancel={() => setShowWhitelist(false)} cancelDisabled={wlAdding}
+          onConfirm={addToWhitelist} confirmDisabled={wlAdding || !wlPlayer.trim()}
+          confirmLabel={wlAdding ? "Adding…" : "Add Player"} confirmColor="#ef4444" loading={wlAdding} />
+      </Modal>
+
+      {/* Upload World */}
+      <Modal show={showUploadWorld} onClose={() => !uploadingWorld && setShowUploadWorld(false)} maxW="max-w-md">
+        <ModalHeader icon={<UploadCloud size={15} />} iconColor="#3b82f6" title="Upload World" sub="Upload a world folder or zip" onClose={() => setShowUploadWorld(false)} />
+        <input ref={worldInputRef} type="file" className="hidden"
+          accept=".zip,.tar,.gz,.rar,.7z,.json,.dat,.mca,.mcworld"
+          onChange={e => { const f = e.target.files?.[0]; if (f) { setWorldFile(f); setUploadWorldErr(""); setUploadWorldMsg(""); } e.target.value = ""; }} />
+        <div onClick={() => worldInputRef.current?.click()}
+          onDragOver={e => { e.preventDefault(); setWorldDragOver(true); }}
+          onDragLeave={() => setWorldDragOver(false)}
+          onDrop={e => { e.preventDefault(); setWorldDragOver(false); const f = e.dataTransfer.files[0]; if (f) { setWorldFile(f); setUploadWorldErr(""); setUploadWorldMsg(""); } }}
+          className="rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-7 cursor-pointer mb-4 transition-all"
+          style={{ borderColor: worldDragOver ? "#3b82f6" : worldFile ? "#22c55e40" : "#332a1f", background: worldDragOver ? "rgba(59,130,246,0.04)" : "rgba(255,255,255,0.02)" }}>
+          {worldFile ? (
+            <><Check size={20} className="mb-2" style={{ color: "#22c55e" }} />
+              <p className="text-sm font-semibold" style={{ color: "#22c55e" }}>{worldFile.name}</p>
+              <p className="text-[11px] mt-1" style={{ color: mutedText }}>{(worldFile.size/1048576).toFixed(2)} MB</p></>
+          ) : (
+            <><UploadCloud size={20} className="mb-2" style={{ color: worldDragOver ? "#3b82f6" : "#374151" }} />
+              <p className="text-sm font-semibold" style={{ color: worldDragOver ? "#3b82f6" : mutedText }}>{worldDragOver ? "Drop it!" : "Click or drag & drop"}</p>
+              <p className="text-[11px] mt-0.5" style={{ color: "#374151" }}>Supports .zip, .dat, .mca, .mcworld</p></>
+          )}
+        </div>
+        {uploadWorldErr && <p className="text-xs mb-3" style={{ color: "#ef4444" }}>{uploadWorldErr}</p>}
+        {uploadWorldMsg && <p className="text-xs mb-3" style={{ color: "#22c55e" }}>{uploadWorldMsg}</p>}
+        <ModalActions onCancel={() => setShowUploadWorld(false)} cancelDisabled={uploadingWorld}
+          onConfirm={uploadWorld} confirmDisabled={!worldFile || uploadingWorld}
+          confirmLabel={uploadingWorld ? "Uploading…" : "Upload World"} confirmColor="#3b82f6" loading={uploadingWorld} />
+      </Modal>
+
+      {/* Delete server */}
+      <Modal show={showDelete} onClose={() => !deleting && setShowDelete(false)}>
+        <ModalHeader icon={<Trash2 size={15} />} iconColor="#ef4444" title="Delete Server?" sub="This cannot be undone" onClose={() => setShowDelete(false)} />
+        <p className="text-xs mb-4 px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", color: "#fca5a5" }}>
+          All files and data will be permanently deleted.
+        </p>
+        <label className="text-[11px] block mb-1.5" style={{ color: mutedText }}>
+          Type <strong style={{ color: "#f3f4f6" }}>{server?.name}</strong> to confirm
+        </label>
+        <input type="text" value={deleteInput} onChange={e => setDeleteInput(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && deleteInput === server?.name && deleteServer()}
+          autoFocus placeholder={server?.name}
+          className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mb-4 mono"
+          style={{ border: "1px solid #332a1f", color: "#f3f4f6" }} />
+        <ModalActions onCancel={() => setShowDelete(false)} cancelDisabled={deleting}
+          onConfirm={deleteServer} confirmDisabled={deleting || deleteInput !== server?.name}
+          confirmLabel={deleting ? "Deleting…" : "Delete Forever"} confirmColor="#ef4444" loading={deleting} />
+      </Modal>
+
+      {/* Custom hostname form (inline modal) */}
+      <AnimatePresence>
+        {showHnForm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(6px)" }}
+            onClick={() => !hnSubmitting && setShowHnForm(false)}>
+            <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
+              className="rounded-2xl p-5 w-full max-w-sm" onClick={e => e.stopPropagation()}
+              style={{ background: "#1a1612", border: "1px solid #332a1f" }}>
+              <ModalHeader icon={<Globe size={15} />} iconColor="#f59e0b" title="Custom Domain" sub="Set a custom subdomain" onClose={() => setShowHnForm(false)} />
+              {server?.hostname && !showHnForm ? (
+                <div className="rounded-xl p-3 mb-4" style={{ background: "rgba(229,57,53,0.08)", border: "1px solid rgba(229,57,53,0.2)" }}>
+                  <p className="text-xs" style={{ color: "#fcd34d" }}>{server.customAddress}</p>
+                </div>
+              ) : (
+                <div className="mb-4">
+                  <div className="flex items-center rounded-xl overflow-hidden mb-2"
+                    style={{ background: "#221d17", border: "1px solid #332a1f" }}>
                     <input type="text" value={hnEdit}
                       onChange={e => {
                         const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0, 32);
@@ -943,337 +1298,218 @@ export default function ServerConsole() {
                         }
                       }}
                       placeholder="yourname"
-                      className="flex-1 bg-transparent outline-none px-2 py-1.5 mono text-[11px] min-w-0"
-                      style={{ color: "#e2e8f0" }} />
-                    {hnChecking && <Loader2 size={9} className="animate-spin mr-2" style={{ color: "#475569" }} />}
-                    {!hnChecking && hnAvail === true && <Check size={9} className="mr-2" style={{ color: "#4ade80" }} />}
+                      className="flex-1 bg-transparent outline-none px-3 py-2.5 text-sm min-w-0"
+                      style={{ color: "#f3f4f6" }} />
+                    {hnChecking && <Loader2 size={12} className="animate-spin mr-3" style={{ color: mutedText }} />}
+                    {!hnChecking && hnAvail === true && <Check size={12} className="mr-3" style={{ color: "#22c55e" }} />}
                   </div>
-                  {hnError && <p className="text-[10px] mono" style={{ color: "#f87171" }}>{hnError}</p>}
-                  <div className="flex gap-1.5">
-                    <button onClick={() => { setShowHnForm(false); setHnError(""); }}
-                      className="flex-1 h-6 rounded-lg text-[10px] transition-colors"
-                      style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#475569" }}>Cancel</button>
-                    <button disabled={hnSubmitting || !hnAvail || hnEdit.length < 3}
-                      onClick={async () => {
-                        setHnSubmitting(true); setHnError("");
-                        try {
-                          const method = server?.hostname ? "PUT" : "POST";
-                          const r = await apiFetch(`/api/servers/${id}/hostname`, {
-                            method, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
-                            body: JSON.stringify({ name: hnEdit }),
-                          });
-                          let d: any = {}; try { d = await r.json(); } catch {}
-                          if (!r.ok) { setHnError(d.error || `Failed.`); return; }
-                          setServer(p => p ? { ...p, hostname: d.hostname, hostnameStatus: d.hostnameStatus, customAddress: d.customAddress } : p);
-                          setShowHnForm(false);
-                        } catch (err: any) { setHnError(err?.message || "Network error."); }
-                        finally { setHnSubmitting(false); }
-                      }}
-                      className="flex-1 h-6 rounded-lg text-[10px] font-semibold disabled:opacity-30"
-                      style={{ background: "#7c3aed", color: "white" }}>
-                      {hnSubmitting ? <Loader2 size={9} className="animate-spin mx-auto" /> : "Save"}
-                    </button>
-                  </div>
+                  {hnError && <p className="text-[11px]" style={{ color: "#ef4444" }}>{hnError}</p>}
                 </div>
-              ) : (
-                <button onClick={() => { setShowHnForm(true); setHnEdit(""); setHnAvail(null); setHnError(""); }}
-                  className="w-full h-7 flex items-center justify-center gap-1.5 rounded-lg text-[11px] font-medium transition-all hover:opacity-80"
-                  style={{ background: "rgba(124,58,237,0.08)", color: "#a78bfa", border: "1px solid rgba(124,58,237,0.16)" }}>
-                  <Globe size={10} /> Set Custom Address
-                </button>
               )}
-            </div>
+              <ModalActions onCancel={() => { setShowHnForm(false); setHnError(""); }} cancelDisabled={hnSubmitting}
+                onConfirm={async () => {
+                  setHnSubmitting(true); setHnError("");
+                  try {
+                    const method = server?.hostname ? "PUT" : "POST";
+                    const r = await apiFetch(`/api/servers/${id}/hostname`, {
+                      method, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+                      body: JSON.stringify({ name: hnEdit }),
+                    });
+                    let d: any = {}; try { d = await r.json(); } catch {}
+                    if (!r.ok) { setHnError(d.error || "Failed."); return; }
+                    setServer(p => p ? { ...p, hostname: d.hostname, hostnameStatus: d.hostnameStatus, customAddress: d.customAddress } : p);
+                    setShowHnForm(false);
+                  } catch (err: any) { setHnError(err?.message || "Network error."); }
+                  finally { setHnSubmitting(false); }
+                }}
+                confirmDisabled={hnSubmitting || !hnAvail || hnEdit.length < 3}
+                confirmLabel={hnSubmitting ? "Saving…" : "Save"} confirmColor="#f59e0b" loading={hnSubmitting} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
-            {/* Quick Actions */}
-            <div className="p-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-              <p className="text-[10px] mono uppercase tracking-widest mb-2" style={{ color: "#1e293b" }}>Quick Actions</p>
-              <div className="grid grid-cols-2 gap-1.5">
-                {([
-                  { icon: Package,    label: "Plugins",     color: "#a78bfa", to: `/server/${id}/installer` },
-                  { icon: UploadCloud,label: "Upload World",color: "#60a5fa", action: () => { setShowUploadWorld(true); setWorldFile(null); setUploadWorldErr(""); setUploadWorldMsg(""); } },
-                  { icon: HardDrive,  label: "Backup",      color: "#fbbf24", action: () => { setShowBackup(true); setBackupName(""); setBackupErr(""); setBackupMsg(""); } },
-                  { icon: Calendar,   label: "Schedules",   color: "#4ade80", to: `/server/${id}/schedules` },
-                  { icon: List,       label: "Whitelist",   color: "#f87171", action: () => { setShowWhitelist(true); setWlPlayer(""); setWlErr(""); setWlMsg(""); } },
-                  { icon: Zap,        label: "Domain",      color: "#c084fc", action: () => { setShowHnForm(true); setHnEdit(server?.hostname ?? ""); setHnAvail(null); setHnError(""); } },
-                ] as const).map(item => {
-                  const Comp: any = (item as any).to ? Link : "button";
-                  const extra = (item as any).to ? { to: (item as any).to } : { onClick: (item as any).action };
-                  return (
-                    <Comp key={item.label} {...extra}
-                      className="flex items-center gap-2 px-2.5 py-2 rounded-lg w-full text-left transition-all hover:brightness-110"
-                      style={{ background: `${item.color}0f`, border: `1px solid ${item.color}22` }}>
-                      <item.icon size={11} style={{ color: item.color }} />
-                      <span className="text-[11px] font-semibold" style={{ color: item.color }}>{item.label}</span>
-                    </Comp>
-                  );
-                })}
-              </div>
-            </div>
+/* ─── Sub-components ─────────────────────────────────────────────────── */
 
-            {/* ── AI Chat ── */}
-            <div className="flex flex-col flex-1 min-h-0">
-              <div className="flex items-center gap-2 px-3 py-2.5 shrink-0"
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-                  style={{ background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.22)" }}>
-                  <Sparkles size={11} style={{ color: "#a78bfa" }} />
-                </div>
-                <span className="text-[11px] font-semibold" style={{ color: "#94a3b8" }}>NetherNodes AI</span>
-              </div>
+function PowerBtn({ label, signal, icon: Icon, color, disabled, loading, onPower, variant = "default" }: {
+  label: string; signal: "start"|"stop"|"restart"|"kill"; icon: any;
+  color: string; disabled: boolean; loading: boolean;
+  onPower: (s: "start"|"stop"|"restart"|"kill") => void;
+  variant?: "default"|"ghost";
+}) {
+  return (
+    <button
+      onClick={() => onPower(signal)}
+      disabled={disabled || loading}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-30"
+      style={variant === "ghost"
+        ? { background: "transparent", color: "#6b7280", border: "1px solid #332a1f" }
+        : { background: `${color}15`, color, border: `1px solid ${color}30` }}>
+      {loading ? <Loader2 size={12} className="animate-spin" /> : <Icon size={12} />}
+      {label}
+    </button>
+  );
+}
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2" style={{ minHeight: 0 }}>
-                {aiMessages.length === 0 ? (
-                  <div className="text-center py-4">
-                    <Sparkles size={18} className="mx-auto mb-2 opacity-20" style={{ color: "#a78bfa" }} />
-                    <p className="text-[11px]" style={{ color: "#334155" }}>Ask me anything about your server, plugins, or hosting.</p>
-                  </div>
-                ) : (
-                  aiMessages.map((m, i) => (
-                    <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                      <div className="max-w-[90%] rounded-xl px-2.5 py-1.5 text-[11px] leading-relaxed"
-                        style={m.role === "user"
-                          ? { background: "rgba(124,58,237,0.18)", border: "1px solid rgba(124,58,237,0.28)", color: "#e2e8f0" }
-                          : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", color: "#94a3b8" }}>
-                        {m.content}
-                      </div>
-                    </div>
-                  ))
-                )}
-                {aiLoading && (
-                  <div className="flex justify-start">
-                    <div className="rounded-xl px-2.5 py-1.5 flex items-center gap-1.5"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                      <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-1 h-1 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: "300ms" }} />
-                    </div>
-                  </div>
-                )}
-                <div ref={aiChatEndRef} />
-              </div>
+function SidebarContent({ id, server, sendPower, powerLoading, setShowDelete, setDeleteInput, onClose }: {
+  id: string; server: ServerData | null;
+  sendPower: (s: "start"|"stop"|"restart"|"kill") => void; powerLoading: string | null;
+  setShowDelete: (v: boolean) => void; setDeleteInput: (v: string) => void;
+  onClose?: () => void;
+}) {
+  const { pathname } = { pathname: window.location.pathname };
+  const st = STATUS_MAP[server?.status ?? ""] ?? STATUS_MAP.stopped;
+  const isRunning = server?.status === "running";
 
-              {/* Input */}
-              <div className="shrink-0 flex items-center gap-1.5 p-2"
-                style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-                <input
-                  value={aiInput}
-                  onChange={e => setAiInput(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendAiMessage()}
-                  placeholder="Ask AI…"
-                  className="flex-1 bg-transparent outline-none text-[11px] px-2.5 py-1.5 rounded-lg mono"
-                  style={{ color: "#e2e8f0", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
-                />
-                <button onClick={sendAiMessage} disabled={!aiInput.trim() || aiLoading}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-90 disabled:opacity-30 shrink-0"
-                  style={{ background: "rgba(124,58,237,0.25)", border: "1px solid rgba(124,58,237,0.35)" }}>
-                  <Send size={11} style={{ color: "#a78bfa" }} />
-                </button>
-              </div>
-            </div>
+  return (
+    <div className="flex flex-col h-full">
+      {/* Back */}
+      <Link to="/dashboard" onClick={onClose}
+        className="flex items-center gap-2 mb-5 px-1 text-xs transition-colors"
+        style={{ color: "#6b7280" }}
+        onMouseEnter={e => (e.currentTarget.style.color = "#9ca3af")}
+        onMouseLeave={e => (e.currentTarget.style.color = "#6b7280")}>
+        <ArrowLeft size={12} /> Back to Dashboard
+      </Link>
+
+      {/* Server card */}
+      <div className="mb-5 rounded-xl p-3" style={{ background: "#1a1a1d", border: "1px solid #332a1f" }}>
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold"
+            style={{ background: "#2a2218", border: "1px solid #332a1f", color: "#f3f4f6" }}>
+            {server?.name?.charAt(0)?.toUpperCase()}
           </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold truncate" style={{ color: "#f3f4f6" }}>{server?.name}</p>
+            <p className="text-[10px]" style={{ color: "#6b7280" }}>{server?.plan} plan</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg mb-3"
+          style={{ background: "#2a2218", border: "1px solid #332a1f" }}>
+          <span className={`w-2 h-2 rounded-full ${isRunning ? "animate-pulse" : ""}`} style={{ background: st.color }} />
+          <span className="text-[11px] font-semibold" style={{ color: st.color }}>{st.label}</span>
+          <span className="ml-auto text-[10px]" style={{ color: "#6b7280" }}>{server?.ram}</span>
+        </div>
+        <div className="grid grid-cols-3 gap-1.5">
+          {[
+            { label: "Start", signal: "start" as const, icon: Play,      color: "#22c55e", disabled: isRunning || server?.status === "starting" },
+            { label: "Restart", signal: "restart" as const, icon: RotateCcw, color: "#f59e0b", disabled: !isRunning },
+            { label: "Stop",  signal: "stop" as const,  icon: Square,    color: "#ef4444", disabled: !isRunning },
+          ].map(btn => (
+            <button key={btn.label}
+              onClick={() => sendPower(btn.signal)} disabled={btn.disabled || !!powerLoading}
+              className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-[9px] font-semibold transition-all disabled:opacity-25"
+              style={{ background: `${btn.color}10`, border: `1px solid ${btn.color}22`, color: btn.color }}>
+              {powerLoading === btn.signal
+                ? <Loader2 size={13} className="animate-spin" style={{ color: btn.color }} />
+                : <btn.icon size={13} style={{ color: btn.color }} />}
+              {btn.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* ══ MODALS ══════════════════════════════════════════════════════ */}
+      {/* Nav */}
+      <div className="flex-1 overflow-y-auto space-y-4">
+        {NAV.map(section => (
+          <div key={section.section}>
+            <p className="text-[9px] font-semibold uppercase tracking-widest px-2 mb-1" style={{ color: "#4b5563" }}>
+              {section.section}
+            </p>
+            {section.items.map(item => {
+              const href   = `/server/${id}/${item.to}`;
+              const active = pathname === href || (item.to === "console" && pathname === `/server/${id}/console`);
+              return (
+                <Link key={item.label} to={href} onClick={onClose}
+                  className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all mb-0.5"
+                  style={{
+                    background: active ? "#2a2218" : "transparent",
+                    color: active ? "#f3f4f6" : "#6b7280",
+                    border: active ? "1px solid #332a1f" : "1px solid transparent",
+                  }}
+                  onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "#1a1a1d"; (e.currentTarget as HTMLElement).style.color = "#9ca3af"; }}}
+                  onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#6b7280"; }}}>
+                  <item.icon size={13} /> {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </div>
 
-      {/* Create Backup */}
-      <AnimatePresence>
-        {showBackup && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
-            onClick={() => !creatingBackup && setShowBackup(false)}>
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "#0f0f1a", border: "1px solid rgba(251,191,36,0.2)" }}>
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)" }}>
-                  <HardDrive size={14} style={{ color: "#fbbf24" }} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Create Backup</p>
-                  <p className="text-[11px]" style={{ color: "#475569" }}>Snapshot your server now</p>
-                </div>
-                <button onClick={() => setShowBackup(false)} style={{ color: "#334155" }}><X size={14} /></button>
-              </div>
-              <input value={backupName} onChange={e => setBackupName(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && createBackupNow()}
-                placeholder={`Backup ${new Date().toLocaleDateString("en-IN")}`}
-                className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mb-4"
-                style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#f1f5f9" }} />
-              {backupErr && <p className="text-xs mb-3" style={{ color: "#f87171" }}>{backupErr}</p>}
-              {backupMsg && <p className="text-xs mb-3" style={{ color: "#4ade80" }}>{backupMsg}</p>}
-              <div className="flex gap-2">
-                <button onClick={() => setShowBackup(false)} disabled={creatingBackup}
-                  className="flex-1 h-9 rounded-xl text-xs"
-                  style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
-                <button onClick={createBackupNow} disabled={creatingBackup}
-                  className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
-                  style={{ background: "linear-gradient(135deg,#92400e,#d97706)", color: "white" }}>
-                  {creatingBackup ? <><Loader2 size={12} className="animate-spin" /> Creating…</> : "Create Backup"}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Delete */}
+      <div className="mt-3 pt-3" style={{ borderTop: "1px solid #221d17" }}>
+        <button onClick={() => { setShowDelete(true); setDeleteInput(""); onClose?.(); }}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors hover:opacity-80"
+          style={{ color: "#ef4444", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.14)" }}>
+          <Trash2 size={11} /> Delete Server
+        </button>
+      </div>
+    </div>
+  );
+}
 
-      {/* Whitelist */}
-      <AnimatePresence>
-        {showWhitelist && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
-            onClick={() => !wlAdding && setShowWhitelist(false)}>
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "#0f0f1a", border: "1px solid rgba(239,68,68,0.2)" }}>
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                  <List size={14} style={{ color: "#f87171" }} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Whitelist Player</p>
-                  <p className="text-[11px]" style={{ color: "#475569" }}>Add a Minecraft player</p>
-                </div>
-                <button onClick={() => setShowWhitelist(false)} style={{ color: "#334155" }}><X size={14} /></button>
-              </div>
-              <input value={wlPlayer} onChange={e => setWlPlayer(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && addToWhitelist()}
-                placeholder="e.g. Notch" autoFocus
-                className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mono mb-3"
-                style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#f1f5f9" }} />
-              {wlErr && <p className="text-xs mb-3" style={{ color: "#f87171" }}>{wlErr}</p>}
-              {wlMsg && <p className="text-xs mb-3" style={{ color: "#4ade80" }}>{wlMsg}</p>}
-              <div className="flex gap-2">
-                <button onClick={() => setShowWhitelist(false)} disabled={wlAdding}
-                  className="flex-1 h-9 rounded-xl text-xs"
-                  style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
-                <button onClick={addToWhitelist} disabled={wlAdding || !wlPlayer.trim()}
-                  className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
-                  style={{ background: "linear-gradient(135deg,#991b1b,#dc2626)", color: "white" }}>
-                  {wlAdding ? <><Loader2 size={12} className="animate-spin" /> Adding…</> : "Add Player"}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+/* ─── Modal helpers ──────────────────────────────────────────────────── */
 
-      {/* Upload World */}
-      <AnimatePresence>
-        {showUploadWorld && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
-            onClick={() => !uploadingWorld && setShowUploadWorld(false)}>
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="rounded-2xl p-6 max-w-md w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "#0f0f1a", border: "1px solid rgba(96,165,250,0.2)" }}>
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.2)" }}>
-                  <UploadCloud size={14} style={{ color: "#60a5fa" }} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Upload World</p>
-                  <p className="text-[11px]" style={{ color: "#475569" }}>Upload a world folder or zip</p>
-                </div>
-                <button onClick={() => setShowUploadWorld(false)} style={{ color: "#334155" }}><X size={14} /></button>
-              </div>
-              <input ref={worldInputRef} type="file" className="hidden"
-                accept=".zip,.tar,.gz,.rar,.7z,.json,.dat,.mca,.mcworld"
-                onChange={e => { const f = e.target.files?.[0]; if (f) { setWorldFile(f); setUploadWorldErr(""); setUploadWorldMsg(""); } e.target.value = ""; }} />
-              <div onClick={() => worldInputRef.current?.click()}
-                onDragOver={e => { e.preventDefault(); setWorldDragOver(true); }}
-                onDragLeave={() => setWorldDragOver(false)}
-                onDrop={e => { e.preventDefault(); setWorldDragOver(false); const f = e.dataTransfer.files[0]; if (f) { setWorldFile(f); setUploadWorldErr(""); setUploadWorldMsg(""); } }}
-                className="rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-7 cursor-pointer mb-4 transition-all"
-                style={{
-                  borderColor: worldDragOver ? "#60a5fa" : worldFile ? "rgba(74,222,128,0.35)" : "rgba(255,255,255,0.08)",
-                  background: worldDragOver ? "rgba(96,165,250,0.05)" : worldFile ? "rgba(74,222,128,0.03)" : "rgba(255,255,255,0.02)",
-                }}>
-                {worldFile ? (
-                  <>
-                    <Check size={20} className="mb-2" style={{ color: "#4ade80" }} />
-                    <p className="text-sm font-semibold" style={{ color: "#4ade80" }}>{worldFile.name}</p>
-                    <p className="text-[11px] mt-1" style={{ color: "#475569" }}>{(worldFile.size/1048576).toFixed(2)} MB — click to change</p>
-                  </>
-                ) : (
-                  <>
-                    <UploadCloud size={20} className="mb-2" style={{ color: worldDragOver ? "#60a5fa" : "#334155" }} />
-                    <p className="text-sm font-semibold" style={{ color: worldDragOver ? "#60a5fa" : "#64748b" }}>
-                      {worldDragOver ? "Drop it!" : "Click or drag & drop"}
-                    </p>
-                    <p className="text-[11px] mt-0.5" style={{ color: "#1e293b" }}>Supports .zip, .dat, .mca, .mcworld</p>
-                  </>
-                )}
-              </div>
-              {uploadWorldErr && <p className="text-xs mb-3" style={{ color: "#f87171" }}>{uploadWorldErr}</p>}
-              {uploadWorldMsg && <p className="text-xs mb-3" style={{ color: "#4ade80" }}>{uploadWorldMsg}</p>}
-              <div className="flex gap-2">
-                <button onClick={() => setShowUploadWorld(false)} disabled={uploadingWorld}
-                  className="flex-1 h-9 rounded-xl text-xs"
-                  style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
-                <button onClick={uploadWorld} disabled={!worldFile || uploadingWorld}
-                  className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
-                  style={{ background: "linear-gradient(135deg,#1d4ed8,#3b82f6)", color: "white" }}>
-                  {uploadingWorld ? <><Loader2 size={12} className="animate-spin" /> Uploading…</> : "Upload World"}
-                </button>
-              </div>
-            </motion.div>
+function Modal({ show, onClose, children, maxW = "max-w-sm" }: {
+  show: boolean; onClose: () => void; children: React.ReactNode; maxW?: string;
+}) {
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(6px)" }}
+          onClick={onClose}>
+          <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className={`rounded-2xl p-5 w-full ${maxW}`} onClick={e => e.stopPropagation()}
+            style={{ background: "#1a1612", border: "1px solid #332a1f" }}>
+            {children}
           </motion.div>
-        )}
-      </AnimatePresence>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
 
-      {/* Delete server */}
-      <AnimatePresence>
-        {showDelete && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(0,0,0,0.9)", backdropFilter: "blur(8px)" }}
-            onClick={() => !deleting && setShowDelete(false)}>
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "#0f0f1a", border: "1px solid rgba(239,68,68,0.22)" }}>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.22)" }}>
-                  <Trash2 size={15} style={{ color: "#f87171" }} />
-                </div>
-                <div>
-                  <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Delete Server?</p>
-                  <p className="text-[11px]" style={{ color: "#475569" }}>This cannot be undone</p>
-                </div>
-              </div>
-              <p className="text-xs mb-3 px-3 py-2 rounded-lg" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.14)", color: "#fca5a5" }}>
-                All files and data will be permanently deleted.
-              </p>
-              <label className="text-[10px] mono uppercase tracking-wider block mb-1.5" style={{ color: "#475569" }}>
-                Type <strong style={{ color: "#f1f5f9" }}>{server?.name}</strong> to confirm
-              </label>
-              <input type="text" value={deleteInput} onChange={e => setDeleteInput(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && deleteInput === server?.name && deleteServer()}
-                autoFocus placeholder={server?.name}
-                className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mb-4 mono"
-                style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#f1f5f9" }} />
-              <div className="flex gap-2">
-                <button onClick={() => setShowDelete(false)} disabled={deleting}
-                  className="flex-1 h-9 rounded-xl text-xs"
-                  style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
-                <button onClick={deleteServer} disabled={deleting || deleteInput !== server?.name}
-                  className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
-                  style={{ background: "linear-gradient(135deg,#991b1b,#dc2626)", color: "white" }}>
-                  {deleting ? <Loader2 size={12} className="animate-spin" /> : "Delete Forever"}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+function ModalHeader({ icon, iconColor, title, sub, onClose }: {
+  icon: React.ReactNode; iconColor: string; title: string; sub: string; onClose: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 mb-5">
+      <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: `${iconColor}12`, border: `1px solid ${iconColor}25` }}>
+        <span style={{ color: iconColor }}>{icon}</span>
+      </div>
+      <div className="flex-1">
+        <p className="text-sm font-bold" style={{ color: "#f3f4f6" }}>{title}</p>
+        <p className="text-[11px]" style={{ color: "#6b7280" }}>{sub}</p>
+      </div>
+      <button onClick={onClose} style={{ color: "#4b5563" }}><X size={14} /></button>
+    </div>
+  );
+}
+
+function ModalActions({ onCancel, cancelDisabled, onConfirm, confirmDisabled, confirmLabel, confirmColor, loading }: {
+  onCancel: () => void; cancelDisabled: boolean;
+  onConfirm: () => void; confirmDisabled: boolean;
+  confirmLabel: string; confirmColor: string; loading: boolean;
+}) {
+  return (
+    <div className="flex gap-2">
+      <button onClick={onCancel} disabled={cancelDisabled}
+        className="flex-1 h-9 rounded-xl text-xs disabled:opacity-40"
+        style={{ border: "1px solid #332a1f", color: "#6b7280" }}>Cancel</button>
+      <button onClick={onConfirm} disabled={confirmDisabled}
+        className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
+        style={{ background: `${confirmColor}20`, color: confirmColor, border: `1px solid ${confirmColor}30` }}>
+        {loading && <Loader2 size={12} className="animate-spin" />}
+        {confirmLabel}
+      </button>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Ticket, RefreshCw, CheckCircle, Circle, Clock, Mail, ChevronDown, ChevronUp, Send, AlertCircle } from "lucide-react";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -147,7 +147,7 @@ const AdminTickets = () => {
                 onClick={pollInbox}
                 disabled={polling}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs transition-colors"
-                style={{ border: "1px solid hsl(270 70% 30%)", color: polling ? "hsl(270 70% 40%)" : "hsl(270 70% 60%)" }}
+                style={{ border: "1px solid hsl(38 92% 25%)", color: polling ? "hsl(38 92% 35%)" : "hsl(38 92% 50%)" }}
               >
                 <Mail size={12} className={polling ? "animate-pulse" : ""} />
                 {polling ? "Checking…" : "Check Inbox"}

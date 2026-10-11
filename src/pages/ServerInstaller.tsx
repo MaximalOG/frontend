@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+﻿import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -105,7 +105,7 @@ function ProjectCard({
           }
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-foreground truncate group-hover:text-purple-300 transition-colors">
+          <p className="text-sm font-bold text-foreground truncate group-hover:text-amber-300 transition-colors">
             {project.title}
           </p>
           <p className="text-[10px] text-muted-foreground/50">by {project.author}</p>
@@ -490,7 +490,7 @@ const ServerInstaller = () => {
                 <div className="text-center py-16">
                   <Package className="w-10 h-10 mx-auto mb-3 text-muted-foreground/20" />
                   <p className="text-sm text-muted-foreground/50">No plugins or mods installed yet</p>
-                  <button onClick={() => setTab("search")} className="mt-3 text-xs text-purple-400 hover:text-purple-300 transition-colors">
+                  <button onClick={() => setTab("search")} className="mt-3 text-xs text-amber-400 hover:text-amber-300 transition-colors">
                     Browse the installer →
                   </button>
                 </div>

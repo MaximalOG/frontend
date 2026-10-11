@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Tag, Save, ToggleLeft, ToggleRight, RefreshCw, Plus, Trash2,
@@ -90,9 +90,9 @@ function PlanPicker({
           }}
             className="px-2 py-0.5 rounded-lg text-[10px] font-medium transition-all"
             style={{
-              background: (value === "all" || sel) ? "rgba(139,92,246,0.15)" : "rgba(255,255,255,0.04)",
-              color: (value === "all" || sel) ? "#c4b5fd" : "#475569",
-              border: `1px solid ${(value === "all" || sel) ? "rgba(139,92,246,0.25)" : "rgba(255,255,255,0.08)"}`,
+              background: (value === "all" || sel) ? "rgba(229,57,53,0.15)" : "rgba(255,255,255,0.04)",
+              color: (value === "all" || sel) ? "#fcd34d" : "#475569",
+              border: `1px solid ${(value === "all" || sel) ? "rgba(229,57,53,0.25)" : "rgba(255,255,255,0.08)"}`,
             }}>
             {plan}
           </button>
@@ -192,7 +192,7 @@ export default function SaleAdmin() {
   );
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: "#080810" }}>
+    <div className="min-h-screen pb-24" style={{ background: "#0c0a08" }}>
       <div className="container mx-auto px-4 max-w-6xl pt-10">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
 
@@ -218,7 +218,7 @@ export default function SaleAdmin() {
             <div className="lg:col-span-2">
               {canBanner ? (
                 <div className="rounded-2xl overflow-hidden"
-                  style={{ background: "linear-gradient(135deg, #0d0d18, #100d1a)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                  style={{ background: "linear-gradient(135deg, #120f0b, #100d1a)", border: "1px solid rgba(239,68,68,0.2)" }}>
 
                   {/* Header */}
                   <div className="px-5 py-4 flex items-center justify-between"
@@ -308,7 +308,7 @@ export default function SaleAdmin() {
                 </div>
               ) : (
                 <div className="rounded-2xl p-5 opacity-50 cursor-not-allowed"
-                  style={{ background: "#0d0d18", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  style={{ background: "#120f0b", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <p className="text-sm font-bold flex items-center gap-2" style={{ color: "#64748b" }}>
                     <Shield size={14} /> Banner Sale — No Access
                   </p>
@@ -323,17 +323,17 @@ export default function SaleAdmin() {
             <div className="lg:col-span-3">
               {canCodes ? (
                 <div className="rounded-2xl overflow-hidden"
-                  style={{ background: "linear-gradient(135deg, #0d0d18, #0f0d1c)", border: "1px solid rgba(139,92,246,0.2)" }}>
+                  style={{ background: "linear-gradient(135deg, #120f0b, #0f0d1c)", border: "1px solid rgba(229,57,53,0.2)" }}>
 
                   {/* Header */}
                   <div className="px-5 py-4 flex items-center justify-between"
                     style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                     <div>
                       <h2 className="text-sm font-bold flex items-center gap-2" style={{ color: "#f1f5f9" }}>
-                        <Tag size={14} style={{ color: "#a78bfa" }} /> Promo Codes
+                        <Tag size={14} style={{ color: "#fbbf24" }} /> Promo Codes
                         {config.codes.length > 0 && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold mono"
-                            style={{ background: "rgba(139,92,246,0.15)", color: "#c4b5fd", border: "1px solid rgba(139,92,246,0.25)" }}>
+                            style={{ background: "rgba(229,57,53,0.15)", color: "#fcd34d", border: "1px solid rgba(229,57,53,0.25)" }}>
                             {config.codes.length}
                           </span>
                         )}
@@ -342,7 +342,7 @@ export default function SaleAdmin() {
                     </div>
                     <button onClick={addCode}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90"
-                      style={{ background: "rgba(139,92,246,0.15)", color: "#c4b5fd", border: "1px solid rgba(139,92,246,0.25)" }}>
+                      style={{ background: "rgba(229,57,53,0.15)", color: "#fcd34d", border: "1px solid rgba(229,57,53,0.25)" }}>
                       <Plus size={12} /> New Code
                     </button>
                   </div>
@@ -363,8 +363,8 @@ export default function SaleAdmin() {
                   {config.codes.length === 0 ? (
                     <div className="py-14 text-center">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3"
-                        style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.15)" }}>
-                        <Tag size={18} style={{ color: "#6d28d9" }} />
+                        style={{ background: "rgba(229,57,53,0.08)", border: "1px solid rgba(229,57,53,0.15)" }}>
+                        <Tag size={18} style={{ color: "#c2410c" }} />
                       </div>
                       <p className="text-sm font-semibold" style={{ color: "#64748b" }}>No promo codes yet</p>
                       <p className="text-xs mt-1" style={{ color: "#334155" }}>Click "New Code" to create one</p>
@@ -410,7 +410,7 @@ export default function SaleAdmin() {
                                   )}
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5">
-                                  <span className="text-[11px] mono tracking-widest" style={{ color: "#7c3aed" }}>
+                                  <span className="text-[11px] mono tracking-widest" style={{ color: "#e53935" }}>
                                     {c.code || <span style={{ color: "#1e293b" }}>—</span>}
                                   </span>
                                   {c.code && (
@@ -433,7 +433,7 @@ export default function SaleAdmin() {
                               </div>
 
                               {/* Discount */}
-                              <div className="text-xs font-bold mono" style={{ color: free ? "#4ade80" : "#a78bfa" }}>
+                              <div className="text-xs font-bold mono" style={{ color: free ? "#4ade80" : "#fbbf24" }}>
                                 {free ? "100% off" : c.discountType === "percent" ? `${c.discount}%` : `₹${c.discount}`}
                               </div>
 
@@ -461,7 +461,7 @@ export default function SaleAdmin() {
                                   transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                                   style={{ overflow: "hidden" }}>
                                   <div className="px-5 pb-5 pt-3 space-y-4"
-                                    style={{ background: "rgba(139,92,246,0.04)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                                    style={{ background: "rgba(229,57,53,0.04)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
 
                                     {/* Row 1: Label + Code */}
                                     <div className="grid grid-cols-2 gap-3">
@@ -474,7 +474,7 @@ export default function SaleAdmin() {
                                         <input value={c.code} onChange={e => updateCode(i, "code", e.target.value)}
                                           placeholder="STAFF100"
                                           className="w-full bg-transparent text-sm outline-none mono tracking-widest font-bold"
-                                          style={{ color: "#c4b5fd" }} />
+                                          style={{ color: "#fcd34d" }} />
                                       </Field>
                                     </div>
 
@@ -592,7 +592,7 @@ export default function SaleAdmin() {
                                         {c.maxUses > 0 && (
                                           <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
                                             <div className="h-full rounded-full transition-all duration-700"
-                                              style={{ width: `${usedPct}%`, background: exhausted ? "#ef4444" : "#a855f7" }} />
+                                              style={{ width: `${usedPct}%`, background: exhausted ? "#ef4444" : "#f59e0b" }} />
                                           </div>
                                         )}
                                       </div>
@@ -618,7 +618,7 @@ export default function SaleAdmin() {
                   <div className="px-5 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                     <button onClick={() => saveSection("codes")} disabled={savingCodes}
                       className="w-full h-9 rounded-xl text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
-                      style={{ background: "linear-gradient(135deg, #5b21b6, #7c3aed)", color: "white" }}>
+                      style={{ background: "linear-gradient(135deg, #b91c1c, #e53935)", color: "white" }}>
                       {savingCodes ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
                       {savedCodes ? "Saved!" : savingCodes ? "Saving…" : "Save Promo Codes"}
                     </button>
@@ -626,7 +626,7 @@ export default function SaleAdmin() {
                 </div>
               ) : (
                 <div className="rounded-2xl p-5 opacity-50 cursor-not-allowed"
-                  style={{ background: "#0d0d18", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  style={{ background: "#120f0b", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <p className="text-sm font-bold flex items-center gap-2" style={{ color: "#64748b" }}>
                     <Shield size={14} /> Promo Codes — No Access
                   </p>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, X, Send, ExternalLink, Ticket, Paperclip, FileText, Star } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -609,7 +609,7 @@ const ChatBot = () => {
               position: "absolute", inset: -5, borderRadius: "50%",
               border: "2px solid transparent",
               borderTopColor: "hsl(350 85% 60%)",
-              borderRightColor: "hsl(270 70% 60%)",
+              borderRightColor: "hsl(38 92% 50%)",
               pointerEvents: "none",
             }}
           />
