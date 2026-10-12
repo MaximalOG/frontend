@@ -150,9 +150,9 @@ const plans = [
     features: ["Full Panel Access", "DDoS Protection", "Instant Setup", "Daily Backups"],
   },
   {
-    name: "Basic",   price: "Free",   priceInr: 0,     priceNote: "limited time",
+    name: "Basic",   price: "₹149",   priceInr: 149,   priceNote: "/month",
     description: "Small vanilla server for friends",   shortLine: "Small vanilla friends server",
-    btnLabel: "Start Free Server",
+    btnLabel: "Start Basic Server",
     specs: { ram: "2GB RAM", ssd: "10GB SSD", cpu: "100% CPU" },
     infoRow: { players: "1–5 players", plugins: "No modded", type: "Vanilla / Survival" },
     usageLines: ["1–5 players", "Not for modded", "Small vanilla friends server"],

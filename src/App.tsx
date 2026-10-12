@@ -24,6 +24,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import VerifyEmail from "./pages/VerifyEmail.tsx";
 import ForgotPassword from "./pages/ForgotPassword.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
+import ResendVerification from "./pages/ResendVerification.tsx";
 import SetupServer from "./pages/SetupServer.tsx";
 import AccountSettings from "./pages/AccountSettings.tsx";
 import ServerConsole from "./pages/ServerConsole.tsx";
@@ -93,6 +94,7 @@ const App = () => (
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/resend-verification" element={<ResendVerification />} />
           <Route path="/setup-server" element={<SetupServer />} />
           <Route path="/settings" element={<AccountSettings />} />
           <Route path="/server/:id/console" element={<ServerConsole />} />
