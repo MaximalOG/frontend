@@ -354,7 +354,7 @@ const ChatBot = () => {
   const isDone = escalation === "done";
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <div className="fixed bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end gap-3">
       <AnimatePresence>
         {open && (
           <motion.div
@@ -362,10 +362,11 @@ const ChatBot = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 20 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="w-[340px] flex flex-col rounded-sm overflow-hidden"
+            className="flex flex-col rounded-sm overflow-hidden"
             style={{
-              height: isDone ? "auto" : 500,
-              maxHeight: 560,
+              width: "min(340px, calc(100vw - 2rem))",
+              height: isDone ? "auto" : "min(500px, calc(100vh - 120px))",
+              maxHeight: "min(560px, calc(100vh - 100px))",
               background: "hsl(0 0% 6%)",
               border: "1px solid hsl(350, 85%, 40%)",
               boxShadow: "0 0 30px hsl(350 85% 30% / 0.4), 0 8px 32px rgba(0,0,0,0.6)",

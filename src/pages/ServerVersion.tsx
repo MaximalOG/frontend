@@ -332,7 +332,7 @@ export default function ServerVersion() {
                                   return (
                                     <button key={v.value} onClick={() => selectVersion(v.value)}
                                       disabled={isRunning}
-                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40"
+                                      className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40 active:scale-95"
                                       style={{
                                         background: sel ? "rgba(229,57,53,0.18)" : "rgba(255,255,255,0.04)",
                                         color: sel ? "#fcd34d" : "#64748b",

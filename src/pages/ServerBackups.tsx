@@ -224,63 +224,59 @@ export default function ServerBackups() {
       ) : (
         <div className="rounded-2xl overflow-hidden"
           style={{ border: "1px solid rgba(255,255,255,0.07)", background: "#0b0b14" }}>
-          {/* Column headers */}
+          {/* Column header */}
           <div className="grid px-4 py-2 text-[9px] mono uppercase tracking-widest"
-            style={{ gridTemplateColumns: "1fr 90px 140px 112px", gap: "0 12px", color: "#334155", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-            <span>Name</span><span>Size</span><span>Created</span><span className="text-right">Actions</span>
+            style={{ gridTemplateColumns: "1fr auto", gap: "0 12px", color: "#334155", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+            <span>Name</span><span className="text-right">Actions</span>
           </div>
 
           {backups.map((b, i) => (
             <motion.div key={b.uuid} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
-              className="grid items-center px-4 py-3 transition-colors"
-              style={{ gridTemplateColumns: "1fr 90px 140px 112px", gap: "0 12px", borderBottom: i < backups.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
+              className="flex items-center px-4 py-3 gap-3 transition-colors"
+              style={{ borderBottom: i < backups.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.02)"}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}>
 
-              <div className="min-w-0">
+              {/* Name + metadata stacked */}
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ background: b.isSuccessful ? "#22c55e" : "#f59e0b" }} />
+                    style={{ background: b.isSuccessful ? "#22c55e" : "#94a3b8" }} />
                   <p className="text-xs font-medium truncate" style={{ color: "#e2e8f0" }}>{b.name}</p>
                 </div>
-                <p className="text-[9px] mono mt-0.5" style={{ color: "#334155" }}>
-                  {b.isSuccessful ? "Complete" : "In progress…"}
-                </p>
+                <div className="flex items-center gap-3 mt-0.5">
+                  <p className="text-[9px] mono" style={{ color: "#334155" }}>
+                    {b.isSuccessful ? "Complete" : "In progress…"}
+                  </p>
+                  {b.bytes > 0 && (
+                    <p className="text-[9px] mono" style={{ color: "#475569" }}>{fmtBytes(b.bytes)}</p>
+                  )}
+                  <p className="text-[9px] hidden sm:block" style={{ color: "#475569" }}>
+                    <Clock size={8} className="inline mr-1 opacity-50" />
+                    {fmtDate(b.createdAt)}
+                  </p>
+                </div>
               </div>
 
-              <p className="text-xs mono" style={{ color: "#64748b" }}>
-                {b.bytes > 0 ? fmtBytes(b.bytes) : "—"}
-              </p>
-
-              <p className="text-[10px]" style={{ color: "#475569" }}>
-                <Clock size={9} className="inline mr-1 opacity-50" />
-                {fmtDate(b.createdAt)}
-              </p>
-
-              <div className="flex items-center justify-end gap-1.5">
-                {/* Download — only available once backup is complete */}
+              {/* Actions — proper 44px touch targets */}
+              <div className="flex items-center gap-1.5 shrink-0">
                 {b.isSuccessful && (
-                  <button
-                    title="Download"
-                    onClick={() => downloadBackup(b)}
-                    disabled={downloadingUuid === b.uuid}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-80 disabled:opacity-40"
+                  <button title="Download" onClick={() => downloadBackup(b)} disabled={downloadingUuid === b.uuid}
+                    className="w-10 h-10 flex items-center justify-center rounded-lg transition-all hover:opacity-80 disabled:opacity-40 active:scale-95"
                     style={{ background: "rgba(96,165,250,0.1)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.2)" }}>
-                    {downloadingUuid === b.uuid
-                      ? <Loader2 size={11} className="animate-spin" />
-                      : <Download size={11} />}
+                    {downloadingUuid === b.uuid ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
                   </button>
                 )}
                 <button title="Restore" onClick={() => { setRestoreTarget(b); setRestoreError(""); }}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-80"
+                  className="w-10 h-10 flex items-center justify-center rounded-lg transition-all hover:opacity-80 active:scale-95"
                   style={{ background: "rgba(14,165,233,0.08)", color: "#38bdf8", border: "1px solid rgba(14,165,233,0.2)" }}>
-                  <RotateCcw size={11} />
+                  <RotateCcw size={13} />
                 </button>
                 {!b.isLocked && (
                   <button title="Delete" onClick={() => setDeleteTarget(b)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-80"
+                    className="w-10 h-10 flex items-center justify-center rounded-lg transition-all hover:opacity-80 active:scale-95"
                     style={{ background: "rgba(239,68,68,0.07)", color: "#f87171", border: "1px solid rgba(239,68,68,0.18)" }}>
-                    <Trash2 size={11} />
+                    <Trash2 size={13} />
                   </button>
                 )}
               </div>

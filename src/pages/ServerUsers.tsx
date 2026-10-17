@@ -303,9 +303,9 @@ const ServerUsers = () => {
           style={{ border: "1px solid rgba(255,255,255,0.07)", background: "#100e0b" }}>
           {/* Column headers — hide permissions col on mobile */}
           <div className="grid px-4 py-2 text-[9px] mono uppercase tracking-widest"
-            style={{ gridTemplateColumns: "1fr 1fr auto", gap: "0 12px", background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#334155" }}>
+            style={{ gridTemplateColumns: "1fr auto", gap: "0 12px", background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#334155" }}>
             <span>User</span>
-            <span className="hidden sm:block">Permissions</span>
+            <span className="text-right">Actions</span>
             <span className="text-right">Actions</span>
           </div>
 
@@ -324,18 +324,18 @@ const ServerUsers = () => {
             subusers.map((u, i) => (
               <motion.div key={u.uuid} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}
                 className="grid items-center px-4 py-3 transition-colors"
-                style={{ gridTemplateColumns: "1fr 1fr auto", gap: "0 12px", borderBottom: i < subusers.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
+                style={{ gridTemplateColumns: "1fr auto", gap: "0 12px", borderBottom: i < subusers.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}
                 onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.02)"}
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}>
 
-                {/* User info */}
+                {/* User info + permissions stacked */}
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
                     style={{ background: "rgba(229,57,53,0.2)", color: "#fcd34d" }}>
                     {(u.nnAccount?.name || u.email).charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-xs font-semibold truncate" style={{ color: "#e2e8f0" }}>
                         {u.nnAccount?.name || u.username}
                       </p>
@@ -344,36 +344,35 @@ const ServerUsers = () => {
                         : <UserX size={10} className="text-yellow-400 shrink-0" />}
                     </div>
                     <p className="text-[10px] truncate" style={{ color: "#475569" }}>{u.email}</p>
+                    {/* Permissions inline under email */}
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {u.permissions.slice(0, 3).map(perm => {
+                        const label = PERMISSION_GROUPS.flatMap(g => g.perms).find(p => p.key === perm)?.label ?? perm.split(".")[1];
+                        return (
+                          <span key={perm} className="px-1.5 py-0.5 rounded-md text-[9px] mono"
+                            style={{ background: "rgba(255,255,255,0.05)", color: "#64748b", border: "1px solid rgba(255,255,255,0.08)" }}>
+                            {label}
+                          </span>
+                        );
+                      })}
+                      {u.permissions.length > 3 && (
+                        <span className="text-[9px]" style={{ color: "#334155" }}>+{u.permissions.length - 3}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Permissions — hidden on mobile */}
-                <div className="hidden sm:flex flex-wrap gap-1">
-                  {u.permissions.slice(0, 4).map(perm => {
-                    const label = PERMISSION_GROUPS.flatMap(g => g.perms).find(p => p.key === perm)?.label ?? perm.split(".")[1];
-                    return (
-                      <span key={perm} className="px-1.5 py-0.5 rounded-md text-[9px] mono"
-                        style={{ background: "rgba(255,255,255,0.05)", color: "#64748b", border: "1px solid rgba(255,255,255,0.08)" }}>
-                        {label}
-                      </span>
-                    );
-                  })}
-                  {u.permissions.length > 4 && (
-                    <span className="text-[9px]" style={{ color: "#334155" }}>+{u.permissions.length - 4}</span>
-                  )}
-                </div>
-
                 {/* Actions */}
-                <div className="flex items-center justify-end gap-1.5">
+                <div className="flex items-center justify-end gap-2">
                   <button onClick={() => { setEditTarget(u); setEditPerms([...u.permissions]); setSaveError(""); }}
-                    className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all hover:opacity-80"
+                    className="flex items-center gap-1 px-3 py-2.5 rounded-lg text-[10px] font-medium transition-all hover:opacity-80 min-h-[44px]"
                     style={{ background: "rgba(14,165,233,0.08)", color: "#38bdf8", border: "1px solid rgba(14,165,233,0.2)" }}>
-                    <Shield size={9} /> Edit
+                    <Shield size={11} /> Edit
                   </button>
                   <button onClick={() => setDeleteTarget(u)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-80"
+                    className="w-11 h-11 flex items-center justify-center rounded-lg transition-all hover:opacity-80"
                     style={{ background: "rgba(239,68,68,0.07)", color: "#f87171", border: "1px solid rgba(239,68,68,0.18)" }}>
-                    <Trash2 size={12} />
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </motion.div>

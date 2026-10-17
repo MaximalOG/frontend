@@ -646,7 +646,7 @@ export default function ServerConsole() {
             </div>
 
             {/* Right: power buttons */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
               <PowerBtn label="Start" signal="start" icon={Play} color="#22c55e"
                 disabled={isRunning || server?.status === "starting"} loading={powerLoading === "start"} onPower={sendPower} />
               <PowerBtn label="Restart" signal="restart" icon={RotateCcw} color="#0ea5e9"
@@ -799,10 +799,10 @@ export default function ServerConsole() {
         </div>
 
         {/* ── Server Info card + Console side by side ── */}
-        <div className="flex gap-3 px-4 pb-4 min-h-0 flex-1">
+        <div className="flex flex-col lg:flex-row gap-3 px-4 pb-4 min-h-0 flex-1">
 
-          {/* Server Info card */}
-          <div className="w-72 shrink-0 rounded-xl overflow-hidden" style={{ background: cardBg, border }}>
+          {/* Server Info card — stacks above console on mobile, sidebar on desktop */}
+          <div className="w-full lg:w-72 lg:shrink-0 rounded-xl overflow-hidden" style={{ background: cardBg, border }}>
             <div className="px-4 py-3" style={{ borderBottom: "1px solid #2a2218" }}>
               <div className="flex items-center gap-2">
                 <Server size={12} style={{ color: mutedText }} />

@@ -181,7 +181,7 @@ const Dashboard = () => {
                         <span className="text-xs text-amber-300 font-medium">Setup required — configure your server to get started</span>
                       </div>
                       <Link to={`/setup-server?server=${srv.id}`}
-                        className="shrink-0 px-3 py-1 rounded-sm text-[11px] font-semibold transition-all hover:brightness-110"
+                        className="shrink-0 px-4 py-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110 active:scale-95"
                         style={{ background: "hsl(38 92% 35%)", color: "white" }}>
                         Set Up Now
                       </Link>
@@ -275,14 +275,14 @@ const Dashboard = () => {
                     <div className="flex gap-2 shrink-0">
                       {srv.status === "pending_setup" && !srv.shared && (
                         <Link to={`/setup-server?server=${srv.id}`}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110"
-                          style={{ background: "hsl(270 70% 20%)", color: "hsl(270 70% 70%)", border: "1px solid hsl(38 92% 30%)" }}>
+                          className="flex items-center gap-1.5 px-3 py-2.5 rounded-sm text-xs font-medium transition-all hover:brightness-110 active:scale-95"
+                          style={{ background: "hsl(38 92% 12%)", color: "hsl(38 92% 65%)", border: "1px solid hsl(38 92% 30%)" }}>
                           <Settings size={11} /> Setup
                         </Link>
                       )}
                       {!srv.pendingSetup && (
                         <Link to={`/server/${srv.id}/console`}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110"
+                          className="flex items-center gap-1.5 px-3 py-2.5 rounded-sm text-xs font-medium transition-all hover:brightness-110 active:scale-95"
                           style={{ background: "hsl(0 0% 10%)", color: "hsl(0 0% 70%)", border: "1px solid hsl(0 0% 22%)" }}>
                           <Terminal size={11} /> Console
                         </Link>

@@ -270,7 +270,7 @@ function SubCard({
           <div className="flex flex-col gap-2 shrink-0">
             {canEarlyPay && (
               <button onClick={handleEarlyPay} disabled={paying}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-40"
+                className="flex items-center gap-1.5 px-4 py-3 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-40 active:scale-95"
                 style={{ background: "linear-gradient(135deg,#1d4ed8,#3b82f6)", color: "white" }}>
                 {paying ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
                 {paying ? "Processing…" : "Pay Early"}
@@ -278,7 +278,7 @@ function SubCard({
             )}
             {canCancel && (
               <button onClick={() => { setShowCancel(true); setCancelErr(""); }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90"
+                className="flex items-center gap-1.5 px-4 py-3 rounded-xl text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
                 style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}>
                 <Ban size={12} /> Cancel
               </button>

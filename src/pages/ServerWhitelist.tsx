@@ -265,9 +265,9 @@ export default function ServerWhitelist() {
               </div>
 
               <button onClick={() => setDeleteTarget(p)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-80 shrink-0"
+                className="w-10 h-10 flex items-center justify-center rounded-lg transition-all hover:opacity-80 shrink-0 active:scale-95"
                 style={{ background: "rgba(239,68,68,0.07)", color: "#f87171", border: "1px solid rgba(239,68,68,0.18)" }}>
-                <Trash2 size={12} />
+                <Trash2 size={14} />
               </button>
             </motion.div>
           ))}

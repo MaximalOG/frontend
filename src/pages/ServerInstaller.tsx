@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Download, Trash2, Package, Loader2, AlertCircle,
   X, Check, RefreshCw, ChevronLeft, ChevronRight, Star,
-  ExternalLink,
+  ExternalLink, Menu,
 } from "lucide-react";
 import ServerSidebar from "@/components/ServerSidebar";
 import { useAuth } from "@/hooks/useAuth";
@@ -198,6 +198,8 @@ const ServerInstaller = () => {
 
   // Remove state
   const [removing, setRemoving]     = useState<string | null>(null);
+  // Mobile drawer
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -306,7 +308,30 @@ const ServerInstaller = () => {
   return (
     <div className="h-screen bg-background flex overflow-hidden">
 
-      {/* Sidebar */}
+      {/* ── Mobile drawer ── */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 md:hidden"
+              style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+              onClick={() => setDrawerOpen(false)} />
+            <motion.div initial={{ x: -250 }} animate={{ x: 0 }} exit={{ x: -250 }}
+              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+              className="fixed top-0 left-0 h-full z-50 flex flex-col md:hidden px-4 py-5 overflow-y-auto"
+              style={{ width: 248, background: "hsl(0 0% 4.5%)", borderRight: "1px solid hsl(0 0% 12%)" }}>
+              <button onClick={() => setDrawerOpen(false)}
+                className="self-end mb-4 w-8 h-8 flex items-center justify-center rounded-lg"
+                style={{ background: "rgba(255,255,255,0.05)", color: "#64748b" }}>
+                <X size={16} />
+              </button>
+              {server && <ServerSidebar server={server} onPower={async () => {}} powerLoading={null} />}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar (desktop) */}
       <div className="hidden md:flex flex-col h-screen px-4 py-5 overflow-y-auto shrink-0"
         style={{ width: 236, borderRight: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 4.5%)" }}>
         {server && <ServerSidebar server={server} onPower={async () => {}} powerLoading={null} />}
@@ -316,11 +341,17 @@ const ServerInstaller = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Header */}
-        <div className="px-6 pt-5 pb-4 shrink-0"
+        <div className="px-4 sm:px-6 pt-4 sm:pt-5 pb-4 shrink-0"
           style={{ borderBottom: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 5%)" }}>
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: "hsl(270 40% 15%)", border: "1px solid hsl(270 40% 28%)" }}>
+            {/* Hamburger — mobile only */}
+            <button onClick={() => setDrawerOpen(true)}
+              className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl shrink-0"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid hsl(0 0% 15%)" }}>
+              <Menu size={16} style={{ color: "#94a3b8" }} />
+            </button>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: "hsl(38 60% 15%)", border: "1px solid hsl(38 60% 28%)" }}>
               <Package size={18} style={{ color: "hsl(270 60% 65%)" }} />
             </div>
             <div>

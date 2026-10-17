@@ -680,13 +680,13 @@ const ServerFiles = () => {
                     <div className="col-span-5 sm:col-span-1 flex items-center justify-end gap-1">
                       {canEdit && (
                         <button onClick={() => openFile(attr.name)}
-                          className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="p-1.5 rounded-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                           style={{ color: "#64748b" }}>
                           <Edit3 size={11} />
                         </button>
                       )}
                       <button onClick={() => setDeleteTarget(f)}
-                        className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="p-1.5 rounded-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                         style={{ color: "#64748b" }}
                         onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "#f87171"}
                         onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "#64748b"}>

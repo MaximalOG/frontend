@@ -291,7 +291,7 @@ export default function ServerSchedules() {
 
                   {/* Toggle + chevron */}
                   <button onClick={e => { e.stopPropagation(); toggleSchedule(s.id); }}
-                    className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all"
+                    className="shrink-0 w-10 h-10 flex items-center justify-center rounded-lg transition-all active:scale-95"
                     style={{
                       background: s.enabled ? "rgba(74,222,128,0.1)" : "rgba(255,255,255,0.04)",
                       color: s.enabled ? "#4ade80" : "#475569",
@@ -330,7 +330,7 @@ export default function ServerSchedules() {
                           </div>
                         )}
                         <button onClick={() => deleteSchedule(s.id)}
-                          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs transition-all hover:opacity-80"
+                          className="flex items-center gap-2 px-4 py-3 rounded-xl text-xs transition-all hover:opacity-80 active:scale-95"
                           style={{ color: "#f87171", background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)" }}>
                           <Trash2 size={12} /> Delete Schedule
                         </button>
