@@ -595,12 +595,506 @@ export default function ServerConsole() {
       </div>
 
       {/* ── Centre: scrollable main content ── */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-y-auto">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
         {/* ── Server header card ── */}
-        <div className="shrink-0 mx-4 mt-4 mb-3 rounded-xl p-4"
+        <div className="shrink-0 mx-3 sm:mx-4 mt-3 sm:mt-4 mb-2 sm:mb-3 rounded-xl p-3 sm:p-4"
           style={{ background: cardBg, border }}>
-          <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+
+            {/* Left: hamburger + avatar + name + address */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <button onClick={() => setMobileNavOpen(true)}
+                className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg shrink-0"
+                style={{ background: "#221d17", border }}>
+                <Menu size={14} style={{ color: mutedText }} />
+              </button>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold"
+                style={{ background: "#221d17", border, color: headingText }}>
+                {server?.name?.charAt(0)?.toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-sm" style={{ color: headingText }}>{server?.name}</span>
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold"
+                    style={{ background: st.bg, color: st.color }}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${isRunning ? "animate-pulse" : ""}`}
+                      style={{ background: st.color }} />
+                    {st.label}
+                  </span>
+                  {server?.plan && (
+                    <span className="hidden sm:inline text-[11px] font-medium" style={{ color: mutedText }}>
+                      {server.plan}
+                    </span>
+                  )}
+                </div>
+                {displayAddr && (
+                  <button onClick={() => copyAddr(displayAddr)} className="flex items-center gap-1 mt-0.5 group">
+                    <span className="text-[11px] mono" style={{ color: mutedText }}>{displayAddr}</span>
+                    {copied ? <Check size={10} style={{ color: "#22c55e" }} /> : <Copy size={10} style={{ color: mutedText }} />}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Right: power buttons */}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
+              <PowerBtn label="Start" signal="start" icon={Play} color="#22c55e"
+                disabled={isRunning || server?.status === "starting"} loading={powerLoading === "start"} onPower={sendPower} />
+              <PowerBtn label="Restart" signal="restart" icon={RotateCcw} color="#0ea5e9"
+                disabled={!isRunning} loading={powerLoading === "restart"} onPower={sendPower} />
+              <PowerBtn label="Stop" signal="stop" icon={Square} color="#ef4444"
+                disabled={!isRunning} loading={powerLoading === "stop"} onPower={sendPower} />
+              <PowerBtn label="Kill" signal="kill" icon={X} color="#ef4444"
+                disabled={false} loading={powerLoading === "kill"} onPower={sendPower} variant="ghost" />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Mobile tab bar — Console / Stats / AI ── */}
+        <div className="flex lg:hidden shrink-0 mx-3 mb-2 rounded-xl overflow-hidden"
+          style={{ background: cardBg, border }}>
+          {(["console", "stats", "ai"] as const).map(t => (
+            <button key={t} onClick={() => setMobileTab(t)}
+              className="flex-1 py-2.5 text-xs font-semibold capitalize transition-all"
+              style={{
+                background: mobileTab === t ? "#e53935" : "transparent",
+                color: mobileTab === t ? "white" : mutedText,
+              }}>
+              {t === "ai" ? "AI" : t === "stats" ? "Stats" : "Console"}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Content area — tabs on mobile, side-by-side on desktop ── */}
+        <div className="flex flex-col lg:flex-row gap-3 px-3 sm:px-4 pb-4 flex-1 min-h-0">
+
+          {/* ── Stats column — hidden on mobile unless tab selected ── */}
+          <div className={`${mobileTab === "stats" ? "flex" : "hidden"} lg:flex flex-col gap-3 w-full lg:w-auto lg:shrink-0`}
+            style={{ minWidth: 0 }}>
+
+            {/* Metrics charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+
+              {/* CPU history chart */}
+              <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Cpu size={12} style={{ color: mutedText }} />
+                    <span className="text-xs font-medium" style={{ color: mutedText }}>CPU</span>
+                  </div>
+                  <span className="text-xs font-bold" style={{ color: headingText }}>{cpuPct.toFixed(1)}%</span>
+                  <span className="text-[10px]" style={{ color: mutedText }}>of {server?.cpu ?? "—"}</span>
+                </div>
+                <div style={{ height: 80 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={cpuHistory} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="cpuH" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#e53935" stopOpacity={0.35} />
+                          <stop offset="100%" stopColor="#e53935" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <Area type="monotone" dataKey="v" stroke="#e53935" strokeWidth={1.5} fill="url(#cpuH)" dot={false} isAnimationActive={false} />
+                      <Tooltip content={() => null} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="mt-3 space-y-1">
+                  {cpuHistory.slice(-4).map((p, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "#221d17" }}>
+                        <div style={{ width: `${p.v}%`, height: "100%", background: "#e53935", borderRadius: 999 }} />
+                      </div>
+                      <span className="text-[10px] w-8 text-right" style={{ color: mutedText }}>{p.v.toFixed(1)}%</span>
+                    </div>
+                  ))}
+                  <p className="text-[10px] mt-1" style={{ color: mutedText }}>Last 4 · peak {Math.max(...cpuHistory.map(p => p.v)).toFixed(1)}%</p>
+                </div>
+              </div>
+
+              {/* Memory history chart */}
+              <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <MemoryStick size={12} style={{ color: mutedText }} />
+                    <span className="text-xs font-medium" style={{ color: mutedText }}>Memory</span>
+                  </div>
+                  <span className="text-xs font-bold" style={{ color: headingText }}>
+                    {resources?.available ? `${ramUsedMB.toFixed(0)} MB` : "— MB"}
+                  </span>
+                  <span className="text-[10px]" style={{ color: mutedText }}>of {server?.ram ?? "—"}</span>
+                </div>
+                <div style={{ height: 80 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={memHistory} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="memH" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.35} />
+                          <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <Area type="monotone" dataKey="v" stroke="#3b82f6" strokeWidth={1.5} fill="url(#memH)" dot={false} isAnimationActive={false} />
+                      <Tooltip content={() => null} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="mt-3 space-y-1">
+                  {memHistory.slice(-4).map((p, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "#221d17" }}>
+                        <div style={{ width: `${ramLimitMB > 0 ? (p.v / ramLimitMB) * 100 : 0}%`, height: "100%", background: "#3b82f6", borderRadius: 999 }} />
+                      </div>
+                      <span className="text-[10px] w-12 text-right" style={{ color: mutedText }}>{p.v.toFixed(0)} MB</span>
+                    </div>
+                  ))}
+                  <p className="text-[10px] mt-1" style={{ color: mutedText }}>Last 4 · peak {Math.max(...memHistory.map(p => p.v)).toFixed(0)} MB</p>
+                </div>
+              </div>
+
+              {/* Disk donut */}
+              <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <HardDrive size={12} style={{ color: mutedText }} />
+                  <span className="text-xs font-medium" style={{ color: mutedText }}>Disk usage</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="relative shrink-0" style={{ width: 80, height: 80 }}>
+                    <PieChart width={80} height={80}>
+                      <Pie data={[{ value: diskPct }, { value: Math.max(0, 100 - diskPct) }]}
+                        cx={35} cy={35} innerRadius={26} outerRadius={38} dataKey="value" startAngle={90} endAngle={-270} strokeWidth={0}>
+                        <Cell fill="#3b82f6" />
+                        <Cell fill="#221d17" />
+                      </Pie>
+                    </PieChart>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-xs font-bold" style={{ color: headingText }}>{diskPct.toFixed(0)}%</span>
+                    </div>
+                    <p className="text-[9px] text-center mt-0.5" style={{ color: mutedText }}>Used</p>
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    {[
+                      { label: "Used",  val: resources?.available ? fmtBytes(resources.diskBytes) : "—", color: "#3b82f6" },
+                      { label: "Free",  val: diskLimitMB > 0 ? fmtBytes(diskFreeMB * 1048576) : "—", color: null },
+                      { label: "Limit", val: server?.ssd ?? "—", color: null },
+                    ].map(({ label, val, color }) => (
+                      <div key={label} className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-xs" style={{ color: labelText }}>
+                          <span className="w-2 h-2 rounded-sm" style={{ background: color ?? "#221d17", border: color ? undefined : "1px solid #374151" }} />
+                          {label}
+                        </span>
+                        <span className="text-xs font-semibold" style={{ color: headingText }}>{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Server Info card */}
+            <div className="rounded-xl overflow-hidden" style={{ background: cardBg, border }}>
+              <div className="px-4 py-3" style={{ borderBottom: "1px solid #2a2218" }}>
+                <div className="flex items-center gap-2">
+                  <Server size={12} style={{ color: mutedText }} />
+                  <span className="text-xs font-semibold" style={{ color: labelText }}>Server Info</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 divide-x divide-y" style={{ borderColor: "#221d17" }}>
+                {[
+                  { label: "Status", value: st.label, color: st.color },
+                  { label: "Uptime", value: resources?.uptimeMs && resources.uptimeMs > 0 ? fmtUptime(resources.uptimeMs) : "Not running" },
+                  { label: "Plan", value: server?.plan ?? "—" },
+                  { label: "RAM", value: server?.ram ?? "—" },
+                  { label: "CPU", value: server?.cpu ?? "—" },
+                  { label: "Disk", value: server?.ssd ?? "—" },
+                ].map(({ label, value, color }: any) => (
+                  <div key={label} className="flex flex-col px-4 py-2.5">
+                    <span className="text-[10px]" style={{ color: mutedText }}>{label}</span>
+                    <span className="text-xs font-semibold mt-0.5" style={{ color: color ?? labelText }}>{value}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Quick actions */}
+              <div className="px-4 py-4" style={{ borderTop: "1px solid #2a2218" }}>
+                <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: mutedText }}>Quick Actions</p>
+                <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-2 gap-2">
+                  {([
+                    { icon: Package,     label: "Plugins",   color: "#0ea5e9", to: `/server/${id}/installer` },
+                    { icon: HardDrive,   label: "Backup",    color: "#22c55e", action: () => { setShowBackup(true); setBackupName(""); setBackupErr(""); setBackupMsg(""); } },
+                    { icon: UploadCloud, label: "Upload",    color: "#0ea5e9", action: () => { setShowUploadWorld(true); setWorldFile(null); setUploadWorldErr(""); setUploadWorldMsg(""); } },
+                    { icon: List,        label: "Whitelist", color: "#22c55e", action: () => { setShowWhitelist(true); setWlPlayer(""); setWlErr(""); setWlMsg(""); } },
+                    { icon: Calendar,    label: "Schedules", color: "#0ea5e9", to: `/server/${id}/schedules` },
+                    { icon: Globe,       label: "Domain",    color: "#22c55e", action: () => { setShowHnForm(true); setHnEdit(server?.hostname ?? ""); setHnAvail(null); setHnError(""); } },
+                  ] as const).map(item => {
+                    const Comp: any = (item as any).to ? Link : "button";
+                    const extra = (item as any).to ? { to: (item as any).to } : { onClick: (item as any).action };
+                    return (
+                      <Comp key={item.label} {...extra}
+                        className="flex items-center gap-2 px-2.5 py-2.5 rounded-lg w-full text-left transition-all hover:brightness-110 active:scale-95"
+                        style={{ background: `${item.color}15`, border: `1px solid ${item.color}30` }}>
+                        <item.icon size={12} style={{ color: item.color }} />
+                        <span className="text-xs font-semibold truncate" style={{ color: item.color }}>{item.label}</span>
+                      </Comp>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Console panel — always visible on desktop, tab-controlled on mobile ── */}
+          <div className={`${mobileTab === "console" ? "flex" : "hidden"} lg:flex flex-col flex-1 min-w-0 min-h-0 rounded-xl overflow-hidden`}
+            style={{ background: cardBg, border }}>
+
+            {/* Toolbar */}
+            <div className="shrink-0 flex items-center justify-between px-3 py-2 gap-2"
+              style={{ borderBottom: "1px solid #2a2218", background: "#141210" }}>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#0ea5e9" }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
+                </div>
+                <span className="text-[11px] hidden sm:block" style={{ color: "#374151" }}>{server?.name} — console</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <AnimatePresence>
+                  {searchOpen && (
+                    <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 130, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.15 }} className="overflow-hidden flex items-center rounded-md"
+                      style={{ background: "#221d17", border: "1px solid #332a1f" }}>
+                      <Search size={9} className="ml-2 shrink-0" style={{ color: mutedText }} />
+                      <input autoFocus type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                        placeholder="Search…" className="flex-1 bg-transparent outline-none px-2 py-1 mono text-[11px]"
+                        style={{ color: "#d1d5db" }} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {[
+                  { icon: Search,   title: "Search",       active: searchOpen,  onClick: () => { setSearchOpen(o => !o); if (searchOpen) setSearchQuery(""); } },
+                  { icon: X,        title: "Clear",        active: false,       onClick: () => setLogs([]) },
+                  { icon: Download, title: "Download log", active: false,       onClick: downloadLogs },
+                  { icon: autoScroll ? ChevronDown : ChevronUp, title: "Auto-scroll", active: autoScroll, onClick: () => setAutoScroll(a => !a) },
+                ].map(({ icon: Icon, title, active, onClick }) => (
+                  <button key={title} title={title} onClick={onClick}
+                    className="w-7 h-7 flex items-center justify-center rounded transition-colors hover:bg-white/5"
+                    style={{ color: active ? "#0ea5e9" : "#374151" }}>
+                    <Icon size={11} />
+                  </button>
+                ))}
+                <button onClick={analyzeLog} disabled={analyzing || logs.length === 0}
+                  title="Analyze logs with AI"
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[10px] ml-1 transition-all hover:opacity-90 disabled:opacity-30"
+                  style={{ background: "rgba(229,57,53,0.12)", color: "#22c55e", border: "1px solid rgba(229,57,53,0.2)" }}>
+                  {analyzing ? <><Loader2 size={9} className="animate-spin" /> Analyzing…</> : <><Sparkles size={9} /> Analyze</>}
+                </button>
+                {wsStatus === "connected" ? (
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1"
+                    style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
+                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#22c55e" }} /> Live
+                  </span>
+                ) : wsStatus === "connecting" ? (
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1"
+                    style={{ background: "rgba(251,191,36,0.06)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.15)" }}>
+                    <Loader2 size={8} className="animate-spin" /> …
+                  </span>
+                ) : (
+                  <button onClick={connect}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1 transition-all hover:opacity-80"
+                    style={{ background: "rgba(239,68,68,0.06)", color: "#f87171", border: "1px solid rgba(239,68,68,0.15)" }}>
+                    <WifiOff size={8} /> Reconnect
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Analysis panel */}
+            <AnimatePresence>
+              {(analysis || analyzeErr) && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.18 }}
+                  className="shrink-0 overflow-hidden" style={{ borderBottom: "1px solid #2a2218" }}>
+                  {analyzeErr ? (
+                    <div className="flex items-center gap-2 px-4 py-2.5 text-xs" style={{ color: "#ef4444" }}>
+                      <AlertCircle size={12} /> {analyzeErr}
+                      <button onClick={() => setAnalyzeErr("")} className="ml-auto"><X size={11} /></button>
+                    </div>
+                  ) : analysis && (() => {
+                    const SEV = {
+                      healthy:  { color: "#22c55e", label: "✓ Healthy" },
+                      warning:  { color: "#fbbf24", label: "⚠ Warning" },
+                      error:    { color: "#ef4444", label: "✗ Error" },
+                      critical: { color: "#ef4444", label: "🔴 Critical" },
+                    }[analysis.severity] ?? { color: "#0ea5e9", label: "Analysis" };
+                    return (
+                      <div className="px-4 py-3">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold px-2 py-0.5 rounded"
+                              style={{ background: `${SEV.color}15`, color: SEV.color, border: `1px solid ${SEV.color}30` }}>
+                              {SEV.label}
+                            </span>
+                            <span className="text-xs" style={{ color: labelText }}>{analysis.summary}</span>
+                          </div>
+                          <button onClick={() => setAnalysis(null)} style={{ color: mutedText }}><X size={12} /></button>
+                        </div>
+                        {analysis.problem && analysis.problem !== "No issues detected" && (
+                          <p className="text-[11px] mb-1"><span style={{ color: mutedText }}>Problem: </span><span style={{ color: labelText }}>{analysis.problem}</span></p>
+                        )}
+                        {analysis.cause && analysis.cause !== "N/A" && (
+                          <p className="text-[11px] mb-1"><span style={{ color: mutedText }}>Cause: </span><span style={{ color: labelText }}>{analysis.cause}</span></p>
+                        )}
+                        <div className="space-y-0.5 mt-1">
+                          {analysis.fixSteps.map((step, i) => (
+                            <div key={i} className="flex items-start gap-2">
+                              <span className="text-[10px] font-bold shrink-0" style={{ color: SEV.color }}>{i + 1}.</span>
+                              <span className="text-[11px] font-mono" style={{ color: labelText }}>{step}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Log output — FILLS remaining height */}
+            <div ref={logsRef} onScroll={handleConsoleScroll} onClick={() => inputRef.current?.focus()}
+              className="flex-1 overflow-y-auto cursor-text font-mono text-[12.5px] leading-relaxed"
+              style={{ background: "#0c0a08", padding: "12px 16px", minHeight: 200 }}>
+              {filteredLogs.length === 0 ? (
+                <span className="select-none" style={{ color: "#374151" }}>
+                  {searchQuery ? "No matching lines." : "Waiting for output…"}
+                </span>
+              ) : (
+                filteredLogs.map(line => {
+                  const s = LINE_STYLE[line.type];
+                  return (
+                    <div key={line.id} className="flex items-start gap-1.5 mb-px">
+                      {s.badge && (
+                        <span className="shrink-0 text-[9px] font-bold px-1 py-px rounded mt-0.5"
+                          style={{ color: s.color, background: `${s.color}15`, minWidth: 28, textAlign: "center" }}>
+                          {s.badge}
+                        </span>
+                      )}
+                      <span className="whitespace-pre-wrap break-all" style={{ color: s.color }}>{line.text}</span>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={logsEnd} />
+            </div>
+
+            {/* Command input */}
+            <div className="shrink-0 flex items-center"
+              style={{ background: "#141210", borderTop: "1px solid #2a2218", minHeight: 48 }}>
+              <div className="flex items-center px-3 select-none shrink-0 gap-1">
+                <span className="text-base font-bold mono" style={{ color: "#e53935" }}>›</span>
+                {input === "" && (
+                  <span className="inline-block w-1.5 h-3 rounded-sm ml-0.5"
+                    style={{ background: "#e53935", opacity: blink ? 0.6 : 0, transition: "opacity 0.1s" }} />
+                )}
+              </div>
+              <input ref={inputRef} type="text" value={input}
+                onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
+                placeholder={wsStatus === "connected" ? "Enter command…" : "Not connected"}
+                disabled={wsStatus !== "connected"}
+                className="flex-1 bg-transparent outline-none py-3 font-mono text-[13px] disabled:opacity-40"
+                style={{ color: "#d1d5db", caretColor: "transparent" }} />
+              <button onClick={sendCommand} disabled={!input.trim() || wsStatus !== "connected"}
+                className="px-4 py-3 text-xs font-bold shrink-0 transition-all hover:opacity-90 disabled:opacity-30"
+                style={{ background: "#221d17", color: "#9ca3af", borderLeft: "1px solid #2a2218" }}>
+                RUN
+              </button>
+            </div>
+          </div>
+
+          {/* ── AI Chat panel — tab on mobile, sidebar on desktop ── */}
+          <div className={`${mobileTab === "ai" ? "flex" : "hidden"} xl:flex flex-col shrink-0 rounded-xl overflow-hidden`}
+            style={{ width: undefined, minWidth: 0, flex: mobileTab === "ai" ? "1" : undefined, ...(window.innerWidth >= 1280 ? { width: 280 } : {}) }}>
+            <div className="w-full xl:w-72 flex flex-col h-full rounded-xl overflow-hidden" style={{ background: cardBg, border }}>
+
+              {/* Header */}
+              <div className="flex items-center gap-2 px-4 py-3 shrink-0"
+                style={{ borderBottom: "1px solid #2a2218", background: "#141210" }}>
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center"
+                  style={{ background: "rgba(229,57,53,0.15)", border: "1px solid rgba(229,57,53,0.3)" }}>
+                  <Sparkles size={12} style={{ color: "#22c55e" }} />
+                </div>
+                <span className="text-xs font-semibold" style={{ color: labelText }}>NetherNodes AI</span>
+                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded"
+                  style={{ background: "rgba(229,57,53,0.1)", color: "#0ea5e9", border: "1px solid rgba(229,57,53,0.2)" }}>
+                  Beta
+                </span>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2" style={{ minHeight: 0 }}>
+                {aiMessages.length === 0 ? (
+                  <div className="text-center py-6">
+                    <Sparkles size={22} className="mx-auto mb-3 opacity-20" style={{ color: "#0ea5e9" }} />
+                    <p className="text-xs font-medium mb-1" style={{ color: labelText }}>NetherNodes AI</p>
+                    <p className="text-[11px]" style={{ color: mutedText }}>Ask about your server, plugins, errors, or hosting.</p>
+                    <div className="mt-4 space-y-1.5">
+                      {["Why is my server lagging?", "How do I install Essentials?", "What does this error mean?"].map(q => (
+                        <button key={q} onClick={() => { setAiInput(q); }}
+                          className="w-full text-left px-2.5 py-2.5 rounded-lg text-[11px] transition-all hover:brightness-110 active:scale-95"
+                          style={{ background: "#221d17", border: "1px solid #332a1f", color: labelText }}>
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : aiMessages.map((m, i) => (
+                  <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                    {m.role === "user" ? (
+                      <div className="max-w-[88%] rounded-xl px-3 py-2 text-[12px] leading-relaxed"
+                        style={{ background: "#221d17", border: "1px solid #332a1f", color: "#d1d5db" }}>
+                        {m.content}
+                      </div>
+                    ) : (
+                      <div className="max-w-[96%] rounded-xl px-3 py-2.5 text-[12px]"
+                        style={{ background: "#1a1612", border: "1px solid #2a2218", color: "#d1d5db" }}>
+                        <AiMarkdown text={m.content} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {aiLoading && (
+                  <div className="flex justify-start">
+                    <div className="rounded-xl px-3 py-2 flex items-center gap-1.5"
+                      style={{ background: "#1a1612", border: "1px solid #2a2218" }}>
+                      <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#94a3b8", animationDelay: "0ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#94a3b8", animationDelay: "150ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#94a3b8", animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                )}
+                <div ref={aiChatEndRef} />
+              </div>
+
+              {/* Input */}
+              <div className="shrink-0 p-2.5" style={{ borderTop: "1px solid #2a2218" }}>
+                <div className="flex items-center gap-2 rounded-xl px-3 py-2"
+                  style={{ background: "#221d17", border: "1px solid #332a1f" }}>
+                  <input value={aiInput} onChange={e => setAiInput(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendAiMessage()}
+                    placeholder="Ask AI…"
+                    className="flex-1 bg-transparent outline-none text-[12px]"
+                    style={{ color: "#d1d5db" }} />
+                  <button onClick={sendAiMessage} disabled={!aiInput.trim() || aiLoading}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-90 disabled:opacity-30 shrink-0"
+                    style={{ background: "rgba(229,57,53,0.2)", border: "1px solid rgba(229,57,53,0.3)" }}>
+                    <Send size={12} style={{ color: "#e53935" }} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
 
             {/* Left: avatar + name + address */}
             <div className="flex items-center gap-3 min-w-0">
