@@ -30,7 +30,7 @@ const WhyCard = ({ p, i }: { p: typeof points[0]; i: number }) => {
     >
       <div className="flex items-start gap-3">
         <p.icon
-          className="w-5 h-5 text-primary mt-0.5 shrink-0 group-hover:drop-shadow-[0_0_8px_hsla(350,85%,50%,0.5)] transition-all"
+          className="w-5 h-5 text-primary mt-0.5 shrink-0 group-hover:drop-shadow-[0_0_8px_hsla(262,95%,76%,0.5)] transition-all"
           style={{ transform: "translateZ(16px)" }}
         />
         <div>
@@ -56,7 +56,7 @@ const WhyChooseSection = () => {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
-            Why Choose <span className="text-secondary glow-text-secondary">NetherNodes</span>?
+            Why Choose <span className="text-primary glow-text-primary">NetherNodes</span>?
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
             Built for Performance, Not Just Hosting — everything you need to run a great server.
