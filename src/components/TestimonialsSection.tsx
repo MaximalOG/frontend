@@ -15,7 +15,7 @@ function ReviewCard({ review }: { review: Review }) {
   return (
     <div
       className="glass-surface rounded-sm p-6 flex flex-col gap-3 shrink-0"
-      style={{ width: 320, paddingBottom: "1.75rem" }}
+      style={{ width: 320, paddingBottom: "2rem" }}
     >
       <div className="flex gap-1">
         {Array.from({ length: 5 }).map((_, i) => (
@@ -154,7 +154,7 @@ const TestimonialsSection = () => {
       <div
         ref={wrapperRef}
         className="relative w-full overflow-hidden"
-        style={{ height: 215 }}
+        style={{ height: 220 }}
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
       >
