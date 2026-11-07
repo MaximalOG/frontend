@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -17,26 +17,23 @@ function ReviewCard({ review }: { review: Review }) {
       className="glass-surface rounded-sm p-6 flex flex-col gap-3 shrink-0"
       style={{ width: 280 }}
     >
-      {/* Stars */}
       <div className="flex gap-1">
         {Array.from({ length: 5 }).map((_, i) => (
           <Star
             key={i}
             className="w-4 h-4"
             style={{
-              fill: i < review.rating ? "hsl(262 95% 76%)" : "transparent",
+              fill:  i < review.rating ? "hsl(262 95% 76%)" : "transparent",
               color: i < review.rating ? "hsl(262 95% 76%)" : "hsl(0 0% 30%)",
             }}
           />
         ))}
       </div>
 
-      {/* Text */}
       <p className="text-sm text-muted-foreground leading-relaxed flex-1">
         &ldquo;{review.text}&rdquo;
       </p>
 
-      {/* Author */}
       <div className="flex items-center gap-2.5 mt-1">
         {review.avatarUrl ? (
           <img
@@ -66,63 +63,37 @@ const ease = [0.16, 1, 0.3, 1] as const;
 const TestimonialsSection = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const rafRef   = useRef<number>(0);
-  const posRef   = useRef(0);
 
-  // Fetch live reviews from backend — no fallback, only real reviews
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/reviews`)
       .then(r => r.ok ? r.json() : [])
-      .then((data: Review[]) => {
-        setReviews(data);
-        setLoaded(true);
-      })
+      .then((data: Review[]) => { setReviews(data); setLoaded(true); })
       .catch(() => { setReviews([]); setLoaded(true); });
   }, []);
 
-  // Infinite right-to-left scroll via requestAnimationFrame
-  useEffect(() => {
-    if (!loaded) return;
-    const track = trackRef.current;
-    if (!track) return;
+  if (loaded && reviews.length === 0) return null;
 
-    const speed = 0.4; // px per frame — adjust for faster/slower
-    let paused = false;
-
-    const onEnter = () => { paused = true; };
-    const onLeave = () => { paused = false; };
-    track.addEventListener("mouseenter", onEnter);
-    track.addEventListener("mouseleave", onLeave);
-
-    const tick = () => {
-      if (!paused) {
-        posRef.current -= speed;
-        // When we've scrolled one full "half" width, reset to 0 for seamless loop
-        const halfWidth = track.scrollWidth / 2;
-        if (Math.abs(posRef.current) >= halfWidth) {
-          posRef.current = 0;
-        }
-        track.style.transform = `translateX(${posRef.current}px)`;
-      }
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(rafRef.current);
-      track.removeEventListener("mouseenter", onEnter);
-      track.removeEventListener("mouseleave", onLeave);
-    };
-  }, [loaded]);
-
-  // Duplicate cards for seamless loop — need at least 1 review
-  const displayReviews = reviews.length > 0 ? [...reviews, ...reviews] : [];
-
-  if (loaded && reviews.length === 0) return null; // hide section entirely if no reviews yet
+  // Card width (280) + gap (16) = 296px per card
+  // CSS animation translates exactly one full set width so the loop is seamless
+  const cardW = 296;
+  const totalW = reviews.length * cardW;
 
   return (
     <section className="py-24 relative overflow-hidden">
+      {/* Inject keyframes dynamically so totalW is known */}
+      <style>{`
+        @keyframes marquee-scroll {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(-${totalW}px); }
+        }
+        .marquee-track {
+          animation: marquee-scroll ${reviews.length * 4}s linear infinite;
+        }
+        .marquee-track:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -140,7 +111,7 @@ const TestimonialsSection = () => {
         </motion.div>
       </div>
 
-      {/* Marquee — full width, clips at edges */}
+      {/* Full-width marquee */}
       <div className="relative w-full overflow-hidden">
         {/* Left fade */}
         <div
@@ -153,14 +124,22 @@ const TestimonialsSection = () => {
           style={{ background: "linear-gradient(to left, hsl(252 24% 7%), transparent)" }}
         />
 
-        {/* Scrolling track */}
+        {/*
+          Two identical sets side by side.
+          Animation moves exactly one set width to the left, then instantly
+          resets to 0 — because set 2 is identical to set 1, the jump is invisible.
+        */}
         <div
-          ref={trackRef}
-          className="flex gap-4 w-max py-2 px-4"
+          className="marquee-track flex gap-4 w-max py-2 px-4"
           style={{ willChange: "transform" }}
         >
-          {displayReviews.map((review, i) => (
-            <ReviewCard key={`${review.id}-${i}`} review={review} />
+          {/* Set 1 */}
+          {reviews.map((review) => (
+            <ReviewCard key={`a-${review.id}`} review={review} />
+          ))}
+          {/* Set 2 — identical copy for seamless loop */}
+          {reviews.map((review) => (
+            <ReviewCard key={`b-${review.id}`} review={review} />
           ))}
         </div>
       </div>
