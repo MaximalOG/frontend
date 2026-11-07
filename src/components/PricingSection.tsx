@@ -339,7 +339,7 @@ const PricingSection = () => {
           <p className="text-muted-foreground max-w-xl mx-auto">
             No hidden fees. No surprises. Pick a plan and start playing.
           </p>
-          <p className="text-xs text-secondary mt-3 mono">Most servers choose 4GB+ for smooth gameplay</p>
+          <p className="text-xs text-primary mt-3 mono">Most servers choose 4GB+ for smooth gameplay</p>
           <p className="text-xs text-primary/80 mt-2 mono font-medium">⚠️ Limited Slots Available — Early Access Phase</p>
         </motion.div>
 
@@ -565,7 +565,7 @@ const PricingSection = () => {
                         );
                       })()}
                     </div>
-                    <p className="text-[11px] text-secondary font-medium mb-3">{plan.shortLine}</p>
+                    <p className="text-[11px] text-primary font-medium mb-3">{plan.shortLine}</p>
 
                     <div className="flex flex-wrap gap-x-3 gap-y-1 mb-3">
                       <span className="text-[10px] text-muted-foreground flex items-center gap-1">
@@ -729,7 +729,7 @@ const PricingSection = () => {
           <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-3">
             We're expanding beyond India — new server regions are on the way for lower latency worldwide.
           </p>
-          <p className="text-xs text-secondary font-medium">
+          <p className="text-xs text-primary font-medium">
             Early users will get priority access to new regions when they launch.
           </p>
         </motion.div>

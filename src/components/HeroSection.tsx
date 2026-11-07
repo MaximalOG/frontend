@@ -66,7 +66,7 @@ const HeroSection = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.6, ease }}
-            className="text-sm md:text-base text-secondary font-medium mb-10"
+            className="text-sm md:text-base text-primary font-medium mb-10"
           >
             🇮🇳 Optimized for Indian Players — Experience ultra-low ping with servers located in India.
           </motion.p>
@@ -120,10 +120,10 @@ const HeroSection = () => {
               <span className="ml-2 text-xs mono text-muted-foreground">NetherNodes-console</span>
             </div>
             <div className="p-4 mono text-sm text-muted-foreground space-y-1">
-              <p><span className="text-secondary">[NetherNodes]</span> Allocating resources...</p>
-              <p><span className="text-secondary">[NetherNodes]</span> Optimizing for India routing...</p>
-              <p><span className="text-secondary">[NetherNodes]</span> Plugins loaded: <span className="text-foreground">EssentialsX, WorldEdit, Vault</span></p>
-              <p><span className="text-secondary">[NetherNodes]</span> Server ready at <span className="text-primary">yourserver.nethernodes.gg</span></p>
+              <p><span className="text-primary">[NetherNodes]</span> Allocating resources...</p>
+              <p><span className="text-primary">[NetherNodes]</span> Optimizing for India routing...</p>
+              <p><span className="text-primary">[NetherNodes]</span> Plugins loaded: <span className="text-foreground">EssentialsX, WorldEdit, Vault</span></p>
+              <p><span className="text-primary">[NetherNodes]</span> Server ready at <span className="text-primary">yourserver.nethernodes.gg</span></p>
               <p><span className="text-green-400">[Done]</span> Ready in <span className="text-foreground">1.2s</span> — <span className="text-foreground">0 players online</span></p>
               <p className="flex items-center">
                 <span className="text-primary">{">"}</span>

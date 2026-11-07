@@ -11,7 +11,7 @@ const StartStopTab = () => (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
       {[
         { label: "CPU", value: "23%", color: "text-primary" },
-        { label: "RAM", value: "1.8GB", color: "text-secondary" },
+        { label: "RAM", value: "1.8GB", color: "text-primary" },
         { label: "Players", value: "12/30", color: "text-green-400" },
         { label: "TPS", value: "19.8", color: "text-foreground" },
       ].map(s => (
@@ -40,8 +40,8 @@ const ConsoleTab = () => {
     { t: "17:42:03", c: "text-green-400",        m: "[Server thread/INFO]: Preparing level \"world\"" },
     { t: "17:42:04", c: "text-muted-foreground", m: "[Server thread/INFO]: Preparing start region for dimension minecraft:overworld" },
     { t: "17:42:05", c: "text-green-400",        m: "[Server thread/INFO]: Done (3.241s)! For help, type \"help\"" },
-    { t: "17:43:11", c: "text-secondary",        m: "[Server thread/INFO]: Alex joined the game" },
-    { t: "17:44:02", c: "text-secondary",        m: "[Server thread/INFO]: Steve joined the game" },
+    { t: "17:43:11", c: "text-primary",        m: "[Server thread/INFO]: Alex joined the game" },
+    { t: "17:44:02", c: "text-primary",        m: "[Server thread/INFO]: Steve joined the game" },
     { t: "17:46:30", c: "text-muted-foreground", m: "[Server thread/INFO]: Alex: hello everyone" },
     { t: "17:47:01", c: "text-green-400",        m: "[Server thread/INFO]: TPS: 19.8 | Memory: 1.8GB / 4GB" },
   ];
@@ -82,10 +82,10 @@ const FileManagerTab = () => {
         {files.map((f, i) => (
           <div key={i} className="grid grid-cols-3 gap-2 px-3 py-1.5 text-xs hover:bg-muted/20 transition-colors border-b border-border/10 last:border-0">
             <span className="flex items-center gap-1.5">
-              <span className={f.type === "dir" ? "text-secondary" : "text-muted-foreground/60"}>
+              <span className={f.type === "dir" ? "text-primary" : "text-muted-foreground/60"}>
                 {f.type === "dir" ? "??" : "??"}
               </span>
-              <span className={f.type === "dir" ? "text-secondary" : "text-foreground/80"}>{f.name}</span>
+              <span className={f.type === "dir" ? "text-primary" : "text-foreground/80"}>{f.name}</span>
             </span>
             <span className="text-muted-foreground/50 mono">{f.size}</span>
             <span className="text-muted-foreground/50">{f.modified}</span>
@@ -166,7 +166,7 @@ const DashboardPreview = () => {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
-            Your <span className="text-secondary glow-text-secondary">Command Center</span>
+            Your <span className="text-primary glow-text-primary">Command Center</span>
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
             A clean, powerful dashboard to manage everything about your server.

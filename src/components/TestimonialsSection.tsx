@@ -31,18 +31,6 @@ const FALLBACK: Review[] = [
     rating: 5,
     text: "Running a 50-player modded server with zero issues. The hardware is genuinely powerful and support on Discord is always fast.",
   },
-  {
-    id: "f4",
-    username: "NitroSMP",
-    rating: 5,
-    text: "Cheapest good host I've found in India. Latency is around 20ms for most of my players. Highly recommend Starter plan.",
-  },
-  {
-    id: "f5",
-    username: "PixelWarden",
-    rating: 4,
-    text: "Setup was literally under a minute. Panel is clean, backups work great. Would love more RAM options but otherwise perfect.",
-  },
 ];
 
 function ReviewCard({ review }: { review: Review }) {

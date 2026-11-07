@@ -23,11 +23,11 @@ const AISection = () => {
           transition={{ duration: 0.6, ease }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 glass-surface rounded-sm text-xs mono text-secondary mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 glass-surface rounded-sm text-xs mono text-primary mb-4">
             COMING SOON
           </div>
           <h2 className="text-3xl md:text-5xl font-bold tracking-tighter mb-4">
-            Smart Hosting with <span className="text-secondary glow-text-secondary">AI</span>
+            Smart Hosting with <span className="text-primary glow-text-primary">AI</span>
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
             The future of Minecraft hosting — intelligent, automated, and always learning.
@@ -44,7 +44,7 @@ const AISection = () => {
               transition={{ delay: i * 0.1, duration: 0.5, ease }}
               className="glass-surface rounded-sm p-6 group nether-border-hover"
             >
-              <f.icon className="w-8 h-8 text-secondary mb-4 group-hover:drop-shadow-[0_0_8px_hsla(270,70%,60%,0.5)] transition-all" />
+              <f.icon className="w-8 h-8 text-primary mb-4 group-hover:drop-shadow-[0_0_8px_hsla(270,70%,60%,0.5)] transition-all" />
               <h3 className="text-lg font-bold mb-2 text-foreground">{f.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
             </motion.div>
