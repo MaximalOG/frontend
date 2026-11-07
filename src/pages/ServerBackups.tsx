@@ -27,7 +27,7 @@ function fmtBytes(b: number) {
 }
 function fmtDate(iso: string) {
   try { return new Date(iso).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
-  catch { return "—"; }
+  catch { return "â€”"; }
 }
 
 function PageShell({ server, children }: { server: ServerData | null; children: React.ReactNode }) {
@@ -105,7 +105,7 @@ export default function ServerBackups() {
         body: JSON.stringify({ name: `Backup ${new Date().toLocaleString("en-IN")}` }),
       });
       if (!res.ok) { const e = await res.json(); setError(e.error || "Failed to create backup."); return; }
-      setCreateMsg("Backup started — it may take a few minutes.");
+      setCreateMsg("Backup started â€” it may take a few minutes.");
       setTimeout(() => setCreateMsg(""), 5000);
       loadBackups();
     } catch { setError("Network error."); }
@@ -149,7 +149,7 @@ export default function ServerBackups() {
       let data: any = {};
       try { data = await res.json(); } catch {}
       if (!res.ok) { setError(data.error || "Failed to get download link."); return; }
-      // Open the signed URL in a new tab — the browser will download the .tar.gz
+      // Open the signed URL in a new tab â€” the browser will download the .tar.gz
       window.open(data.url, "_blank", "noopener,noreferrer");
     } catch { setError("Network error getting download link."); }
     finally { setDownloadingUuid(null); }
@@ -246,7 +246,7 @@ export default function ServerBackups() {
                 </div>
                 <div className="flex items-center gap-3 mt-0.5">
                   <p className="text-[9px] mono" style={{ color: "#334155" }}>
-                    {b.isSuccessful ? "Complete" : "In progress…"}
+                    {b.isSuccessful ? "Complete" : "In progressâ€”"}
                   </p>
                   {b.bytes > 0 && (
                     <p className="text-[9px] mono" style={{ color: "#475569" }}>{fmtBytes(b.bytes)}</p>
@@ -258,7 +258,7 @@ export default function ServerBackups() {
                 </div>
               </div>
 
-              {/* Actions — proper 44px touch targets */}
+              {/* Actions â€” proper 44px touch targets */}
               <div className="flex items-center gap-1.5 shrink-0">
                 {b.isSuccessful && (
                   <button title="Download" onClick={() => downloadBackup(b)} disabled={downloadingUuid === b.uuid}
@@ -314,7 +314,7 @@ export default function ServerBackups() {
                   className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
                   style={{ background: "linear-gradient(135deg,#991b1b,#dc2626)", color: "white" }}>
                   {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                  {deleting ? "Deleting…" : "Delete"}
+                  {deleting ? "Deletingâ€”" : "Delete"}
                 </button>
               </div>
             </motion.div>
@@ -358,7 +358,7 @@ export default function ServerBackups() {
                   className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
                   style={{ background: "linear-gradient(135deg,hsl(262 80% 40%),hsl(262 95% 55%))", color: "white" }}>
                   {restoring ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
-                  {restoring ? "Restoring…" : "Restore"}
+                  {restoring ? "Restoringâ€”" : "Restore"}
                 </button>
               </div>
             </motion.div>

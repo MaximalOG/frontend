@@ -229,7 +229,7 @@ export default function SaleAdmin() {
                           style={{ background: config.enabled ? "#22c55e" : "#475569", boxShadow: config.enabled ? "0 0 6px #22c55e" : "none" }} />
                         Public Banner Sale
                       </h2>
-                      <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>Shown automatically — no code needed</p>
+                      <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>Shown automatically â€” no code needed</p>
                     </div>
                     <button onClick={() => set("enabled", !config.enabled)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
@@ -302,7 +302,7 @@ export default function SaleAdmin() {
                       className="w-full h-9 rounded-xl text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                       style={{ background: "linear-gradient(135deg, #991b1b, #dc2626)", color: "white" }}>
                       {savingBanner ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
-                      {savedBanner ? "Saved!" : savingBanner ? "Saving…" : "Save Banner Settings"}
+                      {savedBanner ? "Saved!" : savingBanner ? "Savingâ€”" : "Save Banner Settings"}
                     </button>
                   </div>
                 </div>
@@ -310,7 +310,7 @@ export default function SaleAdmin() {
                 <div className="rounded-2xl p-5 opacity-50 cursor-not-allowed"
                   style={{ background: "#120f0b", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <p className="text-sm font-bold flex items-center gap-2" style={{ color: "#64748b" }}>
-                    <Shield size={14} /> Banner Sale — No Access
+                    <Shield size={14} /> Banner Sale â€” No Access
                   </p>
                   <p className="text-xs mt-1" style={{ color: "#334155" }}>You don't have permission to manage the banner sale.</p>
                 </div>
@@ -411,7 +411,7 @@ export default function SaleAdmin() {
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5">
                                   <span className="text-[11px] mono tracking-widest" style={{ color: "#A78BFA" }}>
-                                    {c.code || <span style={{ color: "#1e293b" }}>—</span>}
+                                    {c.code || <span style={{ color: "#1e293b" }}>â€”</span>}
                                   </span>
                                   {c.code && (
                                     <button onClick={e => { e.stopPropagation(); copyCode(c.code, i); }}
@@ -478,7 +478,7 @@ export default function SaleAdmin() {
                                       </Field>
                                     </div>
 
-                                    {/* Row 2: Discount — only shown if not 100% free */}
+                                    {/* Row 2: Discount â€” only shown if not 100% free */}
                                     <div className="grid grid-cols-3 gap-3">
                                       <Field label="Discount">
                                         <div className="flex items-center gap-1.5">
@@ -505,7 +505,7 @@ export default function SaleAdmin() {
                                       </Field>
                                     </div>
 
-                                    {/* Row 3: Free server duration — only visible when 100% discount */}
+                                    {/* Row 3: Free server duration â€” only visible when 100% discount */}
                                     {free && (
                                       <div className="rounded-xl p-4"
                                         style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.18)" }}>
@@ -537,7 +537,7 @@ export default function SaleAdmin() {
                                           </button>
                                         </div>
 
-                                        {/* Month count input — only when "months" selected */}
+                                        {/* Month count input â€” only when "months" selected */}
                                         {c.freeType === "months" && (
                                           <motion.div
                                             initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
@@ -561,7 +561,7 @@ export default function SaleAdmin() {
 
                                         {c.freeType === "lifetime" && (
                                           <p className="text-[10px] mt-2.5 text-center" style={{ color: "#334155" }}>
-                                            Server stays free permanently — no future billing
+                                            Server stays free permanently â€” no future billing
                                           </p>
                                         )}
                                       </div>
@@ -620,7 +620,7 @@ export default function SaleAdmin() {
                       className="w-full h-9 rounded-xl text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                       style={{ background: "linear-gradient(135deg, #b91c1c, #A78BFA)", color: "white" }}>
                       {savingCodes ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
-                      {savedCodes ? "Saved!" : savingCodes ? "Saving…" : "Save Promo Codes"}
+                      {savedCodes ? "Saved!" : savingCodes ? "Savingâ€”" : "Save Promo Codes"}
                     </button>
                   </div>
                 </div>
@@ -628,7 +628,7 @@ export default function SaleAdmin() {
                 <div className="rounded-2xl p-5 opacity-50 cursor-not-allowed"
                   style={{ background: "#120f0b", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <p className="text-sm font-bold flex items-center gap-2" style={{ color: "#64748b" }}>
-                    <Shield size={14} /> Promo Codes — No Access
+                    <Shield size={14} /> Promo Codes â€” No Access
                   </p>
                   <p className="text-xs mt-1" style={{ color: "#334155" }}>You don't have permission to manage promo codes.</p>
                 </div>

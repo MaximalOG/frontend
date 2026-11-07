@@ -17,7 +17,7 @@ interface ServerData {
 
 const SERVER_TYPES = [
   { id: "paper",      label: "Paper",       desc: "High-performance, plugin-ready (recommended)", color: "#4ade80" },
-  { id: "vanilla",    label: "Vanilla",     desc: "Pure Minecraft — no plugins or mods",            color: "#60a5fa" },
+  { id: "vanilla",    label: "Vanilla",     desc: "Pure Minecraft â€” no plugins or mods",            color: "#60a5fa" },
   { id: "forge",      label: "Forge",       desc: "Full mod support via Minecraft Forge",            color: "#fb923c" },
   { id: "bungeecord", label: "BungeeCord",  desc: "Multi-server network proxy",                     color: "#38bdf8" },
   { id: "sponge",     label: "Sponge",      desc: "Vanilla server with SpongeAPI mod support",       color: "#fbbf24" },
@@ -177,7 +177,7 @@ export default function ServerVersion() {
             <div>
               <h1 className="text-base font-bold" style={{ color: "#f1f5f9" }}>Version & Software</h1>
               <p className="text-[10px] mono mt-0.5" style={{ color: "#475569" }}>
-                Change Minecraft version or server software — server must be stopped
+                Change Minecraft version or server software â€” server must be stopped
               </p>
             </div>
           </div>
@@ -213,12 +213,12 @@ export default function ServerVersion() {
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
               <p className="text-[9px] mono uppercase tracking-widest" style={{ color: "#334155" }}>Current software</p>
-              <p className="text-xs font-bold capitalize" style={{ color: "#e2e8f0" }}>{server?.serverType ?? "—"}</p>
+              <p className="text-xs font-bold capitalize" style={{ color: "#e2e8f0" }}>{server?.serverType ?? "â€”"}</p>
             </div>
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
               <p className="text-[9px] mono uppercase tracking-widest" style={{ color: "#334155" }}>Current version</p>
-              <p className="text-xs font-bold mono" style={{ color: "#e2e8f0" }}>{server?.mcVersion ?? "—"}</p>
+              <p className="text-xs font-bold mono" style={{ color: "#e2e8f0" }}>{server?.mcVersion ?? "â€”"}</p>
             </div>
             <div className="ml-auto px-3 py-1.5 rounded-xl text-[10px] font-semibold"
               style={{
@@ -381,7 +381,7 @@ export default function ServerVersion() {
               <button onClick={handleSave} disabled={saving || isRunning || !hasChanges}
                 className="w-full h-11 flex items-center justify-center gap-2 rounded-2xl text-sm font-bold transition-all hover:opacity-90 disabled:opacity-30 mt-4"
                 style={{ background: "linear-gradient(135deg,#1d4ed8,#3b82f6)", color: "white" }}>
-                {saving ? <><Loader2 size={14} className="animate-spin" /> Applying…</> : <><Check size={14} /> Apply Changes</>}
+                {saving ? <><Loader2 size={14} className="animate-spin" /> Applyingâ€”</> : <><Check size={14} /> Apply Changes</>}
               </button>
             </div>
           </div>
@@ -442,7 +442,7 @@ export default function ServerVersion() {
                 <button onClick={handleReinstall} disabled={reinstalling}
                   className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-40"
                   style={{ background: "linear-gradient(135deg,#991b1b,#dc2626)", color: "white" }}>
-                  {reinstalling ? <><Loader2 size={12} className="animate-spin" /> Reinstalling…</> : <><RefreshCw size={12} /> Reinstall</>}
+                  {reinstalling ? <><Loader2 size={12} className="animate-spin" /> Reinstallingâ€”</> : <><RefreshCw size={12} /> Reinstall</>}
                 </button>
               </div>
             </motion.div>

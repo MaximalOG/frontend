@@ -32,7 +32,7 @@ function formatSize(b: number): string {
 
 function formatDate(iso: string): string {
   try { return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }); }
-  catch { return "—"; }
+  catch { return "â€”"; }
 }
 
 const TEXT_EXTS = new Set([
@@ -164,7 +164,7 @@ function highlightToml(text: string): string {
 // -- JSON ----------------------------------------------------------------------
 
 function highlightJson(text: string): string {
-  // Token-by-token pass — simple but effective
+  // Token-by-token pass â€” simple but effective
   let out = "";
   let i = 0;
   while (i < text.length) {
@@ -196,7 +196,7 @@ function highlightJson(text: string): string {
     if (text.startsWith("null",  i)) { out += sp(C.null_,     "null");  i += 4; continue; }
     // Punctuation
     if ("{}[]:,".includes(ch)) { out += sp(C.punct, escHtml(ch)); i++; continue; }
-    // Newline / whitespace — preserve as-is
+    // Newline / whitespace â€” preserve as-is
     out += escHtml(ch); i++;
   }
   return out;
@@ -321,13 +321,13 @@ function highlight(text: string, ext: string): string {
     case "md":
     case "markdown":
       return highlightMarkdown(text);
-    // txt / java / py / ts / js / css — plain with escaping
+    // txt / java / py / ts / js / css â€” plain with escaping
     default:
       return text.split("\n").map(l => escHtml(l) || "").join("\n");
   }
 }
 
-// -- Highlight editor — scroll-synced overlay ---------------------------------
+// -- Highlight editor â€” scroll-synced overlay ---------------------------------
 // The textarea is the scroll driver (it has the real scrollbar).
 // The <pre> sits behind it and its scroll position is kept in sync via onScroll.
 // This prevents the two layers drifting apart and eliminates the ghost-text glitch.
@@ -345,7 +345,7 @@ const HighlightEditor = ({
 
   return (
     <div className="flex-1 relative overflow-hidden" style={{ minHeight: 300 }}>
-      {/* Highlighted backdrop — scroll is driven by the textarea below */}
+      {/* Highlighted backdrop â€” scroll is driven by the textarea below */}
       <pre
         ref={preRef}
         aria-hidden="true"
@@ -357,7 +357,7 @@ const HighlightEditor = ({
         }}
         dangerouslySetInnerHTML={{ __html: highlight(content, ext) + "\n" }}
       />
-      {/* Textarea — the only scrollable element; text is transparent so the pre shows through */}
+      {/* Textarea â€” the only scrollable element; text is transparent so the pre shows through */}
       <textarea
         value={content}
         onChange={e => onChange(e.target.value)}
@@ -527,7 +527,7 @@ const ServerFiles = () => {
           const BINARY  = new Set(["png","gif","webp","ico","jpg","jpeg","jar","zip"]);
           const blocked = Array.from(list).filter(f => !ALLOWED.has(f.name.split(".").pop()?.toLowerCase() ?? ""));
           if (blocked.length > 0) {
-            setError(`Cannot upload: ${blocked.map(f => f.name).join(", ")} — file type not allowed.`);
+            setError(`Cannot upload: ${blocked.map(f => f.name).join(", ")} â€” file type not allowed.`);
             e.target.value = ""; return;
           }
           setUploading(true);
@@ -558,7 +558,7 @@ const ServerFiles = () => {
         }}
       />
 
-      {/* Full-height file browser — nether background */}
+      {/* Full-height file browser â€” nether background */}
       <div className="flex flex-col overflow-hidden relative rounded-xl"
         style={{ height: "calc(100vh - 120px)", minHeight: 400 }}>
 
@@ -645,7 +645,7 @@ const ServerFiles = () => {
               {loading ? (
                 <div className="flex items-center justify-center py-12" style={{ color: "#475569" }}>
                   <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  <span className="text-sm">Loading…</span>
+                  <span className="text-sm">Loadingâ€”</span>
                 </div>
               ) : sorted.length === 0 ? (
                 <div className="text-center py-12">
@@ -672,7 +672,7 @@ const ServerFiles = () => {
                       </button>
                     </div>
                     <span className="hidden sm:block col-span-2 text-right mono" style={{ color: "#334155" }}>
-                      {attr.is_file ? formatSize(attr.size) : "—"}
+                      {attr.is_file ? formatSize(attr.size) : "â€”"}
                     </span>
                     <span className="hidden sm:block col-span-3 text-right" style={{ color: "#334155" }}>
                       {formatDate(attr.modified_at)}

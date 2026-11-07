@@ -42,12 +42,12 @@ interface PaymentHistoryEntry {
 // -- Helpers -------------------------------------------------------------------
 
 function fmtDate(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "â€”";
   try {
     return new Date(iso).toLocaleDateString("en-IN", {
       day: "2-digit", month: "short", year: "numeric",
     });
-  } catch { return "—"; }
+  } catch { return "â€”"; }
 }
 
 function daysUntil(iso: string | null): number | null {
@@ -136,7 +136,7 @@ function SubCard({
           amount:      orderData.amount,
           currency:    "INR",
           name:        "NetherNodes",
-          description: `Early Renewal — ${sub.planName} Plan`,
+          description: `Early Renewal â€” ${sub.planName} Plan`,
           prefill:     {},
           theme:       { color: "#A78BFA" },
           handler: async (response: any) => {
@@ -273,7 +273,7 @@ function SubCard({
                 className="flex items-center gap-1.5 px-4 py-3 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-40 active:scale-95"
                 style={{ background: "linear-gradient(135deg,#1d4ed8,#3b82f6)", color: "white" }}>
                 {paying ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-                {paying ? "Processing…" : "Pay Early"}
+                {paying ? "Processingâ€”" : "Pay Early"}
               </button>
             )}
             {canCancel && (
@@ -319,7 +319,7 @@ function SubCard({
             <div className="px-5 pb-4">
               {loadingHist ? (
                 <div className="flex items-center gap-2 py-4 text-xs" style={{ color: "#475569" }}>
-                  <Loader2 size={12} className="animate-spin" /> Loading history…
+                  <Loader2 size={12} className="animate-spin" /> Loading historyâ€”
                 </div>
               ) : history.length === 0 ? (
                 <p className="text-xs py-4" style={{ color: "#334155" }}>No payment events yet.</p>
@@ -376,7 +376,7 @@ function SubCard({
                 </div>
                 <div>
                   <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Cancel subscription?</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>{sub.planName} — {sub.serverName}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>{sub.planName} â€” {sub.serverName}</p>
                 </div>
               </div>
               <div className="rounded-xl px-3 py-2.5 mb-4 text-xs"
@@ -392,7 +392,7 @@ function SubCard({
                   className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
                   style={{ background: "linear-gradient(135deg,#991b1b,#dc2626)", color: "white" }}>
                   {cancelling ? <Loader2 size={12} className="animate-spin" /> : <Ban size={12} />}
-                  {cancelling ? "Cancelling…" : "Cancel Subscription"}
+                  {cancelling ? "Cancellingâ€”" : "Cancel Subscription"}
                 </button>
               </div>
             </motion.div>
@@ -473,7 +473,7 @@ export default function Subscriptions() {
           {loading ? (
             <div className="text-center py-16 text-muted-foreground text-sm">
               <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-3" />
-              Loading subscriptions…
+              Loading subscriptionsâ€”
             </div>
           ) : subs.length === 0 ? (
             <div className="rounded-sm p-10 text-center" style={{ border: "1px solid hsl(0 0% 16%)" }}>
@@ -540,7 +540,7 @@ export default function Subscriptions() {
                 </p>
                 <p className="text-[11px] leading-relaxed" style={{ color: "#64748b" }}>
                   Paying early extends your subscription by one full billing cycle (30 days) <em>from your current period end date</em>, not from today.
-                  So if your server is active until July 7 and you pay early on June 19, it extends to August 7 — you're paying for the July cycle in advance.
+                  So if your server is active until July 7 and you pay early on June 19, it extends to August 7 â€” you're paying for the July cycle in advance.
                   Your automatic subscription charge for that cycle will still process and extend it further.
                 </p>
               </div>

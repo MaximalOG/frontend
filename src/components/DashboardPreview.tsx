@@ -22,7 +22,7 @@ const StartStopTab = () => (
       ))}
     </div>
     <div className="bg-muted/20 rounded-sm p-4">
-      <div className="text-xs text-muted-foreground mono mb-3">RESOURCE USAGE — LAST 24H</div>
+      <div className="text-xs text-muted-foreground mono mb-3">RESOURCE USAGE â€” LAST 24H</div>
       <div className="flex items-end gap-1 h-24">
         {[35,42,28,55,48,62,45,38,52,65,58,42,35,48,55,62,70,58,45,38,42,35,28,23].map((h,i) => (
           <div key={i} className="flex-1 rounded-t-sm bg-primary/60 transition-all hover:bg-primary" style={{ height: `${h}%` }} />
@@ -63,10 +63,10 @@ const ConsoleTab = () => {
 
 const FileManagerTab = () => {
   const files = [
-    { name: "world",           type: "dir",  size: "—",       modified: "Today 17:42" },
-    { name: "world_nether",    type: "dir",  size: "—",       modified: "Today 17:42" },
-    { name: "plugins",         type: "dir",  size: "—",       modified: "Today 17:40" },
-    { name: "logs",            type: "dir",  size: "—",       modified: "Today 17:46" },
+    { name: "world",           type: "dir",  size: "â€”",       modified: "Today 17:42" },
+    { name: "world_nether",    type: "dir",  size: "â€”",       modified: "Today 17:42" },
+    { name: "plugins",         type: "dir",  size: "â€”",       modified: "Today 17:40" },
+    { name: "logs",            type: "dir",  size: "â€”",       modified: "Today 17:46" },
     { name: "server.jar",      type: "file", size: "47.2 MB", modified: "Yesterday" },
     { name: "server.properties",type:"file", size: "2.1 KB",  modified: "Today 17:40" },
     { name: "bukkit.yml",      type: "file", size: "1.4 KB",  modified: "Today 17:40" },

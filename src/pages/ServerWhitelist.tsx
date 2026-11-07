@@ -199,7 +199,7 @@ export default function ServerWhitelist() {
         <div className="flex gap-2">
           <input value={newPlayer} onChange={e => setNewPlayer(e.target.value)}
             onKeyDown={e => e.key === "Enter" && addPlayer()}
-            placeholder="Minecraft username…"
+            placeholder="Minecraft usernameâ€”"
             className="flex-1 rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none"
             style={{ border: "1px solid rgba(255,255,255,0.1)", color: "#f1f5f9" }} />
           <button onClick={addPlayer} disabled={adding || !newPlayer.trim()}
@@ -218,7 +218,7 @@ export default function ServerWhitelist() {
           style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
           <Search size={12} style={{ color: "#475569" }} />
           <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search players…"
+            placeholder="Search playersâ€”"
             className="flex-1 bg-transparent outline-none text-sm"
             style={{ color: "#f1f5f9" }} />
           {search && <button onClick={() => setSearch("")} style={{ color: "#475569" }}><X size={12} /></button>}

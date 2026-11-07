@@ -118,7 +118,7 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
           <span className="ml-auto text-[9px] mono" style={{ color: "#334155" }}>{server.ram} RAM</span>
         </div>
 
-        {/* -- Power controls — inside the card, always visible -- */}
+        {/* -- Power controls â€” inside the card, always visible -- */}
         <div className="relative grid grid-cols-3 gap-1.5">
           <button
             onClick={() => onPower("start")}

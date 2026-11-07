@@ -160,7 +160,7 @@ function ProjectCard({
         }}
       >
         {installing
-          ? <><Loader2 size={11} className="animate-spin" /> Installing…</>
+          ? <><Loader2 size={11} className="animate-spin" /> Installingâ€”</>
           : installed
           ? <><Check size={11} /> Installed</>
           : <><Download size={11} /> Install</>
@@ -275,7 +275,7 @@ const ServerInstaller = () => {
       setTimeout(() => setInstallSuccess(""), 4000);
     } catch (err: any) {
       if (err?.name === "AbortError") {
-        setInstallError("Install timed out — the file may be very large. Check the Files tab to see if it was uploaded.");
+        setInstallError("Install timed out â€” the file may be very large. Check the Files tab to see if it was uploaded.");
       } else {
         setInstallError(err?.message || "Network error during install. Please try again.");
       }
@@ -344,7 +344,7 @@ const ServerInstaller = () => {
         <div className="px-4 sm:px-6 pt-4 sm:pt-5 pb-4 shrink-0"
           style={{ borderBottom: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 5%)" }}>
           <div className="flex items-center gap-3 mb-4">
-            {/* Hamburger — mobile only */}
+            {/* Hamburger â€” mobile only */}
             <button onClick={() => setDrawerOpen(true)}
               className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl shrink-0"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid hsl(0 0% 15%)" }}>
@@ -358,7 +358,7 @@ const ServerInstaller = () => {
               <h1 className="text-base font-bold text-foreground">Plugin & Mod Installer</h1>
               <p className="text-[10px] text-muted-foreground/50">
                 {server?.serverType ? `${server.serverType}` : "server"}
-                {server?.mcVersion ? ` · ${server.mcVersion}` : ""} — Modrinth
+                {server?.mcVersion ? ` â€” ${server.mcVersion}` : ""} â€” Modrinth
               </p>
             </div>
             {/* Tabs */}
@@ -392,7 +392,7 @@ const ServerInstaller = () => {
                 <Search size={14} className="text-muted-foreground/40 shrink-0" />
                 <input type="text" value={query}
                   onChange={e => handleSearch(e.target.value)}
-                  placeholder="Search plugins and mods…"
+                  placeholder="Search plugins and modsâ€”"
                   className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/30 outline-none py-2.5"
                 />
                 {query && (

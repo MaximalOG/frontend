@@ -32,7 +32,7 @@ const PRESET_CRONS = [
   { label: "Daily at midnight", cron: "0 0 * * *" },
   { label: "Daily at 6 AM",     cron: "0 6 * * *" },
   { label: "Weekly (Monday)",   cron: "0 0 * * 1" },
-  { label: "Custom…",           cron: "" },
+  { label: "Customâ€”",           cron: "" },
 ];
 
 const ACTION_CFG = {

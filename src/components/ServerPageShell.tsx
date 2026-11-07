@@ -19,7 +19,7 @@ interface Props {
   children: React.ReactNode;
   /** Page title shown in the mobile header */
   title?: string;
-  /** Optional delete button handler — only shown if provided */
+  /** Optional delete button handler â€” only shown if provided */
   onDelete?: () => void;
   /** Extra content to render below the nav in the sidebar */
   sidebarExtra?: React.ReactNode;

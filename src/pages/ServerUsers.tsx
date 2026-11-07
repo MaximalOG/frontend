@@ -290,7 +290,7 @@ const ServerUsers = () => {
                   <button onClick={addUser} disabled={adding || !addEmail.trim()}
                     className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-40"
                     style={{ background: "linear-gradient(135deg,hsl(262 80% 40%),hsl(262 95% 55%))", color: "white" }}>
-                    {adding ? <><Loader2 size={12} className="animate-spin" /> Sending…</> : <><UserPlus size={12} /> Send Invite</>}
+                    {adding ? <><Loader2 size={12} className="animate-spin" /> Sendingâ€”</> : <><UserPlus size={12} /> Send Invite</>}
                   </button>
                 </div>
               </div>
@@ -301,7 +301,7 @@ const ServerUsers = () => {
         {/* User table */}
         <div className="rounded-2xl overflow-hidden"
           style={{ border: "1px solid rgba(255,255,255,0.07)", background: "#100e0b" }}>
-          {/* Column headers — hide permissions col on mobile */}
+          {/* Column headers â€” hide permissions col on mobile */}
           <div className="grid px-4 py-2 text-[9px] mono uppercase tracking-widest"
             style={{ gridTemplateColumns: "1fr auto", gap: "0 12px", background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#334155" }}>
             <span>User</span>
@@ -312,7 +312,7 @@ const ServerUsers = () => {
           {loading ? (
             <div className="flex items-center justify-center py-12" style={{ color: "#475569" }}>
               <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              <span className="text-sm">Loading users…</span>
+              <span className="text-sm">Loading usersâ€”</span>
             </div>
           ) : subusers.length === 0 ? (
             <div className="text-center py-12">
@@ -437,7 +437,7 @@ const ServerUsers = () => {
                   <button onClick={savePermissions} disabled={saving}
                     className="flex-1 h-10 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-50"
                     style={{ background: "linear-gradient(135deg,hsl(262 80% 40%),hsl(262 95% 55%))", color: "white" }}>
-                    {saving ? <><Loader2 size={12} className="animate-spin" /> Saving…</> : <><Check size={12} /> Save Permissions</>}
+                    {saving ? <><Loader2 size={12} className="animate-spin" /> Savingâ€”</> : <><Check size={12} /> Save Permissions</>}
                   </button>
                 </div>
               </div>

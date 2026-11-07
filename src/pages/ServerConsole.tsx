@@ -182,7 +182,7 @@ export default function ServerConsole() {
   /* Mobile tab state */
   const [mobileTab, setMobileTab]       = useState<"console" | "stats" | "ai">("console");
 
-  /* Ad status � used to show a single ad to free/non-logged-in users */
+  /* Ad status — used to show a single ad to free/non-logged-in users */
   const { showAds } = useAdStatus();
 
   /* Log analysis state */
@@ -275,7 +275,7 @@ export default function ServerConsole() {
     if (!id || wsRef.current?.readyState === WebSocket.OPEN) return;
     if (document.visibilityState === "hidden") return;
     setWsStatus("connecting");
-    updateConnLog(`[${nowStr()}] Connecting�`, "system");
+    updateConnLog(`[${nowStr()}] Connecting…`, "system");
     try {
       const res = await apiFetch(`/api/servers/${id}/console-token`, { headers: { Authorization: `Bearer ${token()}` } });
       if (!res.ok) { updateConnLog(`[${nowStr()}] Failed: ${(await res.json()).error}`, "error"); setWsStatus("error"); return; }
@@ -302,7 +302,7 @@ export default function ServerConsole() {
               })();
               break;
             case "token expired":
-              updateConnLog(`[${nowStr()}] Session expired � reconnecting�`, "warn");
+              updateConnLog(`[${nowStr()}] Session expired — reconnecting…`, "warn");
               ws.close();
               if (document.visibilityState === "visible") setTimeout(connect, 1500);
               break;
@@ -660,7 +660,7 @@ export default function ServerConsole() {
           </div>
         </div>
 
-        {/* -- Mobile tab bar � Console / Stats / AI -- */}
+        {/* -- Mobile tab bar — Console / Stats / AI -- */}
         <div className="flex lg:hidden shrink-0 mx-3 mb-2 rounded-xl overflow-hidden"
           style={{ background: cardBg, border }}>
           {(["console", "stats", "ai"] as const).map(t => (
@@ -675,10 +675,10 @@ export default function ServerConsole() {
           ))}
         </div>
 
-        {/* -- Content area � tabs on mobile, side-by-side on desktop -- */}
+        {/* -- Content area — tabs on mobile, side-by-side on desktop -- */}
         <div className="flex flex-col lg:flex-row gap-3 px-3 sm:px-4 pb-4 flex-1 min-h-0">
 
-          {/* -- Stats column � hidden on mobile unless tab selected -- */}
+          {/* -- Stats column — hidden on mobile unless tab selected -- */}
           <div className={`${mobileTab === "stats" ? "flex" : "hidden"} lg:flex flex-col gap-3 w-full lg:w-auto lg:shrink-0`}
             style={{ minWidth: 0 }}>
 
@@ -693,7 +693,7 @@ export default function ServerConsole() {
                     <span className="text-xs font-medium" style={{ color: mutedText }}>CPU</span>
                   </div>
                   <span className="text-xs font-bold" style={{ color: headingText }}>{cpuPct.toFixed(1)}%</span>
-                  <span className="text-[10px]" style={{ color: mutedText }}>of {server?.cpu ?? "�"}</span>
+                  <span className="text-[10px]" style={{ color: mutedText }}>of {server?.cpu ?? "—"}</span>
                 </div>
                 <div style={{ height: 80 }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -718,7 +718,7 @@ export default function ServerConsole() {
                       <span className="text-[10px] w-8 text-right" style={{ color: mutedText }}>{p.v.toFixed(1)}%</span>
                     </div>
                   ))}
-                  <p className="text-[10px] mt-1" style={{ color: mutedText }}>Last 4 � peak {Math.max(...cpuHistory.map(p => p.v)).toFixed(1)}%</p>
+                  <p className="text-[10px] mt-1" style={{ color: mutedText }}>Last 4 — peak {Math.max(...cpuHistory.map(p => p.v)).toFixed(1)}%</p>
                 </div>
               </div>
 
@@ -730,9 +730,9 @@ export default function ServerConsole() {
                     <span className="text-xs font-medium" style={{ color: mutedText }}>Memory</span>
                   </div>
                   <span className="text-xs font-bold" style={{ color: headingText }}>
-                    {resources?.available ? `${ramUsedMB.toFixed(0)} MB` : "� MB"}
+                    {resources?.available ? `${ramUsedMB.toFixed(0)} MB` : "— MB"}
                   </span>
-                  <span className="text-[10px]" style={{ color: mutedText }}>of {server?.ram ?? "�"}</span>
+                  <span className="text-[10px]" style={{ color: mutedText }}>of {server?.ram ?? "—"}</span>
                 </div>
                 <div style={{ height: 80 }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -757,7 +757,7 @@ export default function ServerConsole() {
                       <span className="text-[10px] w-12 text-right" style={{ color: mutedText }}>{p.v.toFixed(0)} MB</span>
                     </div>
                   ))}
-                  <p className="text-[10px] mt-1" style={{ color: mutedText }}>Last 4 � peak {Math.max(...memHistory.map(p => p.v)).toFixed(0)} MB</p>
+                  <p className="text-[10px] mt-1" style={{ color: mutedText }}>Last 4 — peak {Math.max(...memHistory.map(p => p.v)).toFixed(0)} MB</p>
                 </div>
               </div>
 
@@ -783,9 +783,9 @@ export default function ServerConsole() {
                   </div>
                   <div className="space-y-2 flex-1">
                     {[
-                      { label: "Used",  val: resources?.available ? fmtBytes(resources.diskBytes) : "�", color: "#3b82f6" },
-                      { label: "Free",  val: diskLimitMB > 0 ? fmtBytes(diskFreeMB * 1048576) : "�", color: null },
-                      { label: "Limit", val: server?.ssd ?? "�", color: null },
+                      { label: "Used",  val: resources?.available ? fmtBytes(resources.diskBytes) : "—", color: "#3b82f6" },
+                      { label: "Free",  val: diskLimitMB > 0 ? fmtBytes(diskFreeMB * 1048576) : "—", color: null },
+                      { label: "Limit", val: server?.ssd ?? "—", color: null },
                     ].map(({ label, val, color }) => (
                       <div key={label} className="flex items-center justify-between">
                         <span className="flex items-center gap-1.5 text-xs" style={{ color: labelText }}>
@@ -812,10 +812,10 @@ export default function ServerConsole() {
                 {[
                   { label: "Status", value: st.label, color: st.color },
                   { label: "Uptime", value: resources?.uptimeMs && resources.uptimeMs > 0 ? fmtUptime(resources.uptimeMs) : "Not running" },
-                  { label: "Plan", value: server?.plan ?? "�" },
-                  { label: "RAM", value: server?.ram ?? "�" },
-                  { label: "CPU", value: server?.cpu ?? "�" },
-                  { label: "Disk", value: server?.ssd ?? "�" },
+                  { label: "Plan", value: server?.plan ?? "—" },
+                  { label: "RAM", value: server?.ram ?? "—" },
+                  { label: "CPU", value: server?.cpu ?? "—" },
+                  { label: "Disk", value: server?.ssd ?? "—" },
                 ].map(({ label, value, color }: any) => (
                   <div key={label} className="flex flex-col px-4 py-2.5">
                     <span className="text-[10px]" style={{ color: mutedText }}>{label}</span>
@@ -851,7 +851,7 @@ export default function ServerConsole() {
             </div>
           </div>
 
-          {/* -- Console panel � always visible on desktop, tab-controlled on mobile -- */}
+          {/* -- Console panel — always visible on desktop, tab-controlled on mobile -- */}
           <div className={`${mobileTab === "console" ? "flex" : "hidden"} lg:flex flex-col flex-1 min-w-0 rounded-xl overflow-hidden`}
             style={{ background: cardBg, border, minHeight: mobileTab === "console" ? "calc(100vh - 210px)" : undefined }}>
 
@@ -864,7 +864,7 @@ export default function ServerConsole() {
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#0ea5e9" }} />
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
                 </div>
-                <span className="text-[11px] hidden sm:block" style={{ color: "#374151" }}>{server?.name} � console</span>
+                <span className="text-[11px] hidden sm:block" style={{ color: "#374151" }}>{server?.name} — console</span>
               </div>
               <div className="flex items-center gap-1">
                 <AnimatePresence>
@@ -874,7 +874,7 @@ export default function ServerConsole() {
                       style={{ background: "#231d35", border: "1px solid #342f52" }}>
                       <Search size={9} className="ml-2 shrink-0" style={{ color: mutedText }} />
                       <input autoFocus type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                        placeholder="Search�" className="flex-1 bg-transparent outline-none px-2 py-1 mono text-[11px]"
+                        placeholder="Search…" className="flex-1 bg-transparent outline-none px-2 py-1 mono text-[11px]"
                         style={{ color: "#d1d5db" }} />
                     </motion.div>
                   )}
@@ -895,7 +895,7 @@ export default function ServerConsole() {
                   title="Analyze logs with AI"
                   className="flex items-center gap-1 px-2 py-1 rounded text-[10px] ml-1 transition-all hover:opacity-90 disabled:opacity-30"
                   style={{ background: "rgba(167,139,250,0.12)", color: "#22c55e", border: "1px solid rgba(167,139,250,0.2)" }}>
-                  {analyzing ? <><Loader2 size={9} className="animate-spin" /> Analyzing�</> : <><Sparkles size={9} /> Analyze</>}
+                  {analyzing ? <><Loader2 size={9} className="animate-spin" /> Analyzing…</> : <><Sparkles size={9} /> Analyze</>}
                 </button>
                 {wsStatus === "connected" ? (
                   <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1"
@@ -905,7 +905,7 @@ export default function ServerConsole() {
                 ) : wsStatus === "connecting" ? (
                   <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1"
                     style={{ background: "rgba(251,191,36,0.06)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.15)" }}>
-                    <Loader2 size={8} className="animate-spin" /> �
+                    <Loader2 size={8} className="animate-spin" /> —
                   </span>
                 ) : (
                   <button onClick={connect}
@@ -968,13 +968,13 @@ export default function ServerConsole() {
               )}
             </AnimatePresence>
 
-            {/* Log output � FILLS remaining height */}
+            {/* Log output — FILLS remaining height */}
             <div ref={logsRef} onScroll={handleConsoleScroll} onClick={() => inputRef.current?.focus()}
               className="flex-1 overflow-y-auto cursor-text font-mono text-[12.5px] leading-relaxed"
               style={{ background: "#0D0B13", padding: "12px 16px", minHeight: 200 }}>
               {filteredLogs.length === 0 ? (
                 <span className="select-none" style={{ color: "#374151" }}>
-                  {searchQuery ? "No matching lines." : "Waiting for output�"}
+                  {searchQuery ? "No matching lines." : "Waiting for output—"}
                 </span>
               ) : (
                 filteredLogs.map(line => {
@@ -999,7 +999,7 @@ export default function ServerConsole() {
             <div className="shrink-0 flex items-center"
               style={{ background: "#191522", borderTop: "1px solid #2d2845", minHeight: 48 }}>
               <div className="flex items-center px-3 select-none shrink-0 gap-1">
-                <span className="text-base font-bold mono" style={{ color: "#A78BFA" }}>�</span>
+                <span className="text-base font-bold mono" style={{ color: "#A78BFA" }}>—</span>
                 {input === "" && (
                   <span className="inline-block w-1.5 h-3 rounded-sm ml-0.5"
                     style={{ background: "#A78BFA", opacity: blink ? 0.6 : 0, transition: "opacity 0.1s" }} />
@@ -1007,7 +1007,7 @@ export default function ServerConsole() {
               </div>
               <input ref={inputRef} type="text" value={input}
                 onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
-                placeholder={wsStatus === "connected" ? "Enter command�" : "Not connected"}
+                placeholder={wsStatus === "connected" ? "Enter command…" : "Not connected"}
                 disabled={wsStatus !== "connected"}
                 className="flex-1 bg-transparent outline-none py-3 font-mono text-[13px] disabled:opacity-40"
                 style={{ color: "#d1d5db", caretColor: "transparent" }} />
@@ -1017,13 +1017,13 @@ export default function ServerConsole() {
                 RUN
               </button>
             </div>
-            {/* Single ad for free / non-logged-in users � never shown to paid subscribers */}
+            {/* Single ad for free / non-logged-in users — never shown to paid subscribers */}
             {showAds && (
               <AdBanner slot="REPLACE_WITH_SLOT_ID" format="horizontal" className="px-3 py-2" />
             )}
           </div>
 
-          {/* -- AI Chat panel � tab on mobile, sidebar on desktop -- */}
+          {/* -- AI Chat panel — tab on mobile, sidebar on desktop -- */}
           <div className={`${mobileTab === "ai" ? "flex" : "hidden"} lg:flex flex-col shrink-0 rounded-xl overflow-hidden`}
             style={{ width: 280, minWidth: 0, flex: mobileTab === "ai" ? "1" : undefined }}>
             <div className="w-full flex flex-col h-full rounded-xl overflow-hidden" style={{ background: cardBg, border }}>
@@ -1093,7 +1093,7 @@ export default function ServerConsole() {
                   style={{ background: "#231d35", border: "1px solid #342f52" }}>
                   <input value={aiInput} onChange={e => setAiInput(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendAiMessage()}
-                    placeholder="Ask AI�"
+                    placeholder="Ask AI…"
                     className="flex-1 bg-transparent outline-none text-[12px]"
                     style={{ color: "#d1d5db" }} />
                   <button onClick={sendAiMessage} disabled={!aiInput.trim() || aiLoading}
@@ -1180,7 +1180,7 @@ export default function ServerConsole() {
         {backupMsg && <p className="text-xs mb-3" style={{ color: "#22c55e" }}>{backupMsg}</p>}
         <ModalActions onCancel={() => setShowBackup(false)} cancelDisabled={creatingBackup}
           onConfirm={createBackupNow} confirmDisabled={creatingBackup}
-          confirmLabel={creatingBackup ? "Creating�" : "Create Backup"} confirmColor="#0ea5e9" loading={creatingBackup} />
+          confirmLabel={creatingBackup ? "Creating…" : "Create Backup"} confirmColor="#0ea5e9" loading={creatingBackup} />
       </Modal>
 
       {/* Whitelist */}
@@ -1195,7 +1195,7 @@ export default function ServerConsole() {
         {wlMsg && <p className="text-xs mb-3" style={{ color: "#22c55e" }}>{wlMsg}</p>}
         <ModalActions onCancel={() => setShowWhitelist(false)} cancelDisabled={wlAdding}
           onConfirm={addToWhitelist} confirmDisabled={wlAdding || !wlPlayer.trim()}
-          confirmLabel={wlAdding ? "Adding�" : "Add Player"} confirmColor="#ef4444" loading={wlAdding} />
+          confirmLabel={wlAdding ? "Adding…" : "Add Player"} confirmColor="#ef4444" loading={wlAdding} />
       </Modal>
 
       {/* Upload World */}
@@ -1224,7 +1224,7 @@ export default function ServerConsole() {
         {uploadWorldMsg && <p className="text-xs mb-3" style={{ color: "#22c55e" }}>{uploadWorldMsg}</p>}
         <ModalActions onCancel={() => setShowUploadWorld(false)} cancelDisabled={uploadingWorld}
           onConfirm={uploadWorld} confirmDisabled={!worldFile || uploadingWorld}
-          confirmLabel={uploadingWorld ? "Uploading�" : "Upload World"} confirmColor="#3b82f6" loading={uploadingWorld} />
+          confirmLabel={uploadingWorld ? "Uploading…" : "Upload World"} confirmColor="#3b82f6" loading={uploadingWorld} />
       </Modal>
 
       {/* Delete server */}
@@ -1243,7 +1243,7 @@ export default function ServerConsole() {
           style={{ border: "1px solid #342f52", color: "#f3f4f6" }} />
         <ModalActions onCancel={() => setShowDelete(false)} cancelDisabled={deleting}
           onConfirm={deleteServer} confirmDisabled={deleting || deleteInput !== server?.name}
-          confirmLabel={deleting ? "Deleting�" : "Delete Forever"} confirmColor="#ef4444" loading={deleting} />
+          confirmLabel={deleting ? "Deleting…" : "Delete Forever"} confirmColor="#ef4444" loading={deleting} />
       </Modal>
 
       {/* Custom hostname form (inline modal) */}
@@ -1309,7 +1309,7 @@ export default function ServerConsole() {
                   finally { setHnSubmitting(false); }
                 }}
                 confirmDisabled={hnSubmitting || !hnAvail || hnEdit.length < 3}
-                confirmLabel={hnSubmitting ? "Saving�" : "Save"} confirmColor="#0ea5e9" loading={hnSubmitting} />
+                confirmLabel={hnSubmitting ? "Saving…" : "Save"} confirmColor="#0ea5e9" loading={hnSubmitting} />
             </motion.div>
           </motion.div>
         )}
@@ -1548,7 +1548,7 @@ function AiMarkdown({ text }: { text: string }) {
     const line = lines[i];
     const trimmed = line.trim();
 
-    // Blank line � small spacer
+    // Blank line — small spacer
     if (!trimmed) { els.push(<div key={i} className="h-2" />); i++; continue; }
 
     // Heading ## or ###
@@ -1562,11 +1562,11 @@ function AiMarkdown({ text }: { text: string }) {
       i++; continue;
     }
 
-    // Bullet list � collect consecutive bullets
-    if (/^[-*�]\s/.test(trimmed)) {
+    // Bullet list — collect consecutive bullets
+    if (/^[-*]\s/.test(trimmed)) {
       const items: string[] = [];
-      while (i < lines.length && /^[-*�]\s/.test(lines[i].trim())) {
-        items.push(lines[i].trim().replace(/^[-*�]\s/, ""));
+      while (i < lines.length && /^[-*]\s/.test(lines[i].trim())) {
+        items.push(lines[i].trim().replace(/^[-*]\s/, ""));
         i++;
       }
       els.push(
@@ -1582,7 +1582,7 @@ function AiMarkdown({ text }: { text: string }) {
       continue;
     }
 
-    // Numbered list � collect consecutive
+    // Numbered list — collect consecutive
     if (/^\d+\.\s/.test(trimmed)) {
       const items: string[] = [];
       let n = 1;
