@@ -15,7 +15,7 @@ function ReviewCard({ review }: { review: Review }) {
   return (
     <div
       className="glass-surface rounded-sm p-6 flex flex-col gap-3 shrink-0"
-      style={{ width: 280 }}
+      style={{ width: 320 }}
     >
       <div className="flex gap-1">
         {Array.from({ length: 5 }).map((_, i) => (
@@ -61,7 +61,7 @@ function ReviewCard({ review }: { review: Review }) {
 const ease = [0.16, 1, 0.3, 1] as const;
 
 // Card width + gap
-const CARD_W = 296;
+const CARD_W = 336;
 // Pixels per second scroll speed
 const SPEED = 60;
 
@@ -88,8 +88,8 @@ const TestimonialsSection = () => {
     const totalW = reviews.length * CARD_W; // full strip width
     const viewW  = wrapperRef.current?.offsetWidth ?? window.innerWidth;
 
-    // Start with all cards just off the right edge
-    let pos = viewW;
+    // Start centred — offset so the strip is centred in the viewport
+    let pos = (viewW - totalW) / 2;
     setOffset(pos);
     setVisible(true);
 
@@ -103,10 +103,10 @@ const TestimonialsSection = () => {
 
         // All cards have gone fully off the left edge
         if (pos + totalW < 0) {
-          // Hide track, wait 1s, then restart from right
+          // Hide track, wait 1s, then restart centred
           setVisible(false);
           setTimeout(() => {
-            pos = viewW;
+            pos = (viewW - totalW) / 2;
             setOffset(pos);
             setVisible(true);
             lastRef.current = 0;
