@@ -24,7 +24,7 @@ const Admin = () => {
       desc: "View and manage customer support tickets, reply to users, and track ticket status.",
       color: "hsl(262 95% 55%)",
       border: "hsl(262 95% 40%)",
-      glow: " "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" ",
+      glow: "hsl(262 95% 65% / 0.2)",
       allowed: hasPermission("tickets"),
     },
     {

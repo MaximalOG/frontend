@@ -402,11 +402,11 @@ const Checkout = () => {
         >
           {/* ── LEFT: Plan Summary ── */}
           <div className="glass-surface rounded-sm p-6 flex flex-col gap-4 relative overflow-hidden"
-            style={{ border: "1px solid hsl(262 95% 45%)", boxShadow: "0 0 30px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " }}>
+            style={{ border: "1px solid hsl(262 95% 45%)", boxShadow: "0 0 30px hsl(262 95% 65% / 0.2)" }}>
 
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-sm pointer-events-none"
-              style={{ background: "linear-gradient(135deg,  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))"  0%, transparent 60%)" }} />
+              style={{ background: "linear-gradient(135deg, hsl(262 95% 65% / 0.2) 0%, transparent 60%)" }} />
 
             {/* Popular badge */}
             {plan.popular && (
@@ -608,10 +608,10 @@ const Checkout = () => {
                   }
                 } : handlePay}
                 disabled={loading}
-                whileHover={{ scale: 1.02, boxShadow: "0 0 32px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " }}
+                whileHover={{ scale: 1.02, boxShadow: "0 0 32px hsl(262 95% 65% / 0.2)" }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full h-12 rounded-sm font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-                style={{ background: "hsl(262 95% 55%)", color: "white", boxShadow: "0 0 20px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " }}
+                style={{ background: "hsl(262 95% 55%)", color: "white", boxShadow: "0 0 20px hsl(262 95% 65% / 0.2)" }}
               >
                 {loading ? (
                   <><Loader2 size={16} className="animate-spin" /> Setting up your server…</>

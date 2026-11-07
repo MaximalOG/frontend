@@ -24,7 +24,7 @@ const AIChatPreview = () => {
             viewport={{ once: true }}
             transition={{ delay: 0.1, duration: 0.5, ease }}
             className="glass-surface rounded-sm overflow-hidden mb-6"
-            style={{ border: "1px solid  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " }}
+            style={{ border: "1px solid hsl(262 95% 65% / 0.2)" }}
           >
             {/* Chat header */}
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50" style={{ background: "hsl(0 0% 8%)" }}>

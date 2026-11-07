@@ -323,7 +323,7 @@ const SetupServer = () => {
 
       {/* Ambient glow */}
       <div className="fixed top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] pointer-events-none"
-        style={{ background: "radial-gradient(circle,  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))"  0%, transparent 70%)" }} />
+        style={{ background: "radial-gradient(circle, hsl(262 95% 65% / 0.2) 0%, transparent 70%)" }} />
 
       <div className="container mx-auto px-4 max-w-2xl pt-28">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
@@ -392,7 +392,7 @@ const SetupServer = () => {
                       style={{
                         background:  serverType === t.id ? "hsl(262 95% 10%)" : "hsl(0 0% 7%)",
                         border:      serverType === t.id ? "1px solid hsl(262 95% 55%)" : "1px solid hsl(0 0% 14%)",
-                        boxShadow:   serverType === t.id ? "0 0 16px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " : "none",
+                        boxShadow:   serverType === t.id ? "0 0 16px hsl(262 95% 65% / 0.2)" : "none",
                       }}
                     >
                       <div className="flex items-center justify-between">

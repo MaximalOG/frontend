@@ -86,7 +86,7 @@ const SubdomainChecker = () => {
               boxShadow: status === "available"
                 ? "0 0 14px hsl(142 70% 40% / 0.3)"
                 : status === "taken" || status === "error"
-                ? "0 0 14px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" "
+                ? "0 0 14px hsl(262 95% 65% / 0.2)"
                 : undefined,
               transition: "border-color 0.25s ease, box-shadow 0.25s ease",
               background: "hsl(0 0% 8%)",

@@ -123,7 +123,7 @@ const SupportSection = () => {
               border: "1px solid hsl(262 95% 20%)",
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = "0 0 32px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" ";
+              (e.currentTarget as HTMLElement).style.boxShadow = "0 0 32px hsl(262 95% 65% / 0.2)";
               (e.currentTarget as HTMLElement).style.borderColor = "hsl(262 95% 50%)";
             }}
             onMouseLeave={e => {
@@ -134,7 +134,7 @@ const SupportSection = () => {
             {/* Icon */}
             <div
               className="w-12 h-12 rounded-sm flex items-center justify-center"
-              style={{ background: " "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" ", border: "1px solid  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " }}
+              style={{ background: "hsl(262 95% 65% / 0.2)", border: "1px solid hsl(262 95% 65% / 0.2)" }}
             >
               <Mail size={22} className="text-primary" />
             </div>

@@ -35,7 +35,7 @@ const HowItWorks = () => (
             whileInView={{ scaleX: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.3, ease }}
-            style={{ transformOrigin: "left", height: "1px", background: "linear-gradient(90deg,  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" , hsl(270 70% 55% / 0.6))" }}
+            style={{ transformOrigin: "left", height: "1px", background: "linear-gradient(90deg, hsl(262 95% 65% / 0.2), hsl(270 70% 55% / 0.6))" }}
           />
         </div>
 

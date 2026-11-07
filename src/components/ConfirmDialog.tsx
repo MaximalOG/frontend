@@ -40,7 +40,7 @@ const ConfirmDialog = ({
             background: "hsl(0 0% 8%)",
             border: `1px solid ${danger ? "hsl(262 95% 40%)" : "hsl(0 0% 20%)"}`,
             boxShadow: danger
-              ? "0 0 40px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" , 0 8px 32px rgba(0,0,0,0.6)"
+              ? "0 0 40px hsl(262 95% 65% / 0.2), 0 8px 32px rgba(0,0,0,0.6)"
               : "0 8px 32px rgba(0,0,0,0.6)",
           }}
           onMouseDown={e => e.stopPropagation()}

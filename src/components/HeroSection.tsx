@@ -107,7 +107,7 @@ const HeroSection = () => {
           <div
             className="absolute inset-0 rounded-sm pointer-events-none"
             style={{
-              background: "radial-gradient(ellipse at 50% 80%,  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))"  0%, transparent 70%)",
+              background: "radial-gradient(ellipse at 50% 80%, hsl(262 95% 65% / 0.2) 0%, transparent 70%)",
               filter: "blur(20px)",
               transform: "translateZ(-10px)",
             }}

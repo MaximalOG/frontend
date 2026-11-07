@@ -491,23 +491,23 @@ const PricingSection = () => {
                       : "1px solid hsl(0 0% 18%)",
                     borderRadius: "0.25rem",
                     boxShadow: isExpanded
-                      ? "0 12px 48px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" "
+                      ? "0 12px 48px hsl(262 95% 65% / 0.2)"
                       : isHighlighted
-                      ? "0 0 24px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" "
+                      ? "0 0 24px hsl(262 95% 65% / 0.2)"
                       : isPopular
-                      ? "0 0 16px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" "
+                      ? "0 0 16px hsl(262 95% 65% / 0.2)"
                       : undefined,
                     transition: "box-shadow 0.25s ease, border-color 0.25s ease",
                   }}
                   onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 32px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" ";
+                    (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 32px hsl(262 95% 65% / 0.2)";
                     (e.currentTarget as HTMLElement).style.borderColor = "hsl(262 95% 70%)";
                   }}
                   onMouseLeave={e => {
                     (e.currentTarget as HTMLElement).style.boxShadow = isExpanded
-                      ? "0 12px 48px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" "
-                      : isHighlighted ? "0 0 24px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" "
-                      : isPopular ? "0 0 16px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " : "";
+                      ? "0 12px 48px hsl(262 95% 65% / 0.2)"
+                      : isHighlighted ? "0 0 24px hsl(262 95% 65% / 0.2)"
+                      : isPopular ? "0 0 16px hsl(262 95% 65% / 0.2)" : "";
                     (e.currentTarget as HTMLElement).style.borderColor = isExpanded
                       ? "hsl(262 95% 76%)"
                       : isHighlighted ? "hsl(262 95% 70%)"
@@ -642,7 +642,7 @@ const PricingSection = () => {
                         border: "1px solid hsl(262 95% 76%)",
                         borderTop: "none",
                         borderRadius: "0 0 0.25rem 0.25rem",
-                        boxShadow: "0 20px 60px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" , 0 4px 20px rgba(0,0,0,0.8)",
+                        boxShadow: "0 20px 60px hsl(262 95% 65% / 0.2), 0 4px 20px rgba(0,0,0,0.8)",
                         padding: "16px",
                       }}
                     >

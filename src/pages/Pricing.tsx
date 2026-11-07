@@ -126,10 +126,10 @@ const Pricing = () => {
 
       {/* Static ambient orbs — CSS only, no JS animation */}
       <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <div style={{ position: "absolute", top: "10%", left: "5%", width: 500, height: 500, background: "radial-gradient(circle,  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))"  0%, transparent 70%)", filter: "blur(40px)" }} />
+        <div style={{ position: "absolute", top: "10%", left: "5%", width: 500, height: 500, background: "radial-gradient(circle, hsl(262 95% 65% / 0.2) 0%, transparent 70%)", filter: "blur(40px)" }} />
         <div style={{ position: "absolute", top: "40%", right: "0%", width: 600, height: 600, background: "radial-gradient(circle, hsl(270 70% 55% / 0.08) 0%, transparent 70%)", filter: "blur(50px)" }} />
-        <div style={{ position: "absolute", bottom: "10%", left: "30%", width: 400, height: 400, background: "radial-gradient(circle,  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))"  0%, transparent 70%)", filter: "blur(35px)" }} />
-        <div style={{ position: "absolute", top: 64, left: 0, right: 0, height: 1, background: "linear-gradient(90deg, transparent,  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))"  30%, hsl(270 70% 55% / 0.3) 70%, transparent)" }} />
+        <div style={{ position: "absolute", bottom: "10%", left: "30%", width: 400, height: 400, background: "radial-gradient(circle, hsl(262 95% 65% / 0.2) 0%, transparent 70%)", filter: "blur(35px)" }} />
+        <div style={{ position: "absolute", top: 64, left: 0, right: 0, height: 1, background: "linear-gradient(90deg, transparent, hsl(262 95% 65% / 0.2) 30%, hsl(270 70% 55% / 0.3) 70%, transparent)" }} />
       </div>
 
       {/* Content */}
