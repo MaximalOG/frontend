@@ -11,28 +11,6 @@ interface Review {
   createdAt?: string;
 }
 
-// Hardcoded fallback — shown when the API returns nothing yet
-const FALLBACK: Review[] = [
-  {
-    id: "f1",
-    username: "Alex_MC",
-    rating: 5,
-    text: "Switched from another host and the difference is night and day. My server boots in seconds and my players noticed the lag was gone instantly.",
-  },
-  {
-    id: "f2",
-    username: "CraftQueen",
-    rating: 5,
-    text: "The control panel is so easy to use. I set up plugins and mods without touching a single config file. Perfect for beginners!",
-  },
-  {
-    id: "f3",
-    username: "BlockMaster99",
-    rating: 5,
-    text: "Running a 50-player modded server with zero issues. The hardware is genuinely powerful and support on Discord is always fast.",
-  },
-];
-
 function ReviewCard({ review }: { review: Review }) {
   return (
     <div
@@ -92,15 +70,15 @@ const TestimonialsSection = () => {
   const rafRef   = useRef<number>(0);
   const posRef   = useRef(0);
 
-  // Fetch live reviews from backend
+  // Fetch live reviews from backend — no fallback, only real reviews
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/reviews`)
       .then(r => r.ok ? r.json() : [])
       .then((data: Review[]) => {
-        setReviews(data.length >= 3 ? data : FALLBACK);
+        setReviews(data);
         setLoaded(true);
       })
-      .catch(() => { setReviews(FALLBACK); setLoaded(true); });
+      .catch(() => { setReviews([]); setLoaded(true); });
   }, []);
 
   // Infinite right-to-left scroll via requestAnimationFrame
@@ -138,8 +116,10 @@ const TestimonialsSection = () => {
     };
   }, [loaded]);
 
-  // Duplicate cards for seamless loop
-  const displayReviews = [...reviews, ...reviews];
+  // Duplicate cards for seamless loop — need at least 1 review
+  const displayReviews = reviews.length > 0 ? [...reviews, ...reviews] : [];
+
+  if (loaded && reviews.length === 0) return null; // hide section entirely if no reviews yet
 
   return (
     <section className="py-24 relative overflow-hidden">
