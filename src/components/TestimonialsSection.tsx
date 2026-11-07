@@ -130,10 +130,10 @@ const TestimonialsSection = () => {
         // Scroll track B if active
         if (st.showB) st.posB -= SPEED * dt;
 
-        // When 3rd-last card of A is 50% past the left edge → spawn B from right
+        // When 3rd-last card just starts exiting the left edge, spawn track B
         // 3rd-last card's left edge = posA + totalW - 3*CARD_W
-        // 50% gone means that edge + CARD_W/2 < 0
-        if (!st.triggeredB && (st.posA + st.totalW - 3 * CARD_W + CARD_W / 2) < 0) {
+        // "just starts exiting" = that left edge hits 0
+        if (!st.triggeredB && (st.posA + st.totalW - 3 * CARD_W) < 0) {
           st.posB        = st.viewW; // always start B from right edge (never centred)
           st.showB       = true;
           st.triggeredB  = true;

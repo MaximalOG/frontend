@@ -274,7 +274,7 @@ export default function SaleAdmin() {
                       <Field label="Start Date (optional)">
                         <input type="datetime-local"
                           value={config.startDate ? config.startDate.slice(0, 16) : ""}
-                          onChange={e => set("startDate", e.target.value ? new Date(e.target.value).toISOString() : null)}
+                          onChange={e => set("startDate", e.target.value || null)}
                           className="w-full bg-transparent text-sm outline-none" style={{ color: "#f1f5f9", colorScheme: "dark" }} />
                       </Field>
                       <Field label="End Date">
@@ -286,7 +286,7 @@ export default function SaleAdmin() {
                         {!config.neverExpires && (
                           <input type="datetime-local"
                             value={config.endDate ? config.endDate.slice(0, 16) : ""}
-                            onChange={e => set("endDate", e.target.value ? new Date(e.target.value).toISOString() : null)}
+                            onChange={e => set("endDate", e.target.value || null)}
                             className="w-full bg-transparent text-sm outline-none" style={{ color: "#f1f5f9", colorScheme: "dark" }} />
                         )}
                       </Field>
