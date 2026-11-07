@@ -43,17 +43,8 @@ const Admin = () => {
       title: "Staff Management",
       desc: isOwner ? "Add staff members, set permissions, and manage team access." : "Only the owner can manage staff.",
       color: isOwner ? "hsl(262 95% 70%)" : "hsl(0 0% 35%)",
-      border: isOwner ? " 
-    $m = $args[0].Value
-    $l = [regex]::Match($m, 'hsl\(38 \d+% (\d+)%\)').Groups[1].Value
-    "hsl(262 95% ${l}%)"
-  " : "hsl(0 0% 20%)",
-      glow: isOwner ? "
-    $m = $args[0].Value
-    $l = [regex]::Match($m, '(\d+)%\)').Groups[1].Value
-    $a = [regex]::Match($m, '/ ([\d.]+)\)').Groups[1].Value
-    "hsl(262 95% ${l}% / ${a})"
-  " : "transparent",
+      border: isOwner ? "hsl(262 95% 40%)" : "hsl(0 0% 20%)",
+      glow: isOwner ? "hsl(262 95% 65% / 0.2)" : "transparent",
       allowed: true,
       ownerOnly: true,
     },
@@ -63,17 +54,8 @@ const Admin = () => {
       title: "Customer Feedback",
       desc: "View star ratings and comments submitted after support tickets. Send follow-up questions.",
       color: "hsl(262 95% 70%)",
-      border: " 
-    $m = $args[0].Value
-    $l = [regex]::Match($m, 'hsl\(38 \d+% (\d+)%\)').Groups[1].Value
-    "hsl(262 95% ${l}%)"
-  ",
-      glow: "
-    $m = $args[0].Value
-    $l = [regex]::Match($m, '(\d+)%\)').Groups[1].Value
-    $a = [regex]::Match($m, '/ ([\d.]+)\)').Groups[1].Value
-    "hsl(262 95% ${l}% / ${a})"
-  ",
+      border: "hsl(262 95% 40%)",
+      glow: "hsl(262 95% 65% / 0.2)",
       allowed: hasPermission("feedback"),
     },
     {
@@ -104,7 +86,12 @@ const Admin = () => {
             <h1 className="text-3xl font-bold tracking-tighter text-foreground">Admin Panel</h1>
             <p className="text-sm text-muted-foreground mt-1">
               Signed in as <span className="text-foreground font-medium">{user.username}</span>
-              {isOwner && <span className="ml-2 px-1.5 py-0.5 rounded-sm text-[9px] mono uppercase" style={{ background: "hsl(262 95% 15%)", color: "hsl(262 95% 76%)", border: "1px solid hsl(262 95% 40%)" }}>Owner</span>}
+              {isOwner && (
+                <span className="ml-2 px-1.5 py-0.5 rounded-sm text-[9px] mono uppercase"
+                  style={{ background: "hsl(262 95% 15%)", color: "hsl(262 95% 76%)", border: "1px solid hsl(262 95% 40%)" }}>
+                  Owner
+                </span>
+              )}
             </p>
           </div>
           <button
@@ -121,7 +108,6 @@ const Admin = () => {
           {panels.map((panel, i) => {
             const isLocked = panel.ownerOnly && !isOwner;
             const isDisabled = !panel.allowed && !panel.ownerOnly;
-
             const card = (
               <motion.div
                 key={panel.title}
@@ -129,9 +115,7 @@ const Admin = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1, duration: 0.4, ease }}
                 className={`glass-surface rounded-sm p-6 group transition-all ${isDisabled ? "opacity-40 cursor-not-allowed" : isLocked ? "cursor-not-allowed" : "cursor-pointer"}`}
-                style={{
-                  border: `1px solid ${panel.border}`,
-                }}
+                style={{ border: `1px solid ${panel.border}` }}
                 onMouseEnter={e => { if (!isDisabled) (e.currentTarget as HTMLElement).style.boxShadow = `0 0 24px ${panel.glow}`; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
               >
@@ -149,7 +133,6 @@ const Admin = () => {
                 <p className="text-xs text-muted-foreground leading-relaxed">{panel.desc}</p>
               </motion.div>
             );
-
             if (isDisabled || isLocked) return card;
             return <Link key={panel.title} to={panel.to}>{card}</Link>;
           })}
