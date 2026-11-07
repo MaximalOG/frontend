@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -17,7 +17,7 @@ interface ServerData {
 
 const SERVER_TYPES = [
   { id: "paper",      label: "Paper",       desc: "High-performance, plugin-ready (recommended)", color: "#4ade80" },
-  { id: "vanilla",    label: "Vanilla",     desc: "Pure Minecraft — no plugins or mods",            color: "#60a5fa" },
+  { id: "vanilla",    label: "Vanilla",     desc: "Pure Minecraft � no plugins or mods",            color: "#60a5fa" },
   { id: "forge",      label: "Forge",       desc: "Full mod support via Minecraft Forge",            color: "#fb923c" },
   { id: "bungeecord", label: "BungeeCord",  desc: "Multi-server network proxy",                     color: "#38bdf8" },
   { id: "sponge",     label: "Sponge",      desc: "Vanilla server with SpongeAPI mod support",       color: "#fbbf24" },
@@ -159,7 +159,7 @@ export default function ServerVersion() {
   };
 
   if (authLoading || loadingServer) return (
-    <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
+    <div className="flex items-center justify-center h-screen" style={{ background: "#0D0B13" }}>
       <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#94a3b8" }} />
     </div>
   );
@@ -168,7 +168,7 @@ export default function ServerVersion() {
     <ServerPageShell server={server} title="Version & Software" maxWidth="max-w-3xl">
       <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
 
-          {/* ── Page header ── */}
+          {/* -- Page header -- */}
           <div className="flex items-center gap-3 mb-6">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center"
               style={{ background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.25)" }}>
@@ -177,12 +177,12 @@ export default function ServerVersion() {
             <div>
               <h1 className="text-base font-bold" style={{ color: "#f1f5f9" }}>Version & Software</h1>
               <p className="text-[10px] mono mt-0.5" style={{ color: "#475569" }}>
-                Change Minecraft version or server software — server must be stopped
+                Change Minecraft version or server software � server must be stopped
               </p>
             </div>
           </div>
 
-          {/* ── Running warning ── */}
+          {/* -- Running warning -- */}
           {isRunning && (
             <div className="flex items-center gap-2 px-4 py-3 rounded-xl mb-5 text-xs"
               style={{ background: "rgba(14,165,233,0.07)", border: "1px solid rgba(14,165,233,0.2)", color: "#fbbf24" }}>
@@ -191,7 +191,7 @@ export default function ServerVersion() {
             </div>
           )}
 
-          {/* ── Notifications ── */}
+          {/* -- Notifications -- */}
           <AnimatePresence>
             {(saveMsg || saveError) && (
               <motion.div initial={{ opacity:0, y:-6 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0 }}
@@ -208,17 +208,17 @@ export default function ServerVersion() {
             )}
           </AnimatePresence>
 
-          {/* ── Current config chip row ── */}
+          {/* -- Current config chip row -- */}
           <div className="flex items-center gap-3 flex-wrap mb-6">
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
               <p className="text-[9px] mono uppercase tracking-widest" style={{ color: "#334155" }}>Current software</p>
-              <p className="text-xs font-bold capitalize" style={{ color: "#e2e8f0" }}>{server?.serverType ?? "—"}</p>
+              <p className="text-xs font-bold capitalize" style={{ color: "#e2e8f0" }}>{server?.serverType ?? "�"}</p>
             </div>
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
               <p className="text-[9px] mono uppercase tracking-widest" style={{ color: "#334155" }}>Current version</p>
-              <p className="text-xs font-bold mono" style={{ color: "#e2e8f0" }}>{server?.mcVersion ?? "—"}</p>
+              <p className="text-xs font-bold mono" style={{ color: "#e2e8f0" }}>{server?.mcVersion ?? "�"}</p>
             </div>
             <div className="ml-auto px-3 py-1.5 rounded-xl text-[10px] font-semibold"
               style={{
@@ -230,10 +230,10 @@ export default function ServerVersion() {
             </div>
           </div>
 
-          {/* ══ TWO-COLUMN LAYOUT ══ */}
+          {/* -- TWO-COLUMN LAYOUT -- */}
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
 
-            {/* ── Left: Server Software (2/5) ── */}
+            {/* -- Left: Server Software (2/5) -- */}
             <div className="lg:col-span-2">
               <div className="rounded-2xl overflow-hidden"
                 style={{ background: "linear-gradient(135deg,#120f0b,#0f0d1c)", border: "1px solid rgba(255,255,255,0.07)" }}>
@@ -271,7 +271,7 @@ export default function ServerVersion() {
               </div>
             </div>
 
-            {/* ── Right: Version picker (3/5) ── */}
+            {/* -- Right: Version picker (3/5) -- */}
             <div className="lg:col-span-3">
               <div className="rounded-2xl overflow-hidden"
                 style={{ background: "linear-gradient(135deg,#120f0b,#0f0d1c)", border: "1px solid rgba(255,255,255,0.07)" }}>
@@ -282,7 +282,7 @@ export default function ServerVersion() {
                   <p className="text-[9px] mono uppercase tracking-widest" style={{ color: "#475569" }}>Minecraft Version</p>
                   <div className="flex items-center gap-2">
                     <span className="px-2.5 py-1 rounded-lg text-xs font-bold mono"
-                      style={{ background: "rgba(229,57,53,0.12)", color: "#fcd34d", border: "1px solid rgba(229,57,53,0.22)" }}>
+                      style={{ background: "rgba(167,139,250,0.12)", color: "#fcd34d", border: "1px solid rgba(167,139,250,0.22)" }}>
                       {mcVersion}
                     </span>
                     <span className="text-[10px]" style={{ color: "#475569" }}>{javaVersion}</span>
@@ -310,7 +310,7 @@ export default function ServerVersion() {
                             </span>
                             {hasSelected && (
                               <span className="px-1.5 py-0.5 rounded-md text-[9px] mono font-bold"
-                                style={{ background: "rgba(229,57,53,0.15)", color: "#fbbf24" }}>
+                                style={{ background: "rgba(167,139,250,0.15)", color: "#fbbf24" }}>
                                 selected
                               </span>
                             )}
@@ -334,10 +334,10 @@ export default function ServerVersion() {
                                       disabled={isRunning}
                                       className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40 active:scale-95"
                                       style={{
-                                        background: sel ? "rgba(229,57,53,0.18)" : "rgba(255,255,255,0.04)",
+                                        background: sel ? "rgba(167,139,250,0.18)" : "rgba(255,255,255,0.04)",
                                         color: sel ? "#fcd34d" : "#64748b",
-                                        border: `1px solid ${sel ? "rgba(229,57,53,0.3)" : "rgba(255,255,255,0.07)"}`,
-                                        boxShadow: sel ? "0 0 8px rgba(229,57,53,0.15)" : "none",
+                                        border: `1px solid ${sel ? "rgba(167,139,250,0.3)" : "rgba(255,255,255,0.07)"}`,
+                                        boxShadow: sel ? "0 0 8px rgba(167,139,250,0.15)" : "none",
                                       }}>
                                       {v.label}
                                       {v.tag && (
@@ -381,12 +381,12 @@ export default function ServerVersion() {
               <button onClick={handleSave} disabled={saving || isRunning || !hasChanges}
                 className="w-full h-11 flex items-center justify-center gap-2 rounded-2xl text-sm font-bold transition-all hover:opacity-90 disabled:opacity-30 mt-4"
                 style={{ background: "linear-gradient(135deg,#1d4ed8,#3b82f6)", color: "white" }}>
-                {saving ? <><Loader2 size={14} className="animate-spin" /> Applying…</> : <><Check size={14} /> Apply Changes</>}
+                {saving ? <><Loader2 size={14} className="animate-spin" /> Applying�</> : <><Check size={14} /> Apply Changes</>}
               </button>
             </div>
           </div>
 
-          {/* ── Reinstall section ── */}
+          {/* -- Reinstall section -- */}
           <div className="rounded-2xl p-5 mt-6 flex items-start gap-4"
             style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)" }}>
             <AlertTriangle size={16} className="shrink-0 mt-0.5" style={{ color: "#f87171" }} />
@@ -406,7 +406,7 @@ export default function ServerVersion() {
 
           </motion.div>
 
-      {/* ── Reinstall confirm modal ── */}
+      {/* -- Reinstall confirm modal -- */}
       <AnimatePresence>
         {showReinstall && (
           <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
@@ -416,7 +416,7 @@ export default function ServerVersion() {
             <motion.div initial={{ scale:0.95, opacity:0 }} animate={{ scale:1, opacity:1 }}
               exit={{ scale:0.95, opacity:0 }}
               className="rounded-2xl p-6 max-w-sm w-full"
-              style={{ background: "linear-gradient(135deg,#141008,hsl(38 92% 45%))", border: "1px solid rgba(239,68,68,0.25)" }}
+              style={{ background: "linear-gradient(135deg,#191522,hsl(262 80% 30%))", border: "1px solid rgba(239,68,68,0.25)" }}
               onClick={e => e.stopPropagation()}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"
@@ -430,7 +430,7 @@ export default function ServerVersion() {
               </div>
               <div className="rounded-xl px-3 py-2.5 mb-5 text-xs"
                 style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)", color: "#fca5a5" }}>
-                ⚠ Plugins, mods, worlds, and configs will all be wiped. Back up first.
+                ? Plugins, mods, worlds, and configs will all be wiped. Back up first.
               </div>
               {reinstallError && <p className="text-xs mb-3" style={{ color: "#f87171" }}>{reinstallError}</p>}
               <div className="flex gap-2">
@@ -442,7 +442,7 @@ export default function ServerVersion() {
                 <button onClick={handleReinstall} disabled={reinstalling}
                   className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-40"
                   style={{ background: "linear-gradient(135deg,#991b1b,#dc2626)", color: "white" }}>
-                  {reinstalling ? <><Loader2 size={12} className="animate-spin" /> Reinstalling…</> : <><RefreshCw size={12} /> Reinstall</>}
+                  {reinstalling ? <><Loader2 size={12} className="animate-spin" /> Reinstalling�</> : <><RefreshCw size={12} /> Reinstall</>}
                 </button>
               </div>
             </motion.div>

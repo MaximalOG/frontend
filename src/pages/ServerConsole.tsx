@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from "recharts";
@@ -13,8 +13,10 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
+import AdBanner from "@/components/AdBanner";
+import { useAdStatus } from "@/hooks/useAdStatus";
 
-/* ─── Types ──────────────────────────────────────────────────────────── */
+/* --- Types ------------------------------------------------------------ */
 interface ServerData {
   id: string; name: string; status: string;
   ram: string; cpu: string; ssd?: string;
@@ -31,7 +33,7 @@ interface LogLine {
   type: "info" | "warn" | "error" | "success" | "input" | "system";
 }
 
-/* ─── Helpers ─────────────────────────────────────────────────────────── */
+/* --- Helpers ----------------------------------------------------------- */
 let _lid = 0;
 const mkLine = (text: string, type: LogLine["type"] = "info"): LogLine => ({ id: ++_lid, text, type });
 
@@ -70,7 +72,7 @@ function parseRamMB(ram?: string) {
   return ram.toLowerCase().includes("gb") ? n * 1024 : n;
 }
 
-/* ─── Constants ──────────────────────────────────────────────────────── */
+/* --- Constants -------------------------------------------------------- */
 const LINE_STYLE: Record<LogLine["type"], { color: string; badge?: string }> = {
   error:   { color: "#ef4444", badge: "ERR" },
   warn:    { color: "#0ea5e9", badge: "WARN" },
@@ -89,17 +91,16 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> =
   suspended:  { label: "SUSPENDED", color: "#ef4444", bg: "rgba(239,68,68,0.12)" },
 };
 
-/* ─── Sidebar nav ────────────────────────────────────────────────────── */
+/* --- Sidebar nav ------------------------------------------------------ */
 const NAV = [
   { section: "ESSENTIALS", items: [
     { to: "console",   label: "Console",   icon: Terminal },
     { to: "files",     label: "Files",     icon: FolderOpen },
-    { to: "version",   label: "Startup",   icon: Settings2 },
+    { to: "version",   label: "Version",   icon: Settings2 },
   ]},
   { section: "MC UTILS", items: [
-    { to: "users",     label: "Players",   icon: UsersIcon },
+    { to: "users",     label: "Users",     icon: UsersIcon },
     { to: "installer", label: "Plugins",   icon: Package },
-    { to: "version",   label: "Version",   icon: Settings2 },
     { to: "whitelist", label: "Whitelist", icon: List },
   ]},
   { section: "MANAGEMENT", items: [
@@ -108,7 +109,7 @@ const NAV = [
   ]},
 ];
 
-/* ═══════════════════════ COMPONENT ════════════════════════════════════ */
+/* ----------------------- COMPONENT ------------------------------------ */
 export default function ServerConsole() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -177,6 +178,12 @@ export default function ServerConsole() {
   const [aiInput, setAiInput]           = useState("");
   const [aiLoading, setAiLoading]       = useState(false);
   const aiChatEndRef                    = useRef<HTMLDivElement>(null);
+
+  /* Mobile tab state */
+  const [mobileTab, setMobileTab]       = useState<"console" | "stats" | "ai">("console");
+
+  /* Ad status � used to show a single ad to free/non-logged-in users */
+  const { showAds } = useAdStatus();
 
   /* Log analysis state */
   const [analysis, setAnalysis]   = useState<{
@@ -268,7 +275,7 @@ export default function ServerConsole() {
     if (!id || wsRef.current?.readyState === WebSocket.OPEN) return;
     if (document.visibilityState === "hidden") return;
     setWsStatus("connecting");
-    updateConnLog(`[${nowStr()}] Connecting…`, "system");
+    updateConnLog(`[${nowStr()}] Connecting�`, "system");
     try {
       const res = await apiFetch(`/api/servers/${id}/console-token`, { headers: { Authorization: `Bearer ${token()}` } });
       if (!res.ok) { updateConnLog(`[${nowStr()}] Failed: ${(await res.json()).error}`, "error"); setWsStatus("error"); return; }
@@ -284,7 +291,7 @@ export default function ServerConsole() {
           switch (msg.event) {
             case "auth success":
               setWsStatus("connected");
-              updateConnLog(`[${nowStr()}] ✓ Connected to console`, "success");
+              updateConnLog(`[${nowStr()}] ? Connected to console`, "success");
               break;
             case "token expiring":
               (async () => {
@@ -295,7 +302,7 @@ export default function ServerConsole() {
               })();
               break;
             case "token expired":
-              updateConnLog(`[${nowStr()}] Session expired — reconnecting…`, "warn");
+              updateConnLog(`[${nowStr()}] Session expired � reconnecting�`, "warn");
               ws.close();
               if (document.visibilityState === "visible") setTimeout(connect, 1500);
               break;
@@ -438,7 +445,7 @@ export default function ServerConsole() {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` }, body,
       });
       if (!res.ok) { let m = "Upload failed."; try { const e = await res.json(); m = e.error||m; } catch {} setUploadWorldErr(m); return; }
-      setUploadWorldMsg(`✓ ${worldFile.name} uploaded.`); setWorldFile(null);
+      setUploadWorldMsg(`? ${worldFile.name} uploaded.`); setWorldFile(null);
       setTimeout(() => { setShowUploadWorld(false); setUploadWorldMsg(""); }, 2500);
     } catch (err: any) { setUploadWorldErr(err?.message||"Upload failed."); }
     finally { setUploadingWorld(false); }
@@ -453,7 +460,7 @@ export default function ServerConsole() {
       });
       let data: any = {}; try { data = await res.json(); } catch {}
       if (!res.ok) { setBackupErr(data.error||`Backup failed (${res.status}).`); return; }
-      setBackupMsg("✓ Backup started."); setBackupName("");
+      setBackupMsg("? Backup started."); setBackupName("");
       setTimeout(() => { setShowBackup(false); setBackupMsg(""); }, 3000);
     } catch (err: any) { setBackupErr(err?.message||"Network error."); }
     finally { setCreatingBackup(false); }
@@ -468,7 +475,7 @@ export default function ServerConsole() {
       });
       let data: any = {}; try { data = await res.json(); } catch {}
       if (!res.ok) { setWlErr(data.error||`Failed (${res.status}).`); return; }
-      setWlMsg(`✓ ${wlPlayer.trim()} added.`); setWlPlayer("");
+      setWlMsg(`? ${wlPlayer.trim()} added.`); setWlPlayer("");
       setTimeout(() => { setShowWhitelist(false); setWlMsg(""); }, 2500);
     } catch (err: any) { setWlErr(err?.message||"Network error."); }
     finally { setWlAdding(false); }
@@ -540,36 +547,36 @@ export default function ServerConsole() {
   const diskPct     = diskLimitMB > 0 ? Math.min((diskUsedMB / diskLimitMB) * 100, 100) : 0;
   const diskFreeMB  = Math.max(0, diskLimitMB - diskUsedMB);
 
-  /* ── Loading / error ── */
+  /* -- Loading / error -- */
   if (authLoading || loadingServer) return (
-    <div className="h-screen flex items-center justify-center" style={{ background: "#0e0e10" }}>
+    <div className="h-screen flex items-center justify-center" style={{ background: "#0D0B13" }}>
       <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#6b7280" }} />
     </div>
   );
   if (serverError) return (
-    <div className="h-screen flex items-center justify-center" style={{ background: "#0e0e10" }}>
+    <div className="h-screen flex items-center justify-center" style={{ background: "#0D0B13" }}>
       <div className="text-center px-4">
         <AlertCircle className="w-8 h-8 mx-auto mb-3" style={{ color: "#ef4444" }} />
         <p className="text-sm mb-1" style={{ color: "#f3f4f6" }}>Console unavailable</p>
         <p className="text-xs mb-5" style={{ color: "#6b7280" }}>{serverError}</p>
         <Link to="/dashboard" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium"
-          style={{ background: "#221d17", border: "1px solid #332a1f", color: "#d1d5db" }}>← Dashboard</Link>
+          style={{ background: "#231d35", border: "1px solid #342f52", color: "#d1d5db" }}>? Dashboard</Link>
       </div>
     </div>
   );
 
-  /* ══════════════════════════ RENDER ══════════════════════════════════ */
-  const sidebarBg    = "#141210";
-  const cardBg       = "#1a1612";
-  const border       = "1px solid #2a2218";
+  /* -------------------------- RENDER ---------------------------------- */
+  const sidebarBg    = "#191522";
+  const cardBg       = "#1e1a2e";
+  const border       = "1px solid #2d2845";
   const mutedText    = "#6b7280";
   const labelText    = "#9ca3af";
   const headingText  = "#f3f4f6";
 
   return (
-    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#0e0e10", fontFamily: "Inter, sans-serif" }}>
+    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#0D0B13", fontFamily: "Inter, sans-serif" }}>
 
-      {/* ── Mobile drawer ── */}
+      {/* -- Mobile drawer -- */}
       <AnimatePresence>
         {mobileNavOpen && (
           <>
@@ -581,23 +588,25 @@ export default function ServerConsole() {
               className="fixed top-0 left-0 h-full z-50 flex flex-col md:hidden py-4 px-3 overflow-y-auto"
               style={{ width: 240, background: sidebarBg, borderRight: border }}>
               <SidebarContent id={id!} server={server} sendPower={sendPower} powerLoading={powerLoading}
-                setShowDelete={setShowDelete} setDeleteInput={setDeleteInput} onClose={() => setMobileNavOpen(false)} />
+                setShowDelete={setShowDelete} setDeleteInput={setDeleteInput} onClose={() => setMobileNavOpen(false)}
+                onAiClick={() => { setMobileNavOpen(false); setMobileTab("ai"); }} />
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* ── Left sidebar ── */}
+      {/* -- Left sidebar -- */}
       <div className="hidden md:flex flex-col shrink-0 overflow-y-auto py-4 px-3"
         style={{ width: 220, background: sidebarBg, borderRight: border }}>
         <SidebarContent id={id!} server={server} sendPower={sendPower} powerLoading={powerLoading}
-          setShowDelete={setShowDelete} setDeleteInput={setDeleteInput} />
+          setShowDelete={setShowDelete} setDeleteInput={setDeleteInput}
+          onAiClick={() => setMobileTab("ai")} />
       </div>
 
-      {/* ── Centre: scrollable main content ── */}
+      {/* -- Centre: scrollable main content -- */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
-        {/* ── Server header card ── */}
+        {/* -- Server header card -- */}
         <div className="shrink-0 mx-3 sm:mx-4 mt-3 sm:mt-4 mb-2 sm:mb-3 rounded-xl p-3 sm:p-4"
           style={{ background: cardBg, border }}>
           <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -606,11 +615,11 @@ export default function ServerConsole() {
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <button onClick={() => setMobileNavOpen(true)}
                 className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg shrink-0"
-                style={{ background: "#221d17", border }}>
+                style={{ background: "#231d35", border }}>
                 <Menu size={14} style={{ color: mutedText }} />
               </button>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold"
-                style={{ background: "#221d17", border, color: headingText }}>
+                style={{ background: "#231d35", border, color: headingText }}>
                 {server?.name?.charAt(0)?.toUpperCase()}
               </div>
               <div className="min-w-0">
@@ -651,14 +660,14 @@ export default function ServerConsole() {
           </div>
         </div>
 
-        {/* ── Mobile tab bar — Console / Stats / AI ── */}
+        {/* -- Mobile tab bar � Console / Stats / AI -- */}
         <div className="flex lg:hidden shrink-0 mx-3 mb-2 rounded-xl overflow-hidden"
           style={{ background: cardBg, border }}>
           {(["console", "stats", "ai"] as const).map(t => (
             <button key={t} onClick={() => setMobileTab(t)}
               className="flex-1 py-2.5 text-xs font-semibold capitalize transition-all"
               style={{
-                background: mobileTab === t ? "#e53935" : "transparent",
+                background: mobileTab === t ? "#A78BFA" : "transparent",
                 color: mobileTab === t ? "white" : mutedText,
               }}>
               {t === "ai" ? "AI" : t === "stats" ? "Stats" : "Console"}
@@ -666,10 +675,10 @@ export default function ServerConsole() {
           ))}
         </div>
 
-        {/* ── Content area — tabs on mobile, side-by-side on desktop ── */}
+        {/* -- Content area � tabs on mobile, side-by-side on desktop -- */}
         <div className="flex flex-col lg:flex-row gap-3 px-3 sm:px-4 pb-4 flex-1 min-h-0">
 
-          {/* ── Stats column — hidden on mobile unless tab selected ── */}
+          {/* -- Stats column � hidden on mobile unless tab selected -- */}
           <div className={`${mobileTab === "stats" ? "flex" : "hidden"} lg:flex flex-col gap-3 w-full lg:w-auto lg:shrink-0`}
             style={{ minWidth: 0 }}>
 
@@ -684,18 +693,18 @@ export default function ServerConsole() {
                     <span className="text-xs font-medium" style={{ color: mutedText }}>CPU</span>
                   </div>
                   <span className="text-xs font-bold" style={{ color: headingText }}>{cpuPct.toFixed(1)}%</span>
-                  <span className="text-[10px]" style={{ color: mutedText }}>of {server?.cpu ?? "—"}</span>
+                  <span className="text-[10px]" style={{ color: mutedText }}>of {server?.cpu ?? "�"}</span>
                 </div>
                 <div style={{ height: 80 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={cpuHistory} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="cpuH" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#e53935" stopOpacity={0.35} />
-                          <stop offset="100%" stopColor="#e53935" stopOpacity={0} />
+                          <stop offset="0%" stopColor="#A78BFA" stopOpacity={0.35} />
+                          <stop offset="100%" stopColor="#A78BFA" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <Area type="monotone" dataKey="v" stroke="#e53935" strokeWidth={1.5} fill="url(#cpuH)" dot={false} isAnimationActive={false} />
+                      <Area type="monotone" dataKey="v" stroke="#A78BFA" strokeWidth={1.5} fill="url(#cpuH)" dot={false} isAnimationActive={false} />
                       <Tooltip content={() => null} />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -703,13 +712,13 @@ export default function ServerConsole() {
                 <div className="mt-3 space-y-1">
                   {cpuHistory.slice(-4).map((p, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "#221d17" }}>
-                        <div style={{ width: `${p.v}%`, height: "100%", background: "#e53935", borderRadius: 999 }} />
+                      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "#231d35" }}>
+                        <div style={{ width: `${p.v}%`, height: "100%", background: "#A78BFA", borderRadius: 999 }} />
                       </div>
                       <span className="text-[10px] w-8 text-right" style={{ color: mutedText }}>{p.v.toFixed(1)}%</span>
                     </div>
                   ))}
-                  <p className="text-[10px] mt-1" style={{ color: mutedText }}>Last 4 · peak {Math.max(...cpuHistory.map(p => p.v)).toFixed(1)}%</p>
+                  <p className="text-[10px] mt-1" style={{ color: mutedText }}>Last 4 � peak {Math.max(...cpuHistory.map(p => p.v)).toFixed(1)}%</p>
                 </div>
               </div>
 
@@ -721,9 +730,9 @@ export default function ServerConsole() {
                     <span className="text-xs font-medium" style={{ color: mutedText }}>Memory</span>
                   </div>
                   <span className="text-xs font-bold" style={{ color: headingText }}>
-                    {resources?.available ? `${ramUsedMB.toFixed(0)} MB` : "— MB"}
+                    {resources?.available ? `${ramUsedMB.toFixed(0)} MB` : "� MB"}
                   </span>
-                  <span className="text-[10px]" style={{ color: mutedText }}>of {server?.ram ?? "—"}</span>
+                  <span className="text-[10px]" style={{ color: mutedText }}>of {server?.ram ?? "�"}</span>
                 </div>
                 <div style={{ height: 80 }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -742,13 +751,13 @@ export default function ServerConsole() {
                 <div className="mt-3 space-y-1">
                   {memHistory.slice(-4).map((p, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "#221d17" }}>
+                      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "#231d35" }}>
                         <div style={{ width: `${ramLimitMB > 0 ? (p.v / ramLimitMB) * 100 : 0}%`, height: "100%", background: "#3b82f6", borderRadius: 999 }} />
                       </div>
                       <span className="text-[10px] w-12 text-right" style={{ color: mutedText }}>{p.v.toFixed(0)} MB</span>
                     </div>
                   ))}
-                  <p className="text-[10px] mt-1" style={{ color: mutedText }}>Last 4 · peak {Math.max(...memHistory.map(p => p.v)).toFixed(0)} MB</p>
+                  <p className="text-[10px] mt-1" style={{ color: mutedText }}>Last 4 � peak {Math.max(...memHistory.map(p => p.v)).toFixed(0)} MB</p>
                 </div>
               </div>
 
@@ -764,7 +773,7 @@ export default function ServerConsole() {
                       <Pie data={[{ value: diskPct }, { value: Math.max(0, 100 - diskPct) }]}
                         cx={35} cy={35} innerRadius={26} outerRadius={38} dataKey="value" startAngle={90} endAngle={-270} strokeWidth={0}>
                         <Cell fill="#3b82f6" />
-                        <Cell fill="#221d17" />
+                        <Cell fill="#231d35" />
                       </Pie>
                     </PieChart>
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -774,13 +783,13 @@ export default function ServerConsole() {
                   </div>
                   <div className="space-y-2 flex-1">
                     {[
-                      { label: "Used",  val: resources?.available ? fmtBytes(resources.diskBytes) : "—", color: "#3b82f6" },
-                      { label: "Free",  val: diskLimitMB > 0 ? fmtBytes(diskFreeMB * 1048576) : "—", color: null },
-                      { label: "Limit", val: server?.ssd ?? "—", color: null },
+                      { label: "Used",  val: resources?.available ? fmtBytes(resources.diskBytes) : "�", color: "#3b82f6" },
+                      { label: "Free",  val: diskLimitMB > 0 ? fmtBytes(diskFreeMB * 1048576) : "�", color: null },
+                      { label: "Limit", val: server?.ssd ?? "�", color: null },
                     ].map(({ label, val, color }) => (
                       <div key={label} className="flex items-center justify-between">
                         <span className="flex items-center gap-1.5 text-xs" style={{ color: labelText }}>
-                          <span className="w-2 h-2 rounded-sm" style={{ background: color ?? "#221d17", border: color ? undefined : "1px solid #374151" }} />
+                          <span className="w-2 h-2 rounded-sm" style={{ background: color ?? "#231d35", border: color ? undefined : "1px solid #374151" }} />
                           {label}
                         </span>
                         <span className="text-xs font-semibold" style={{ color: headingText }}>{val}</span>
@@ -793,20 +802,20 @@ export default function ServerConsole() {
 
             {/* Server Info card */}
             <div className="rounded-xl overflow-hidden" style={{ background: cardBg, border }}>
-              <div className="px-4 py-3" style={{ borderBottom: "1px solid #2a2218" }}>
+              <div className="px-4 py-3" style={{ borderBottom: "1px solid #2d2845" }}>
                 <div className="flex items-center gap-2">
                   <Server size={12} style={{ color: mutedText }} />
                   <span className="text-xs font-semibold" style={{ color: labelText }}>Server Info</span>
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 divide-x divide-y" style={{ borderColor: "#221d17" }}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 divide-x divide-y" style={{ borderColor: "#231d35" }}>
                 {[
                   { label: "Status", value: st.label, color: st.color },
                   { label: "Uptime", value: resources?.uptimeMs && resources.uptimeMs > 0 ? fmtUptime(resources.uptimeMs) : "Not running" },
-                  { label: "Plan", value: server?.plan ?? "—" },
-                  { label: "RAM", value: server?.ram ?? "—" },
-                  { label: "CPU", value: server?.cpu ?? "—" },
-                  { label: "Disk", value: server?.ssd ?? "—" },
+                  { label: "Plan", value: server?.plan ?? "�" },
+                  { label: "RAM", value: server?.ram ?? "�" },
+                  { label: "CPU", value: server?.cpu ?? "�" },
+                  { label: "Disk", value: server?.ssd ?? "�" },
                 ].map(({ label, value, color }: any) => (
                   <div key={label} className="flex flex-col px-4 py-2.5">
                     <span className="text-[10px]" style={{ color: mutedText }}>{label}</span>
@@ -815,7 +824,7 @@ export default function ServerConsole() {
                 ))}
               </div>
               {/* Quick actions */}
-              <div className="px-4 py-4" style={{ borderTop: "1px solid #2a2218" }}>
+              <div className="px-4 py-4" style={{ borderTop: "1px solid #2d2845" }}>
                 <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: mutedText }}>Quick Actions</p>
                 <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-2 gap-2">
                   {([
@@ -842,30 +851,30 @@ export default function ServerConsole() {
             </div>
           </div>
 
-          {/* ── Console panel — always visible on desktop, tab-controlled on mobile ── */}
-          <div className={`${mobileTab === "console" ? "flex" : "hidden"} lg:flex flex-col flex-1 min-w-0 min-h-0 rounded-xl overflow-hidden`}
-            style={{ background: cardBg, border }}>
+          {/* -- Console panel � always visible on desktop, tab-controlled on mobile -- */}
+          <div className={`${mobileTab === "console" ? "flex" : "hidden"} lg:flex flex-col flex-1 min-w-0 rounded-xl overflow-hidden`}
+            style={{ background: cardBg, border, minHeight: mobileTab === "console" ? "calc(100vh - 210px)" : undefined }}>
 
             {/* Toolbar */}
             <div className="shrink-0 flex items-center justify-between px-3 py-2 gap-2"
-              style={{ borderBottom: "1px solid #2a2218", background: "#141210" }}>
+              style={{ borderBottom: "1px solid #2d2845", background: "#191522" }}>
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#0ea5e9" }} />
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
                 </div>
-                <span className="text-[11px] hidden sm:block" style={{ color: "#374151" }}>{server?.name} — console</span>
+                <span className="text-[11px] hidden sm:block" style={{ color: "#374151" }}>{server?.name} � console</span>
               </div>
               <div className="flex items-center gap-1">
                 <AnimatePresence>
                   {searchOpen && (
                     <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 130, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
                       transition={{ duration: 0.15 }} className="overflow-hidden flex items-center rounded-md"
-                      style={{ background: "#221d17", border: "1px solid #332a1f" }}>
+                      style={{ background: "#231d35", border: "1px solid #342f52" }}>
                       <Search size={9} className="ml-2 shrink-0" style={{ color: mutedText }} />
                       <input autoFocus type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                        placeholder="Search…" className="flex-1 bg-transparent outline-none px-2 py-1 mono text-[11px]"
+                        placeholder="Search�" className="flex-1 bg-transparent outline-none px-2 py-1 mono text-[11px]"
                         style={{ color: "#d1d5db" }} />
                     </motion.div>
                   )}
@@ -885,8 +894,8 @@ export default function ServerConsole() {
                 <button onClick={analyzeLog} disabled={analyzing || logs.length === 0}
                   title="Analyze logs with AI"
                   className="flex items-center gap-1 px-2 py-1 rounded text-[10px] ml-1 transition-all hover:opacity-90 disabled:opacity-30"
-                  style={{ background: "rgba(229,57,53,0.12)", color: "#22c55e", border: "1px solid rgba(229,57,53,0.2)" }}>
-                  {analyzing ? <><Loader2 size={9} className="animate-spin" /> Analyzing…</> : <><Sparkles size={9} /> Analyze</>}
+                  style={{ background: "rgba(167,139,250,0.12)", color: "#22c55e", border: "1px solid rgba(167,139,250,0.2)" }}>
+                  {analyzing ? <><Loader2 size={9} className="animate-spin" /> Analyzing�</> : <><Sparkles size={9} /> Analyze</>}
                 </button>
                 {wsStatus === "connected" ? (
                   <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1"
@@ -896,7 +905,7 @@ export default function ServerConsole() {
                 ) : wsStatus === "connecting" ? (
                   <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1"
                     style={{ background: "rgba(251,191,36,0.06)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.15)" }}>
-                    <Loader2 size={8} className="animate-spin" /> …
+                    <Loader2 size={8} className="animate-spin" /> �
                   </span>
                 ) : (
                   <button onClick={connect}
@@ -913,7 +922,7 @@ export default function ServerConsole() {
               {(analysis || analyzeErr) && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.18 }}
-                  className="shrink-0 overflow-hidden" style={{ borderBottom: "1px solid #2a2218" }}>
+                  className="shrink-0 overflow-hidden" style={{ borderBottom: "1px solid #2d2845" }}>
                   {analyzeErr ? (
                     <div className="flex items-center gap-2 px-4 py-2.5 text-xs" style={{ color: "#ef4444" }}>
                       <AlertCircle size={12} /> {analyzeErr}
@@ -921,10 +930,10 @@ export default function ServerConsole() {
                     </div>
                   ) : analysis && (() => {
                     const SEV = {
-                      healthy:  { color: "#22c55e", label: "✓ Healthy" },
-                      warning:  { color: "#fbbf24", label: "⚠ Warning" },
-                      error:    { color: "#ef4444", label: "✗ Error" },
-                      critical: { color: "#ef4444", label: "🔴 Critical" },
+                      healthy:  { color: "#22c55e", label: "? Healthy" },
+                      warning:  { color: "#fbbf24", label: "? Warning" },
+                      error:    { color: "#ef4444", label: "? Error" },
+                      critical: { color: "#ef4444", label: "?? Critical" },
                     }[analysis.severity] ?? { color: "#0ea5e9", label: "Analysis" };
                     return (
                       <div className="px-4 py-3">
@@ -959,13 +968,13 @@ export default function ServerConsole() {
               )}
             </AnimatePresence>
 
-            {/* Log output — FILLS remaining height */}
+            {/* Log output � FILLS remaining height */}
             <div ref={logsRef} onScroll={handleConsoleScroll} onClick={() => inputRef.current?.focus()}
               className="flex-1 overflow-y-auto cursor-text font-mono text-[12.5px] leading-relaxed"
-              style={{ background: "#0c0a08", padding: "12px 16px", minHeight: 200 }}>
+              style={{ background: "#0D0B13", padding: "12px 16px", minHeight: 200 }}>
               {filteredLogs.length === 0 ? (
                 <span className="select-none" style={{ color: "#374151" }}>
-                  {searchQuery ? "No matching lines." : "Waiting for output…"}
+                  {searchQuery ? "No matching lines." : "Waiting for output�"}
                 </span>
               ) : (
                 filteredLogs.map(line => {
@@ -988,43 +997,47 @@ export default function ServerConsole() {
 
             {/* Command input */}
             <div className="shrink-0 flex items-center"
-              style={{ background: "#141210", borderTop: "1px solid #2a2218", minHeight: 48 }}>
+              style={{ background: "#191522", borderTop: "1px solid #2d2845", minHeight: 48 }}>
               <div className="flex items-center px-3 select-none shrink-0 gap-1">
-                <span className="text-base font-bold mono" style={{ color: "#e53935" }}>›</span>
+                <span className="text-base font-bold mono" style={{ color: "#A78BFA" }}>�</span>
                 {input === "" && (
                   <span className="inline-block w-1.5 h-3 rounded-sm ml-0.5"
-                    style={{ background: "#e53935", opacity: blink ? 0.6 : 0, transition: "opacity 0.1s" }} />
+                    style={{ background: "#A78BFA", opacity: blink ? 0.6 : 0, transition: "opacity 0.1s" }} />
                 )}
               </div>
               <input ref={inputRef} type="text" value={input}
                 onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
-                placeholder={wsStatus === "connected" ? "Enter command…" : "Not connected"}
+                placeholder={wsStatus === "connected" ? "Enter command�" : "Not connected"}
                 disabled={wsStatus !== "connected"}
                 className="flex-1 bg-transparent outline-none py-3 font-mono text-[13px] disabled:opacity-40"
                 style={{ color: "#d1d5db", caretColor: "transparent" }} />
               <button onClick={sendCommand} disabled={!input.trim() || wsStatus !== "connected"}
                 className="px-4 py-3 text-xs font-bold shrink-0 transition-all hover:opacity-90 disabled:opacity-30"
-                style={{ background: "#221d17", color: "#9ca3af", borderLeft: "1px solid #2a2218" }}>
+                style={{ background: "#231d35", color: "#9ca3af", borderLeft: "1px solid #2d2845" }}>
                 RUN
               </button>
             </div>
+            {/* Single ad for free / non-logged-in users � never shown to paid subscribers */}
+            {showAds && (
+              <AdBanner slot="REPLACE_WITH_SLOT_ID" format="horizontal" className="px-3 py-2" />
+            )}
           </div>
 
-          {/* ── AI Chat panel — tab on mobile, sidebar on desktop ── */}
-          <div className={`${mobileTab === "ai" ? "flex" : "hidden"} xl:flex flex-col shrink-0 rounded-xl overflow-hidden`}
-            style={{ width: undefined, minWidth: 0, flex: mobileTab === "ai" ? "1" : undefined, ...(window.innerWidth >= 1280 ? { width: 280 } : {}) }}>
-            <div className="w-full xl:w-72 flex flex-col h-full rounded-xl overflow-hidden" style={{ background: cardBg, border }}>
+          {/* -- AI Chat panel � tab on mobile, sidebar on desktop -- */}
+          <div className={`${mobileTab === "ai" ? "flex" : "hidden"} lg:flex flex-col shrink-0 rounded-xl overflow-hidden`}
+            style={{ width: 280, minWidth: 0, flex: mobileTab === "ai" ? "1" : undefined }}>
+            <div className="w-full flex flex-col h-full rounded-xl overflow-hidden" style={{ background: cardBg, border }}>
 
               {/* Header */}
               <div className="flex items-center gap-2 px-4 py-3 shrink-0"
-                style={{ borderBottom: "1px solid #2a2218", background: "#141210" }}>
+                style={{ borderBottom: "1px solid #2d2845", background: "#191522" }}>
                 <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-                  style={{ background: "rgba(229,57,53,0.15)", border: "1px solid rgba(229,57,53,0.3)" }}>
+                  style={{ background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.3)" }}>
                   <Sparkles size={12} style={{ color: "#22c55e" }} />
                 </div>
                 <span className="text-xs font-semibold" style={{ color: labelText }}>NetherNodes AI</span>
                 <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded"
-                  style={{ background: "rgba(229,57,53,0.1)", color: "#0ea5e9", border: "1px solid rgba(229,57,53,0.2)" }}>
+                  style={{ background: "rgba(167,139,250,0.1)", color: "#0ea5e9", border: "1px solid rgba(167,139,250,0.2)" }}>
                   Beta
                 </span>
               </div>
@@ -1040,7 +1053,7 @@ export default function ServerConsole() {
                       {["Why is my server lagging?", "How do I install Essentials?", "What does this error mean?"].map(q => (
                         <button key={q} onClick={() => { setAiInput(q); }}
                           className="w-full text-left px-2.5 py-2.5 rounded-lg text-[11px] transition-all hover:brightness-110 active:scale-95"
-                          style={{ background: "#221d17", border: "1px solid #332a1f", color: labelText }}>
+                          style={{ background: "#231d35", border: "1px solid #342f52", color: labelText }}>
                           {q}
                         </button>
                       ))}
@@ -1050,12 +1063,12 @@ export default function ServerConsole() {
                   <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                     {m.role === "user" ? (
                       <div className="max-w-[88%] rounded-xl px-3 py-2 text-[12px] leading-relaxed"
-                        style={{ background: "#221d17", border: "1px solid #332a1f", color: "#d1d5db" }}>
+                        style={{ background: "#231d35", border: "1px solid #342f52", color: "#d1d5db" }}>
                         {m.content}
                       </div>
                     ) : (
                       <div className="max-w-[96%] rounded-xl px-3 py-2.5 text-[12px]"
-                        style={{ background: "#1a1612", border: "1px solid #2a2218", color: "#d1d5db" }}>
+                        style={{ background: "#1e1a2e", border: "1px solid #2d2845", color: "#d1d5db" }}>
                         <AiMarkdown text={m.content} />
                       </div>
                     )}
@@ -1064,7 +1077,7 @@ export default function ServerConsole() {
                 {aiLoading && (
                   <div className="flex justify-start">
                     <div className="rounded-xl px-3 py-2 flex items-center gap-1.5"
-                      style={{ background: "#1a1612", border: "1px solid #2a2218" }}>
+                      style={{ background: "#1e1a2e", border: "1px solid #2d2845" }}>
                       <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#94a3b8", animationDelay: "0ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#94a3b8", animationDelay: "150ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#94a3b8", animationDelay: "300ms" }} />
@@ -1075,18 +1088,18 @@ export default function ServerConsole() {
               </div>
 
               {/* Input */}
-              <div className="shrink-0 p-2.5" style={{ borderTop: "1px solid #2a2218" }}>
+              <div className="shrink-0 p-2.5" style={{ borderTop: "1px solid #2d2845" }}>
                 <div className="flex items-center gap-2 rounded-xl px-3 py-2"
-                  style={{ background: "#221d17", border: "1px solid #332a1f" }}>
+                  style={{ background: "#231d35", border: "1px solid #342f52" }}>
                   <input value={aiInput} onChange={e => setAiInput(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendAiMessage()}
-                    placeholder="Ask AI…"
+                    placeholder="Ask AI�"
                     className="flex-1 bg-transparent outline-none text-[12px]"
                     style={{ color: "#d1d5db" }} />
                   <button onClick={sendAiMessage} disabled={!aiInput.trim() || aiLoading}
                     className="w-7 h-7 flex items-center justify-center rounded-lg transition-all hover:opacity-90 disabled:opacity-30 shrink-0"
-                    style={{ background: "rgba(229,57,53,0.2)", border: "1px solid rgba(229,57,53,0.3)" }}>
-                    <Send size={12} style={{ color: "#e53935" }} />
+                    style={{ background: "rgba(167,139,250,0.2)", border: "1px solid rgba(167,139,250,0.3)" }}>
+                    <Send size={12} style={{ color: "#A78BFA" }} />
                   </button>
                 </div>
               </div>
@@ -1100,11 +1113,11 @@ export default function ServerConsole() {
             <div className="flex items-center gap-3 min-w-0">
               <button onClick={() => setMobileNavOpen(true)}
                 className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg shrink-0"
-                style={{ background: "#221d17", border }}>
+                style={{ background: "#231d35", border }}>
                 <Menu size={14} style={{ color: mutedText }} />
               </button>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold"
-                style={{ background: "#221d17", border, color: headingText }}>
+                style={{ background: "#231d35", border, color: headingText }}>
                 {server?.name?.charAt(0)?.toUpperCase()}
               </div>
               <div className="min-w-0">
@@ -1153,466 +1166,7 @@ export default function ServerConsole() {
           </div>
         </div>
 
-        {/* ── Metrics row 2: CPU chart + Memory chart + Disk donut ── */}
-        <div className="shrink-0 grid grid-cols-1 lg:grid-cols-3 gap-3 px-4 mb-3">
-
-          {/* CPU history chart */}
-          <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Cpu size={12} style={{ color: mutedText }} />
-                <span className="text-xs font-medium" style={{ color: mutedText }}>CPU</span>
-              </div>
-              <span className="text-xs font-bold" style={{ color: headingText }}>
-                {cpuPct.toFixed(1)}%
-              </span>
-              <span className="text-[10px]" style={{ color: mutedText }}>of {server?.cpu ?? "—"}</span>
-            </div>
-            <div style={{ height: 80 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={cpuHistory} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="cpuH" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#e53935" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#e53935" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <Area type="monotone" dataKey="v" stroke="#e53935" strokeWidth={1.5} fill="url(#cpuH)" dot={false} isAnimationActive={false} />
-                  <Tooltip content={() => null} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            {/* mini history rows */}
-            <div className="mt-3 space-y-1">
-              {cpuHistory.slice(-4).map((p, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "#221d17" }}>
-                    <div style={{ width: `${p.v}%`, height: "100%", background: "#e53935", borderRadius: 999 }} />
-                  </div>
-                  <span className="text-[10px] w-8 text-right" style={{ color: mutedText }}>{p.v.toFixed(1)}%</span>
-                </div>
-              ))}
-              <p className="text-[10px] mt-1" style={{ color: mutedText }}>
-                Last 4 readings · peak {Math.max(...cpuHistory.map(p => p.v)).toFixed(1)}%
-              </p>
-            </div>
-          </div>
-
-          {/* Memory history chart */}
-          <div className="rounded-xl p-4" style={{ background: cardBg, border }}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <MemoryStick size={12} style={{ color: mutedText }} />
-                <span className="text-xs font-medium" style={{ color: mutedText }}>Memory</span>
-              </div>
-              <span className="text-xs font-bold" style={{ color: headingText }}>
-                {resources?.available ? `${ramUsedMB.toFixed(0)} MB` : "— MB"}
-              </span>
-              <span className="text-[10px]" style={{ color: mutedText }}>of {server?.ram ?? "—"}</span>
-            </div>
-            <div style={{ height: 80 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={memHistory} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="memH" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <Area type="monotone" dataKey="v" stroke="#3b82f6" strokeWidth={1.5} fill="url(#memH)" dot={false} isAnimationActive={false} />
-                  <Tooltip content={() => null} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-3 space-y-1">
-              {memHistory.slice(-4).map((p, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "#221d17" }}>
-                    <div style={{ width: `${ramLimitMB > 0 ? (p.v / ramLimitMB) * 100 : 0}%`, height: "100%", background: "#3b82f6", borderRadius: 999 }} />
-                  </div>
-                  <span className="text-[10px] w-12 text-right" style={{ color: mutedText }}>{p.v.toFixed(0)} MB</span>
-                </div>
-              ))}
-              <p className="text-[10px] mt-1" style={{ color: mutedText }}>
-                Last 4 readings · peak {Math.max(...memHistory.map(p => p.v)).toFixed(0)} MB
-              </p>
-            </div>
-          </div>
-
-          {/* Disk donut */}
-          <div className="rounded-xl p-4 flex gap-4" style={{ background: cardBg, border }}>
-            <div className="flex items-center gap-2 mb-3">
-              <HardDrive size={12} style={{ color: mutedText }} />
-              <span className="text-xs font-medium" style={{ color: mutedText }}>Disk usage</span>
-            </div>
-            <div className="flex items-center gap-4 mt-1">
-              {/* Donut */}
-              <div className="relative shrink-0" style={{ width: 80, height: 80 }}>
-                <PieChart width={80} height={80}>
-                  <Pie data={[
-                    { value: diskPct },
-                    { value: Math.max(0, 100 - diskPct) },
-                  ]} cx={35} cy={35} innerRadius={26} outerRadius={38} dataKey="value" startAngle={90} endAngle={-270} strokeWidth={0}>
-                    <Cell fill="#3b82f6" />
-                    <Cell fill="#221d17" />
-                  </Pie>
-                </PieChart>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-bold" style={{ color: headingText }}>{diskPct.toFixed(0)}%</span>
-                </div>
-                <p className="text-[9px] text-center mt-0.5" style={{ color: mutedText }}>Used</p>
-              </div>
-
-              {/* Stats */}
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-xs" style={{ color: labelText }}>
-                    <span className="w-2 h-2 rounded-sm" style={{ background: "#3b82f6" }} /> Used
-                  </span>
-                  <span className="text-xs font-semibold" style={{ color: headingText }}>
-                    {resources?.available ? fmtBytes(resources.diskBytes) : "—"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-xs" style={{ color: labelText }}>
-                    <span className="w-2 h-2 rounded-sm" style={{ background: "#221d17", border: "1px solid #374151" }} /> Free
-                  </span>
-                  <span className="text-xs font-semibold" style={{ color: headingText }}>
-                    {diskLimitMB > 0 ? fmtBytes(diskFreeMB * 1048576) : "—"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-xs" style={{ color: labelText }}>
-                    <span className="w-2 h-2 rounded-sm opacity-0" /> Limit
-                  </span>
-                  <span className="text-xs font-semibold" style={{ color: headingText }}>{server?.ssd ?? "—"}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Server Info card + Console side by side ── */}
-        <div className="flex flex-col lg:flex-row gap-3 px-4 pb-4 min-h-0 flex-1">
-
-          {/* Server Info card — stacks above console on mobile, sidebar on desktop */}
-          <div className="w-full lg:w-72 lg:shrink-0 rounded-xl overflow-hidden" style={{ background: cardBg, border }}>
-            <div className="px-4 py-3" style={{ borderBottom: "1px solid #2a2218" }}>
-              <div className="flex items-center gap-2">
-                <Server size={12} style={{ color: mutedText }} />
-                <span className="text-xs font-semibold" style={{ color: labelText }}>Server Info</span>
-              </div>
-            </div>
-            <div className="divide-y" style={{ borderColor: "#221d17" }}>
-              {[
-                { label: "Status", value: (
-                  <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: st.color }}>
-                    <span className={`w-2 h-2 rounded-full ${isRunning ? "animate-pulse" : ""}`} style={{ background: st.color }} />
-                    {st.label}
-                  </span>
-                )},
-                { label: "Uptime", value: resources?.uptimeMs && resources.uptimeMs > 0 ? fmtUptime(resources.uptimeMs) : "Not running" },
-                { label: "Hostname", value: displayAddr ? (
-                  <button onClick={() => copyAddr(displayAddr)} className="flex items-center gap-1 group" style={{ color: labelText }}>
-                    <span className="text-xs truncate max-w-[120px]">{displayAddr}</span>
-                    {copied ? <Check size={10} style={{ color: "#22c55e" }} /> : <Copy size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
-                  </button>
-                ) : "—" },
-                { label: "Node", value: "India" },
-                { label: "Plan", value: server?.plan ?? "—" },
-                { label: "RAM", value: server?.ram ?? "—" },
-                { label: "CPU", value: server?.cpu ?? "—" },
-                { label: "Disk", value: server?.ssd ?? "—" },
-                { label: "Network ↓", value: resources?.available ? fmtBytesShort(resources.netRxBytes) : "—" },
-                { label: "Network ↑", value: resources?.available ? fmtBytesShort(resources.netTxBytes) : "—" },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex items-center justify-between px-4 py-2">
-                  <span className="text-xs" style={{ color: mutedText }}>{label}</span>
-                  {typeof value === "string"
-                    ? <span className="text-xs font-medium" style={{ color: labelText }}>{value}</span>
-                    : value}
-                </div>
-              ))}
-            </div>
-
-            {/* Quick actions — full-size buttons, visible */}
-            <div className="px-4 py-4" style={{ borderTop: "1px solid #2a2218" }}>
-              <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: mutedText }}>Quick Actions</p>
-              <div className="grid grid-cols-2 gap-2">
-                {([
-                  { icon: Package,     label: "Plugins",   color: "#0ea5e9", to: `/server/${id}/installer` },
-                  { icon: HardDrive,   label: "Backup",    color: "#22c55e", action: () => { setShowBackup(true); setBackupName(""); setBackupErr(""); setBackupMsg(""); } },
-                  { icon: UploadCloud, label: "Upload",    color: "#0ea5e9", action: () => { setShowUploadWorld(true); setWorldFile(null); setUploadWorldErr(""); setUploadWorldMsg(""); } },
-                  { icon: List,        label: "Whitelist", color: "#22c55e", action: () => { setShowWhitelist(true); setWlPlayer(""); setWlErr(""); setWlMsg(""); } },
-                  { icon: Calendar,    label: "Schedules", color: "#0ea5e9", to: `/server/${id}/schedules` },
-                  { icon: Globe,       label: "Domain",    color: "#22c55e", action: () => { setShowHnForm(true); setHnEdit(server?.hostname ?? ""); setHnAvail(null); setHnError(""); } },
-                ] as const).map(item => {
-                  const Comp: any = (item as any).to ? Link : "button";
-                  const extra = (item as any).to ? { to: (item as any).to } : { onClick: (item as any).action };
-                  return (
-                    <Comp key={item.label} {...extra}
-                      className="flex items-center gap-2 px-3 py-2.5 rounded-lg w-full text-left transition-all hover:brightness-110 active:scale-95"
-                      style={{ background: `${item.color}15`, border: `1px solid ${item.color}30` }}>
-                      <item.icon size={13} style={{ color: item.color }} />
-                      <span className="text-xs font-semibold" style={{ color: item.color }}>{item.label}</span>
-                    </Comp>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Console panel */}
-          <div className="flex flex-col flex-1 min-w-0 rounded-xl overflow-hidden" style={{ background: cardBg, border }}>
-
-            {/* Toolbar */}
-            <div className="shrink-0 flex items-center justify-between px-3 py-2 gap-2"
-              style={{ borderBottom: "1px solid #2a2218", background: "#141210" }}>
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#ef4444" }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#0ea5e9" }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#22c55e" }} />
-                </div>
-                <span className="text-[11px]" style={{ color: "#374151" }}>{server?.name} — console</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <AnimatePresence>
-                  {searchOpen && (
-                    <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 130, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
-                      transition={{ duration: 0.15 }} className="overflow-hidden flex items-center rounded-md"
-                      style={{ background: "#221d17", border: "1px solid #332a1f" }}>
-                      <Search size={9} className="ml-2 shrink-0" style={{ color: mutedText }} />
-                      <input autoFocus type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                        placeholder="Search…" className="flex-1 bg-transparent outline-none px-2 py-1 mono text-[11px]"
-                        style={{ color: "#d1d5db" }} />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                {[
-                  { icon: Search,   title: "Search",       active: searchOpen,  onClick: () => { setSearchOpen(o => !o); if (searchOpen) setSearchQuery(""); } },
-                  { icon: X,        title: "Clear",        active: false,       onClick: () => setLogs([]) },
-                  { icon: Download, title: "Download log", active: false,       onClick: downloadLogs },
-                  { icon: autoScroll ? ChevronDown : ChevronUp, title: "Auto-scroll", active: autoScroll, onClick: () => setAutoScroll(a => !a) },
-                ].map(({ icon: Icon, title, active, onClick }) => (
-                  <button key={title} title={title} onClick={onClick}
-                    className="w-6 h-6 flex items-center justify-center rounded transition-colors hover:bg-white/5"
-                    style={{ color: active ? "#0ea5e9" : "#374151" }}>
-                    <Icon size={11} />
-                  </button>
-                ))}
-                <button onClick={analyzeLog} disabled={analyzing || logs.length === 0}
-                  title="Analyze logs with AI"
-                  className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] ml-1 transition-all hover:opacity-90 disabled:opacity-30"
-                  style={{ background: "rgba(229,57,53,0.12)", color: "#22c55e", border: "1px solid rgba(229,57,53,0.2)" }}>
-                  {analyzing ? <><Loader2 size={9} className="animate-spin" /> Analyzing…</> : <><Sparkles size={9} /> Analyze</>}
-                </button>
-                {wsStatus === "connected" ? (
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1"
-                    style={{ background: "rgba(34,197,94,0.08)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.2)" }}>
-                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#22c55e" }} /> Live
-                  </span>
-                ) : wsStatus === "connecting" ? (
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1"
-                    style={{ background: "rgba(14,165,233,0.08)", color: "#0ea5e9", border: "1px solid rgba(14,165,233,0.2)" }}>
-                    <Loader2 size={8} className="animate-spin" /> …
-                  </span>
-                ) : (
-                  <button onClick={connect}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] mono ml-1 transition-all hover:opacity-80"
-                    style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
-                    <WifiOff size={8} /> Reconnect
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Analysis panel */}
-            <AnimatePresence>
-              {(analysis || analyzeErr) && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.18 }}
-                  className="shrink-0 overflow-hidden" style={{ borderBottom: "1px solid #2a2218" }}>
-                  {analyzeErr ? (
-                    <div className="flex items-center gap-2 px-4 py-2.5 text-xs" style={{ color: "#ef4444" }}>
-                      <AlertCircle size={12} /> {analyzeErr}
-                      <button onClick={() => setAnalyzeErr("")} className="ml-auto"><X size={11} /></button>
-                    </div>
-                  ) : analysis && (() => {
-                    const SEV = {
-                      healthy:  { color: "#22c55e", label: "✓ Healthy" },
-                      warning:  { color: "#0ea5e9", label: "⚠ Warning" },
-                      error:    { color: "#ef4444", label: "✗ Error" },
-                      critical: { color: "#ef4444", label: "🔴 Critical" },
-                    }[analysis.severity] ?? { color: "#0ea5e9", label: "Analysis" };
-                    return (
-                      <div className="px-4 py-3">
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold px-2 py-0.5 rounded"
-                              style={{ background: `${SEV.color}15`, color: SEV.color, border: `1px solid ${SEV.color}30` }}>
-                              {SEV.label}
-                            </span>
-                            <span className="text-xs" style={{ color: labelText }}>{analysis.summary}</span>
-                          </div>
-                          <button onClick={() => setAnalysis(null)} style={{ color: mutedText }}><X size={12} /></button>
-                        </div>
-                        {analysis.problem && analysis.problem !== "No issues detected" && (
-                          <p className="text-[11px] mb-1"><span style={{ color: mutedText }}>Problem: </span><span style={{ color: labelText }}>{analysis.problem}</span></p>
-                        )}
-                        {analysis.cause && analysis.cause !== "N/A" && (
-                          <p className="text-[11px] mb-1"><span style={{ color: mutedText }}>Cause: </span><span style={{ color: labelText }}>{analysis.cause}</span></p>
-                        )}
-                        <div className="space-y-0.5 mt-1">
-                          {analysis.fixSteps.map((step, i) => (
-                            <div key={i} className="flex items-start gap-2">
-                              <span className="text-[10px] font-bold shrink-0" style={{ color: SEV.color }}>{i + 1}.</span>
-                              <span className="text-[11px] font-mono" style={{ color: labelText }}>{step}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Log output */}
-            <div ref={logsRef} onScroll={handleConsoleScroll} onClick={() => inputRef.current?.focus()}
-              className="flex-1 overflow-y-auto cursor-text font-mono text-[12.5px] leading-relaxed"
-              style={{ background: "#0f0d0a", padding: "12px 16px" }}>
-              {filteredLogs.length === 0 ? (
-                <span className="select-none" style={{ color: "#374151" }}>
-                  {searchQuery ? "No matching lines." : "Waiting for output…"}
-                </span>
-              ) : (
-                filteredLogs.map(line => {
-                  const s = LINE_STYLE[line.type];
-                  return (
-                    <div key={line.id} className="flex items-start gap-1.5 mb-px">
-                      {s.badge && (
-                        <span className="shrink-0 text-[9px] font-bold px-1 py-px rounded mt-0.5"
-                          style={{ color: s.color, background: `${s.color}15`, minWidth: 28, textAlign: "center" }}>
-                          {s.badge}
-                        </span>
-                      )}
-                      <span className="whitespace-pre-wrap break-all" style={{ color: s.color }}>{line.text}</span>
-                    </div>
-                  );
-                })
-              )}
-              <div ref={logsEnd} />
-            </div>
-
-            {/* Command input */}
-            <div className="shrink-0 flex items-center"
-              style={{ background: "#141210", borderTop: "1px solid #2a2218", minHeight: 44 }}>
-              <div className="flex items-center px-3 select-none shrink-0 gap-1">
-                <span className="text-base font-bold mono" style={{ color: "#0ea5e9" }}>›</span>
-                {input === "" && (
-                  <span className="inline-block w-1.5 h-3 rounded-sm ml-0.5"
-                    style={{ background: "#0ea5e9", opacity: blink ? 0.7 : 0, transition: "opacity 0.1s" }} />
-                )}
-              </div>
-              <input ref={inputRef} type="text" value={input}
-                onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown}
-                placeholder={wsStatus === "connected" ? "Enter command…" : "Not connected"}
-                disabled={wsStatus !== "connected"}
-                className="flex-1 bg-transparent outline-none py-3 font-mono text-[13px] disabled:opacity-40"
-                style={{ color: "#d1d5db", caretColor: "transparent" }} />
-              <button onClick={sendCommand} disabled={!input.trim() || wsStatus !== "connected"}
-                className="px-4 py-3 text-xs font-bold shrink-0 transition-all hover:opacity-90 disabled:opacity-30"
-                style={{ background: "#221d17", color: "#9ca3af", borderLeft: "1px solid #2a2218" }}>
-                RUN
-              </button>
-            </div>
-          </div>
-
-          {/* ── AI Chat right panel ── */}
-          <div className="hidden xl:flex flex-col shrink-0 rounded-xl overflow-hidden"
-            style={{ width: 280, background: cardBg, border }}>
-
-            {/* Header */}
-            <div className="flex items-center gap-2 px-4 py-3 shrink-0"
-              style={{ borderBottom: "1px solid #2a2218", background: "#141210" }}>
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-                style={{ background: "rgba(229,57,53,0.15)", border: "1px solid rgba(229,57,53,0.3)" }}>
-                <Sparkles size={12} style={{ color: "#22c55e" }} />
-              </div>
-              <span className="text-xs font-semibold" style={{ color: labelText }}>NetherNodes AI</span>
-              <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded"
-                style={{ background: "rgba(229,57,53,0.1)", color: "#0ea5e9", border: "1px solid rgba(229,57,53,0.2)" }}>
-                Beta
-              </span>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2" style={{ minHeight: 0 }}>
-              {aiMessages.length === 0 ? (
-                <div className="text-center py-6">
-                  <Sparkles size={22} className="mx-auto mb-3 opacity-20" style={{ color: "#0ea5e9" }} />
-                  <p className="text-xs font-medium mb-1" style={{ color: labelText }}>NetherNodes AI</p>
-                  <p className="text-[11px]" style={{ color: mutedText }}>Ask about your server, plugins, errors, or hosting.</p>
-                  <div className="mt-4 space-y-1.5">
-                    {["Why is my server lagging?", "How do I install Essentials?", "What does this error mean?"].map(q => (
-                      <button key={q} onClick={() => { setAiInput(q); }}
-                        className="w-full text-left px-2.5 py-2 rounded-lg text-[11px] transition-all hover:brightness-110"
-                        style={{ background: "#221d17", border: "1px solid #332a1f", color: labelText }}>
-                        {q}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : aiMessages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                  {m.role === "user" ? (
-                    <div className="max-w-[88%] rounded-xl px-3 py-2 text-[12px] leading-relaxed"
-                      style={{ background: "#221d17", border: "1px solid #332a1f", color: "#d1d5db" }}>
-                      {m.content}
-                    </div>
-                  ) : (
-                    <div className="max-w-[96%] rounded-xl px-3 py-2.5 text-[12px]"
-                      style={{ background: "#1a1612", border: "1px solid #2a2218", color: "#d1d5db" }}>
-                      <AiMarkdown text={m.content} />
-                    </div>
-                  )}
-                </div>
-              ))}
-              {aiLoading && (
-                <div className="flex justify-start">
-                  <div className="rounded-xl px-3 py-2 flex items-center gap-1.5"
-                    style={{ background: "#1a1612", border: "1px solid #2a2218" }}>
-                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#94a3b8", animationDelay: "0ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#94a3b8", animationDelay: "150ms" }} />
-                    <span className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: "#94a3b8", animationDelay: "300ms" }} />
-                  </div>
-                </div>
-              )}
-              <div ref={aiChatEndRef} />
-            </div>
-
-            {/* Input */}
-            <div className="shrink-0 p-3" style={{ borderTop: "1px solid #2a2218" }}>
-              <div className="flex items-center gap-2 rounded-xl px-3 py-2"
-                style={{ background: "#221d17", border: "1px solid #332a1f" }}>
-                <input value={aiInput} onChange={e => setAiInput(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendAiMessage()}
-                  placeholder="Ask AI…"
-                  className="flex-1 bg-transparent outline-none text-[12px]"
-                  style={{ color: "#d1d5db" }} />
-                <button onClick={sendAiMessage} disabled={!aiInput.trim() || aiLoading}
-                  className="w-6 h-6 flex items-center justify-center rounded-lg transition-all hover:opacity-90 disabled:opacity-30 shrink-0"
-                  style={{ background: "rgba(229,57,53,0.2)", border: "1px solid rgba(229,57,53,0.3)" }}>
-                  <Send size={11} style={{ color: "#22c55e" }} />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ══ MODALS ══════════════════════════════════════════════════════ */}
+      {/* -- MODALS ------------------------------------------------------ */}
 
       {/* Create Backup */}
       <Modal show={showBackup} onClose={() => !creatingBackup && setShowBackup(false)}>
@@ -1621,12 +1175,12 @@ export default function ServerConsole() {
           onKeyDown={e => e.key === "Enter" && createBackupNow()}
           placeholder={`Backup ${new Date().toLocaleDateString("en-IN")}`}
           className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mb-4"
-          style={{ border: "1px solid #332a1f", color: "#f3f4f6" }} />
+          style={{ border: "1px solid #342f52", color: "#f3f4f6" }} />
         {backupErr && <p className="text-xs mb-3" style={{ color: "#ef4444" }}>{backupErr}</p>}
         {backupMsg && <p className="text-xs mb-3" style={{ color: "#22c55e" }}>{backupMsg}</p>}
         <ModalActions onCancel={() => setShowBackup(false)} cancelDisabled={creatingBackup}
           onConfirm={createBackupNow} confirmDisabled={creatingBackup}
-          confirmLabel={creatingBackup ? "Creating…" : "Create Backup"} confirmColor="#0ea5e9" loading={creatingBackup} />
+          confirmLabel={creatingBackup ? "Creating�" : "Create Backup"} confirmColor="#0ea5e9" loading={creatingBackup} />
       </Modal>
 
       {/* Whitelist */}
@@ -1636,12 +1190,12 @@ export default function ServerConsole() {
           onKeyDown={e => e.key === "Enter" && addToWhitelist()}
           placeholder="e.g. Notch" autoFocus
           className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mono mb-3"
-          style={{ border: "1px solid #332a1f", color: "#f3f4f6" }} />
+          style={{ border: "1px solid #342f52", color: "#f3f4f6" }} />
         {wlErr && <p className="text-xs mb-3" style={{ color: "#ef4444" }}>{wlErr}</p>}
         {wlMsg && <p className="text-xs mb-3" style={{ color: "#22c55e" }}>{wlMsg}</p>}
         <ModalActions onCancel={() => setShowWhitelist(false)} cancelDisabled={wlAdding}
           onConfirm={addToWhitelist} confirmDisabled={wlAdding || !wlPlayer.trim()}
-          confirmLabel={wlAdding ? "Adding…" : "Add Player"} confirmColor="#ef4444" loading={wlAdding} />
+          confirmLabel={wlAdding ? "Adding�" : "Add Player"} confirmColor="#ef4444" loading={wlAdding} />
       </Modal>
 
       {/* Upload World */}
@@ -1655,7 +1209,7 @@ export default function ServerConsole() {
           onDragLeave={() => setWorldDragOver(false)}
           onDrop={e => { e.preventDefault(); setWorldDragOver(false); const f = e.dataTransfer.files[0]; if (f) { setWorldFile(f); setUploadWorldErr(""); setUploadWorldMsg(""); } }}
           className="rounded-xl border-2 border-dashed flex flex-col items-center justify-center p-7 cursor-pointer mb-4 transition-all"
-          style={{ borderColor: worldDragOver ? "#3b82f6" : worldFile ? "#22c55e40" : "#332a1f", background: worldDragOver ? "rgba(59,130,246,0.04)" : "rgba(255,255,255,0.02)" }}>
+          style={{ borderColor: worldDragOver ? "#3b82f6" : worldFile ? "#22c55e40" : "#342f52", background: worldDragOver ? "rgba(59,130,246,0.04)" : "rgba(255,255,255,0.02)" }}>
           {worldFile ? (
             <><Check size={20} className="mb-2" style={{ color: "#22c55e" }} />
               <p className="text-sm font-semibold" style={{ color: "#22c55e" }}>{worldFile.name}</p>
@@ -1670,7 +1224,7 @@ export default function ServerConsole() {
         {uploadWorldMsg && <p className="text-xs mb-3" style={{ color: "#22c55e" }}>{uploadWorldMsg}</p>}
         <ModalActions onCancel={() => setShowUploadWorld(false)} cancelDisabled={uploadingWorld}
           onConfirm={uploadWorld} confirmDisabled={!worldFile || uploadingWorld}
-          confirmLabel={uploadingWorld ? "Uploading…" : "Upload World"} confirmColor="#3b82f6" loading={uploadingWorld} />
+          confirmLabel={uploadingWorld ? "Uploading�" : "Upload World"} confirmColor="#3b82f6" loading={uploadingWorld} />
       </Modal>
 
       {/* Delete server */}
@@ -1686,10 +1240,10 @@ export default function ServerConsole() {
           onKeyDown={e => e.key === "Enter" && deleteInput === server?.name && deleteServer()}
           autoFocus placeholder={server?.name}
           className="w-full rounded-xl px-3 py-2.5 text-sm bg-transparent outline-none mb-4 mono"
-          style={{ border: "1px solid #332a1f", color: "#f3f4f6" }} />
+          style={{ border: "1px solid #342f52", color: "#f3f4f6" }} />
         <ModalActions onCancel={() => setShowDelete(false)} cancelDisabled={deleting}
           onConfirm={deleteServer} confirmDisabled={deleting || deleteInput !== server?.name}
-          confirmLabel={deleting ? "Deleting…" : "Delete Forever"} confirmColor="#ef4444" loading={deleting} />
+          confirmLabel={deleting ? "Deleting�" : "Delete Forever"} confirmColor="#ef4444" loading={deleting} />
       </Modal>
 
       {/* Custom hostname form (inline modal) */}
@@ -1701,16 +1255,16 @@ export default function ServerConsole() {
             onClick={() => !hnSubmitting && setShowHnForm(false)}>
             <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
               className="rounded-2xl p-5 w-full max-w-sm" onClick={e => e.stopPropagation()}
-              style={{ background: "#1a1612", border: "1px solid #332a1f" }}>
+              style={{ background: "#1e1a2e", border: "1px solid #342f52" }}>
               <ModalHeader icon={<Globe size={15} />} iconColor="#0ea5e9" title="Custom Domain" sub="Set a custom subdomain" onClose={() => setShowHnForm(false)} />
               {server?.hostname && !showHnForm ? (
-                <div className="rounded-xl p-3 mb-4" style={{ background: "rgba(229,57,53,0.08)", border: "1px solid rgba(229,57,53,0.2)" }}>
+                <div className="rounded-xl p-3 mb-4" style={{ background: "rgba(229,57,53,0.08)", border: "1px solid rgba(167,139,250,0.2)" }}>
                   <p className="text-xs" style={{ color: "#fcd34d" }}>{server.customAddress}</p>
                 </div>
               ) : (
                 <div className="mb-4">
                   <div className="flex items-center rounded-xl overflow-hidden mb-2"
-                    style={{ background: "#221d17", border: "1px solid #332a1f" }}>
+                    style={{ background: "#231d35", border: "1px solid #342f52" }}>
                     <input type="text" value={hnEdit}
                       onChange={e => {
                         const v = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0, 32);
@@ -1755,7 +1309,7 @@ export default function ServerConsole() {
                   finally { setHnSubmitting(false); }
                 }}
                 confirmDisabled={hnSubmitting || !hnAvail || hnEdit.length < 3}
-                confirmLabel={hnSubmitting ? "Saving…" : "Save"} confirmColor="#0ea5e9" loading={hnSubmitting} />
+                confirmLabel={hnSubmitting ? "Saving�" : "Save"} confirmColor="#0ea5e9" loading={hnSubmitting} />
             </motion.div>
           </motion.div>
         )}
@@ -1764,7 +1318,7 @@ export default function ServerConsole() {
   );
 }
 
-/* ─── Sub-components ─────────────────────────────────────────────────── */
+/* --- Sub-components --------------------------------------------------- */
 
 function PowerBtn({ label, signal, icon: Icon, color, disabled, loading, onPower, variant = "default" }: {
   label: string; signal: "start"|"stop"|"restart"|"kill"; icon: any;
@@ -1778,7 +1332,7 @@ function PowerBtn({ label, signal, icon: Icon, color, disabled, loading, onPower
       disabled={disabled || loading}
       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-30"
       style={variant === "ghost"
-        ? { background: "transparent", color: "#6b7280", border: "1px solid #332a1f" }
+        ? { background: "transparent", color: "#6b7280", border: "1px solid #342f52" }
         : { background: `${color}15`, color, border: `1px solid ${color}30` }}>
       {loading ? <Loader2 size={12} className="animate-spin" /> : <Icon size={12} />}
       {label}
@@ -1786,11 +1340,12 @@ function PowerBtn({ label, signal, icon: Icon, color, disabled, loading, onPower
   );
 }
 
-function SidebarContent({ id, server, sendPower, powerLoading, setShowDelete, setDeleteInput, onClose }: {
+function SidebarContent({ id, server, sendPower, powerLoading, setShowDelete, setDeleteInput, onClose, onAiClick }: {
   id: string; server: ServerData | null;
   sendPower: (s: "start"|"stop"|"restart"|"kill") => void; powerLoading: string | null;
   setShowDelete: (v: boolean) => void; setDeleteInput: (v: string) => void;
   onClose?: () => void;
+  onAiClick?: () => void;
 }) {
   const { pathname } = { pathname: window.location.pathname };
   const st = STATUS_MAP[server?.status ?? ""] ?? STATUS_MAP.stopped;
@@ -1808,10 +1363,10 @@ function SidebarContent({ id, server, sendPower, powerLoading, setShowDelete, se
       </Link>
 
       {/* Server card */}
-      <div className="mb-5 rounded-xl p-3" style={{ background: "#1a1a1d", border: "1px solid #332a1f" }}>
+      <div className="mb-5 rounded-xl p-3" style={{ background: "#1a1a1d", border: "1px solid #342f52" }}>
         <div className="flex items-center gap-2.5 mb-3">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold"
-            style={{ background: "#2a2218", border: "1px solid #332a1f", color: "#f3f4f6" }}>
+            style={{ background: "#2d2845", border: "1px solid #342f52", color: "#f3f4f6" }}>
             {server?.name?.charAt(0)?.toUpperCase()}
           </div>
           <div className="min-w-0">
@@ -1820,7 +1375,7 @@ function SidebarContent({ id, server, sendPower, powerLoading, setShowDelete, se
           </div>
         </div>
         <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg mb-3"
-          style={{ background: "#2a2218", border: "1px solid #332a1f" }}>
+          style={{ background: "#2d2845", border: "1px solid #342f52" }}>
           <span className={`w-2 h-2 rounded-full ${isRunning ? "animate-pulse" : ""}`} style={{ background: st.color }} />
           <span className="text-[11px] font-semibold" style={{ color: st.color }}>{st.label}</span>
           <span className="ml-auto text-[10px]" style={{ color: "#6b7280" }}>{server?.ram}</span>
@@ -1858,9 +1413,9 @@ function SidebarContent({ id, server, sendPower, powerLoading, setShowDelete, se
                 <Link key={item.label} to={href} onClick={onClose}
                   className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all mb-0.5"
                   style={{
-                    background: active ? "#2a2218" : "transparent",
+                    background: active ? "#2d2845" : "transparent",
                     color: active ? "#f3f4f6" : "#6b7280",
-                    border: active ? "1px solid #332a1f" : "1px solid transparent",
+                    border: active ? "1px solid #342f52" : "1px solid transparent",
                   }}
                   onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "#1a1a1d"; (e.currentTarget as HTMLElement).style.color = "#9ca3af"; }}}
                   onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#6b7280"; }}}>
@@ -1872,8 +1427,20 @@ function SidebarContent({ id, server, sendPower, powerLoading, setShowDelete, se
         ))}
       </div>
 
+      {/* AI — only visible on lg–xl (below xl the AI panel is hidden in the main area) */}
+      {onAiClick && (
+        <div className="xl:hidden mt-3 pt-3" style={{ borderTop: "1px solid #2d2845" }}>
+          <p className="text-[9px] font-semibold uppercase tracking-widest px-2 mb-1" style={{ color: "#4b5563" }}>AI</p>
+          <button onClick={() => { onAiClick(); onClose?.(); }}
+            className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all w-full"
+            style={{ color: "#A78BFA", background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.2)" }}>
+            <Sparkles size={13} /> NetherNodes AI
+          </button>
+        </div>
+      )}
+
       {/* Delete */}
-      <div className="mt-3 pt-3" style={{ borderTop: "1px solid #221d17" }}>
+      <div className="mt-3 pt-3" style={{ borderTop: "1px solid #2d2845" }}>
         <button onClick={() => { setShowDelete(true); setDeleteInput(""); onClose?.(); }}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors hover:opacity-80"
           style={{ color: "#ef4444", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.14)" }}>
@@ -1884,7 +1451,7 @@ function SidebarContent({ id, server, sendPower, powerLoading, setShowDelete, se
   );
 }
 
-/* ─── Modal helpers ──────────────────────────────────────────────────── */
+/* --- Modal helpers ---------------------------------------------------- */
 
 function Modal({ show, onClose, children, maxW = "max-w-sm" }: {
   show: boolean; onClose: () => void; children: React.ReactNode; maxW?: string;
@@ -1899,7 +1466,7 @@ function Modal({ show, onClose, children, maxW = "max-w-sm" }: {
           <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.96, opacity: 0 }}
             transition={{ duration: 0.15 }}
             className={`rounded-2xl p-5 w-full ${maxW}`} onClick={e => e.stopPropagation()}
-            style={{ background: "#1a1612", border: "1px solid #332a1f" }}>
+            style={{ background: "#1e1a2e", border: "1px solid #342f52" }}>
             {children}
           </motion.div>
         </motion.div>
@@ -1935,7 +1502,7 @@ function ModalActions({ onCancel, cancelDisabled, onConfirm, confirmDisabled, co
     <div className="flex gap-2">
       <button onClick={onCancel} disabled={cancelDisabled}
         className="flex-1 h-9 rounded-xl text-xs disabled:opacity-40"
-        style={{ border: "1px solid #332a1f", color: "#6b7280" }}>Cancel</button>
+        style={{ border: "1px solid #342f52", color: "#6b7280" }}>Cancel</button>
       <button onClick={onConfirm} disabled={confirmDisabled}
         className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
         style={{ background: `${confirmColor}20`, color: confirmColor, border: `1px solid ${confirmColor}30` }}>
@@ -1946,14 +1513,14 @@ function ModalActions({ onCancel, cancelDisabled, onConfirm, confirmDisabled, co
   );
 }
 
-/* ─── AI Markdown Renderer ───────────────────────────────────────────────────
+/* --- AI Markdown Renderer ---------------------------------------------------
  * Renders the AI response with proper formatting:
- * - ## Heading  → bold section header
- * - **bold**    → bold
- * - `code`      → inline code
- * - - bullet    → bullet list item
- * - 1. item     → numbered list item
- * - blank line  → paragraph break
+ * - ## Heading  ? bold section header
+ * - **bold**    ? bold
+ * - `code`      ? inline code
+ * - - bullet    ? bullet list item
+ * - 1. item     ? numbered list item
+ * - blank line  ? paragraph break
  */
 function AiMarkdown({ text }: { text: string }) {
   const lines = text.split("\n");
@@ -1969,7 +1536,7 @@ function AiMarkdown({ text }: { text: string }) {
       if (p.startsWith("`") && p.endsWith("`"))
         return (
           <code key={idx} className="font-mono text-[11px] px-1 py-0.5 rounded"
-            style={{ background: "#2a2218", color: "#22c55e" }}>
+            style={{ background: "#2d2845", color: "#22c55e" }}>
             {p.slice(1, -1)}
           </code>
         );
@@ -1981,7 +1548,7 @@ function AiMarkdown({ text }: { text: string }) {
     const line = lines[i];
     const trimmed = line.trim();
 
-    // Blank line — small spacer
+    // Blank line � small spacer
     if (!trimmed) { els.push(<div key={i} className="h-2" />); i++; continue; }
 
     // Heading ## or ###
@@ -1995,11 +1562,11 @@ function AiMarkdown({ text }: { text: string }) {
       i++; continue;
     }
 
-    // Bullet list — collect consecutive bullets
-    if (/^[-*•]\s/.test(trimmed)) {
+    // Bullet list � collect consecutive bullets
+    if (/^[-*�]\s/.test(trimmed)) {
       const items: string[] = [];
-      while (i < lines.length && /^[-*•]\s/.test(lines[i].trim())) {
-        items.push(lines[i].trim().replace(/^[-*•]\s/, ""));
+      while (i < lines.length && /^[-*�]\s/.test(lines[i].trim())) {
+        items.push(lines[i].trim().replace(/^[-*�]\s/, ""));
         i++;
       }
       els.push(
@@ -2015,7 +1582,7 @@ function AiMarkdown({ text }: { text: string }) {
       continue;
     }
 
-    // Numbered list — collect consecutive
+    // Numbered list � collect consecutive
     if (/^\d+\.\s/.test(trimmed)) {
       const items: string[] = [];
       let n = 1;
@@ -2038,7 +1605,7 @@ function AiMarkdown({ text }: { text: string }) {
 
     // Horizontal rule ---
     if (/^---+$/.test(trimmed)) {
-      els.push(<hr key={i} className="my-2" style={{ borderColor: "#2a2218" }} />);
+      els.push(<hr key={i} className="my-2" style={{ borderColor: "#2d2845" }} />);
       i++; continue;
     }
 

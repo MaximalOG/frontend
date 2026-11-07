@@ -1,4 +1,4 @@
-ï»¿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Server, Play, Square, RefreshCw, AlertCircle, Cpu, MemoryStick, HardDrive, Settings, ExternalLink, Terminal, Users } from "lucide-react";
@@ -32,13 +32,29 @@ interface ServerData {
 const STATUS_COLOR: Record<string, string> = {
   running:      "hsl(142 70% 55%)",
   stopped:      "hsl(0 0% 45%)",
-  starting:     "hsl(38 90% 60%)",
-  stopping:     "hsl(38 90% 60%)",
+  starting:     " 
+    $m = $args[0].Value
+    $l = [regex]::Match($m, 'hsl\(38 \d+% (\d+)%\)').Groups[1].Value
+    "hsl(262 95% ${l}%)"
+  ",
+  stopping:     " 
+    $m = $args[0].Value
+    $l = [regex]::Match($m, 'hsl\(38 \d+% (\d+)%\)').Groups[1].Value
+    "hsl(262 95% ${l}%)"
+  ",
   installing:   "hsl(200 80% 55%)",
-  suspended:    "hsl(350 85% 55%)",
-  pending_setup: "hsl(38 92% 55%)",
+  suspended:    "hsl(262 95% 65%)",
+  pending_setup: " 
+    $m = $args[0].Value
+    $l = [regex]::Match($m, 'hsl\(38 \d+% (\d+)%\)').Groups[1].Value
+    "hsl(262 95% ${l}%)"
+  ",
   provisioning: "hsl(200 80% 55%)",
-  unknown:      "hsl(38 90% 60%)",
+  unknown:      " 
+    $m = $args[0].Value
+    $l = [regex]::Match($m, 'hsl\(38 \d+% (\d+)%\)').Groups[1].Value
+    "hsl(262 95% ${l}%)"
+  ",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -131,16 +147,16 @@ const Dashboard = () => {
           {loading ? (
             <div className="text-center py-16 text-muted-foreground text-sm">
               <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-3" />
-              Loading your serversâ€¦
+              Loading your servers…
             </div>
           ) : error ? (
-            <div className="rounded-sm p-6 text-center" style={{ background: "hsl(350 85% 8%)", border: "1px solid hsl(350 85% 25%)" }}>
+            <div className="rounded-sm p-6 text-center" style={{ background: "hsl(262 95% 8%)", border: "1px solid hsl(262 95% 25%)" }}>
               <AlertCircle className="w-8 h-8 text-primary mx-auto mb-3" />
               <p className="text-sm text-foreground mb-1">Service unavailable</p>
               <p className="text-xs text-muted-foreground mb-4">{error}</p>
               <button onClick={loadServers}
                 className="px-4 py-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110"
-                style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+                style={{ background: "hsl(262 95% 55%)", color: "white" }}>
                 Retry
               </button>
             </div>
@@ -151,7 +167,7 @@ const Dashboard = () => {
               <p className="text-xs text-muted-foreground mb-5">Purchase a plan to get your first server.</p>
               <a href="/pricing"
                 className="inline-flex items-center gap-2 px-5 py-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110"
-                style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+                style={{ background: "hsl(262 95% 55%)", color: "white" }}>
                 View Plans
               </a>
             </div>
@@ -167,22 +183,22 @@ const Dashboard = () => {
                     border: srv.shared
                       ? "1px solid hsl(210 70% 30%)"
                       : srv.pendingSetup
-                      ? "1px solid hsl(38 92% 30%)"
+                      ? "1px solid hsl(262 95% 30%)"
                       : "1px solid hsl(0 0% 16%)",
                     boxShadow: srv.pendingSetup ? "0 0 20px hsl(270 70% 20% / 0.3)" : undefined,
                   }}
                 >
-                  {/* Setup required banner â€” only for owned servers */}
+                  {/* Setup required banner — only for owned servers */}
                   {srv.pendingSetup && !srv.shared && (
                     <div className="rounded-sm px-3 py-2 mb-4 flex items-center justify-between gap-3"
-                      style={{ background: "hsl(38 92% 5%)", border: "1px solid hsl(38 92% 20%)" }}>
+                      style={{ background: "hsl(262 95% 8%)", border: "1px solid hsl(262 95% 20%)" }}>
                       <div className="flex items-center gap-2">
                         <Settings size={13} className="text-amber-400 shrink-0" />
-                        <span className="text-xs text-amber-300 font-medium">Setup required â€” configure your server to get started</span>
+                        <span className="text-xs text-amber-300 font-medium">Setup required — configure your server to get started</span>
                       </div>
                       <Link to={`/setup-server?server=${srv.id}`}
                         className="shrink-0 px-4 py-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110 active:scale-95"
-                        style={{ background: "hsl(38 92% 35%)", color: "white" }}>
+                        style={{ background: "hsl(262 95% 35%)", color: "white" }}>
                         Set Up Now
                       </Link>
                     </div>
@@ -230,11 +246,11 @@ const Dashboard = () => {
                       )}
                       {srv.serverType && (
                         <p className="text-[10px] text-muted-foreground/40 mono mb-2">
-                          {srv.serverType} {srv.mcVersion && srv.mcVersion !== "latest" ? `Â· ${srv.mcVersion}` : ""}
+                          {srv.serverType} {srv.mcVersion && srv.mcVersion !== "latest" ? `· ${srv.mcVersion}` : ""}
                         </p>
                       )}
 
-                      {/* Hardware specs â€” owned servers only */}
+                      {/* Hardware specs — owned servers only */}
                       {!srv.shared && (
                         <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
@@ -252,7 +268,7 @@ const Dashboard = () => {
                         </div>
                       )}
 
-                      {/* Permission chips â€” shared servers only */}
+                      {/* Permission chips — shared servers only */}
                       {srv.shared && srv.permissions && srv.permissions.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {srv.permissions.slice(0, 5).map(p => {
@@ -276,7 +292,7 @@ const Dashboard = () => {
                       {srv.status === "pending_setup" && !srv.shared && (
                         <Link to={`/setup-server?server=${srv.id}`}
                           className="flex items-center gap-1.5 px-3 py-2.5 rounded-sm text-xs font-medium transition-all hover:brightness-110 active:scale-95"
-                          style={{ background: "hsl(38 92% 12%)", color: "hsl(38 92% 65%)", border: "1px solid hsl(38 92% 30%)" }}>
+                          style={{ background: "hsl(262 95% 12%)", color: "hsl(262 95% 76%)", border: "1px solid hsl(262 95% 30%)" }}>
                           <Settings size={11} /> Setup
                         </Link>
                       )}
@@ -291,7 +307,7 @@ const Dashboard = () => {
                         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs text-muted-foreground"
                           style={{ border: "1px solid hsl(0 0% 20%)" }}>
                           <RefreshCw size={11} className="animate-spin" />
-                          {srv.status === "starting" ? "Startingâ€¦" : srv.status === "installing" ? "Installingâ€¦" : "Stoppingâ€¦"}
+                          {srv.status === "starting" ? "Starting…" : srv.status === "installing" ? "Installing…" : "Stopping…"}
                         </div>
                       )}
                     </div>

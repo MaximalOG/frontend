@@ -1,4 +1,4 @@
-ï»¿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Ticket, RefreshCw, CheckCircle, Circle, Clock, Mail, ChevronDown, ChevronUp, Send, AlertCircle } from "lucide-react";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -22,8 +22,16 @@ interface TicketData {
 const ease = [0.16, 1, 0.3, 1] as const;
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; border: string }> = {
-  open:    { bg: "hsl(350 85% 15%)", color: "hsl(350 85% 65%)", border: "hsl(350 85% 30%)" },
-  pending: { bg: "hsl(38 90% 12%)",  color: "hsl(38 90% 60%)",  border: "hsl(38 90% 28%)" },
+  open:    { bg: "hsl(262 95% 15%)", color: "hsl(262 95% 76%)", border: "hsl(262 95% 40%)" },
+  pending: { bg: "hsl(262 95% 12%)",  color: " 
+    $m = $args[0].Value
+    $l = [regex]::Match($m, 'hsl\(38 \d+% (\d+)%\)').Groups[1].Value
+    "hsl(262 95% ${l}%)"
+  ",  border: " 
+    $m = $args[0].Value
+    $l = [regex]::Match($m, 'hsl\(38 \d+% (\d+)%\)').Groups[1].Value
+    "hsl(262 95% ${l}%)"
+  " },
   closed:  { bg: "hsl(142 60% 10%)", color: "hsl(142 70% 55%)", border: "hsl(142 60% 25%)" },
 };
 
@@ -147,10 +155,10 @@ const AdminTickets = () => {
                 onClick={pollInbox}
                 disabled={polling}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs transition-colors"
-                style={{ border: "1px solid hsl(38 92% 25%)", color: polling ? "hsl(38 92% 35%)" : "hsl(38 92% 50%)" }}
+                style={{ border: "1px solid hsl(262 95% 25%)", color: polling ? "hsl(262 95% 45%)" : "hsl(262 95% 65%)" }}
               >
                 <Mail size={12} className={polling ? "animate-pulse" : ""} />
-                {polling ? "Checkingâ€¦" : "Check Inbox"}
+                {polling ? "Checking…" : "Check Inbox"}
               </button>
               <button
                 onClick={load}
@@ -165,10 +173,10 @@ const AdminTickets = () => {
                   onClick={() => setShowClearConfirm(true)}
                   disabled={clearingClosed}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs transition-colors disabled:opacity-50"
-                  style={{ border: "1px solid hsl(350 85% 30%)", color: clearingClosed ? "hsl(350 85% 40%)" : "hsl(350 85% 60%)" }}
+                  style={{ border: "1px solid hsl(262 95% 40%)", color: clearingClosed ? "hsl(262 95% 50%)" : "hsl(262 95% 76%)" }}
                 >
                   <RefreshCw size={12} className={clearingClosed ? "animate-spin" : ""} />
-                  {clearingClosed ? "Clearingâ€¦" : `Clear Closed (${tickets.filter(t => t.status === "closed").length})`}
+                  {clearingClosed ? "Clearing…" : `Clear Closed (${tickets.filter(t => t.status === "closed").length})`}
                 </button>
               )}
             </div>
@@ -197,9 +205,9 @@ const AdminTickets = () => {
                 onClick={() => setFilter(f)}
                 className="px-3 py-1 rounded-sm text-xs font-medium capitalize transition-all"
                 style={{
-                  background: filter === f ? "hsl(350 85% 45%)" : "hsl(0 0% 10%)",
+                  background: filter === f ? "hsl(262 95% 55%)" : "hsl(0 0% 10%)",
                   color: filter === f ? "white" : "hsl(0 0% 55%)",
-                  border: `1px solid ${filter === f ? "hsl(350 85% 55%)" : "hsl(0 0% 20%)"}`,
+                  border: `1px solid ${filter === f ? "hsl(262 95% 70%)" : "hsl(0 0% 20%)"}`,
                 }}
               >
                 {f}
@@ -316,13 +324,13 @@ const AdminTickets = () => {
                                   key={idx}
                                   className={`rounded-sm px-3 py-2 text-xs ${r.from === "support" ? "ml-4" : "mr-4"}`}
                                   style={{
-                                    background: r.from === "support" ? "hsl(350 85% 10%)" : "hsl(0 0% 10%)",
-                                    border: `1px solid ${r.from === "support" ? "hsl(350 85% 25%)" : "hsl(0 0% 20%)"}`,
+                                    background: r.from === "support" ? "hsl(262 95% 10%)" : "hsl(0 0% 10%)",
+                                    border: `1px solid ${r.from === "support" ? "hsl(262 95% 25%)" : "hsl(0 0% 20%)"}`,
                                   }}
                                 >
                                   <div className="flex items-center justify-between mb-1">
                                     <span className="text-[9px] font-semibold uppercase mono"
-                                      style={{ color: r.from === "support" ? "hsl(350 85% 60%)" : "hsl(0 0% 60%)" }}>
+                                      style={{ color: r.from === "support" ? "hsl(262 95% 76%)" : "hsl(0 0% 60%)" }}>
                                       {r.from === "support" ? "You (Support)" : ticket.email}
                                     </span>
                                     <span className="text-[9px] text-muted-foreground/40">
@@ -343,7 +351,7 @@ const AdminTickets = () => {
                               Reply to {ticket.email}
                             </p>
                             <span className="text-[9px] text-muted-foreground/40 mono">
-                              <span className="text-muted-foreground/60">**bold**</span> â†’ <strong className="text-muted-foreground/60">bold</strong> in email
+                              <span className="text-muted-foreground/60">**bold**</span> ? <strong className="text-muted-foreground/60">bold</strong> in email
                             </span>
                           </div>
                           <div className="rounded-sm overflow-hidden" style={{ border: "1px solid hsl(0 0% 20%)" }}>
@@ -351,7 +359,7 @@ const AdminTickets = () => {
                               rows={3}
                               value={replyText[ticket.id] ?? ""}
                               onChange={e => setReplyText(prev => ({ ...prev, [ticket.id]: e.target.value }))}
-                              placeholder="Type your replyâ€¦ Use **text** to bold in the email."
+                              placeholder="Type your reply… Use **text** to bold in the email."
                               className="w-full bg-transparent text-xs text-foreground placeholder:text-muted-foreground/40 outline-none resize-none px-3 py-2"
                             />
                             {/* Live bold preview */}
@@ -371,17 +379,17 @@ const AdminTickets = () => {
                             <div className="flex items-center justify-between px-3 py-2"
                               style={{ borderTop: "1px solid hsl(0 0% 16%)", background: "hsl(0 0% 7%)" }}>
                               {replySent[ticket.id]
-                                ? <span className="text-[11px] text-green-400">âœ“ Sent â€” ticket set to Pending</span>
+                                ? <span className="text-[11px] text-green-400">? Sent — ticket set to Pending</span>
                                 : <span className="text-[10px] text-muted-foreground/40">Ticket moves to Pending after sending</span>
                               }
                               <button
                                 onClick={() => sendReply(ticket)}
                                 disabled={!replyText[ticket.id]?.trim() || replySending[ticket.id]}
                                 className="flex items-center gap-1.5 px-3 py-1 rounded-sm text-[11px] font-medium transition-all hover:brightness-110 disabled:opacity-40"
-                                style={{ background: "hsl(350 85% 45%)", color: "white" }}
+                                style={{ background: "hsl(262 95% 55%)", color: "white" }}
                               >
                                 <Send size={11} />
-                                {replySending[ticket.id] ? "Sendingâ€¦" : "Send Reply"}
+                                {replySending[ticket.id] ? "Sending…" : "Send Reply"}
                               </button>
                             </div>
                           </div>
@@ -396,9 +404,9 @@ const AdminTickets = () => {
                             onClick={() => toggleStatus(ticket)}
                             className="px-3 py-1 rounded-sm text-[11px] font-medium transition-all hover:brightness-110"
                             style={{
-                              background: ticket.status !== "closed" ? "hsl(142 60% 15%)" : "hsl(350 85% 15%)",
-                              color: ticket.status !== "closed" ? "hsl(142 70% 55%)" : "hsl(350 85% 65%)",
-                              border: `1px solid ${ticket.status !== "closed" ? "hsl(142 60% 25%)" : "hsl(350 85% 30%)"}`,
+                              background: ticket.status !== "closed" ? "hsl(142 60% 15%)" : "hsl(262 95% 15%)",
+                              color: ticket.status !== "closed" ? "hsl(142 70% 55%)" : "hsl(262 95% 76%)",
+                              border: `1px solid ${ticket.status !== "closed" ? "hsl(142 60% 25%)" : "hsl(262 95% 40%)"}`,
                             }}
                           >
                             Mark as {ticket.status !== "closed" ? "Closed" : "Open"}

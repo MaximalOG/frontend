@@ -116,7 +116,7 @@ const AdminStaff = () => {
               </button>
               <button onClick={() => setShowForm(v => !v)}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs font-medium transition-all hover:brightness-110"
-                style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+                style={{ background: "hsl(262 95% 55%)", color: "white" }}>
                 <Plus size={12} /> Add Staff
               </button>
             </div>
@@ -126,7 +126,7 @@ const AdminStaff = () => {
           {showForm && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
               className="glass-surface rounded-sm p-5 mb-6 space-y-4"
-              style={{ border: "1px solid hsl(350 85% 30%)" }}>
+              style={{ border: "1px solid hsl(262 95% 40%)" }}>
               <h3 className="text-sm font-bold text-foreground">New Staff Member</h3>
 
               <div className="grid grid-cols-2 gap-3">
@@ -160,9 +160,9 @@ const AdminStaff = () => {
                     <button key={p.key} onClick={() => togglePerm(p.key)}
                       className="px-2.5 py-1 rounded-sm text-xs font-medium transition-all"
                       style={{
-                        background: newPerms.includes(p.key) ? "hsl(350 85% 15%)" : "hsl(0 0% 10%)",
-                        color: newPerms.includes(p.key) ? "hsl(350 85% 65%)" : "hsl(0 0% 45%)",
-                        border: `1px solid ${newPerms.includes(p.key) ? "hsl(350 85% 30%)" : "hsl(0 0% 18%)"}`,
+                        background: newPerms.includes(p.key) ? "hsl(262 95% 15%)" : "hsl(0 0% 10%)",
+                        color: newPerms.includes(p.key) ? "hsl(262 95% 76%)" : "hsl(0 0% 45%)",
+                        border: `1px solid ${newPerms.includes(p.key) ? "hsl(262 95% 40%)" : "hsl(0 0% 18%)"}`,
                       }}>
                       {p.label}
                     </button>
@@ -170,11 +170,11 @@ const AdminStaff = () => {
                 </div>
               </div>
 
-              {error && <p className="text-xs" style={{ color: "hsl(350 85% 60%)" }}>{error}</p>}
+              {error && <p className="text-xs" style={{ color: "hsl(262 95% 76%)" }}>{error}</p>}
 
               <button onClick={createStaff} disabled={saving}
                 className="flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-50"
-                style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+                style={{ background: "hsl(262 95% 55%)", color: "white" }}>
                 {saving ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
                 {saving ? "Creating…" : "Create Staff Account"}
               </button>

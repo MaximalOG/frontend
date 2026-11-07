@@ -109,7 +109,7 @@ const PromoCode = ({ onDiscount }: Props) => {
               key="input"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="flex items-center rounded-sm overflow-hidden"
-              style={{ border: status === "invalid" ? "1px solid hsl(350 85% 40%)" : "1px solid hsl(0 0% 20%)", background: "hsl(0 0% 8%)" }}
+              style={{ border: status === "invalid" ? "1px solid hsl(262 95% 50%)" : "1px solid hsl(0 0% 20%)", background: "hsl(0 0% 8%)" }}
             >
               <Tag size={13} className="text-muted-foreground ml-3 shrink-0" />
               <input
@@ -124,7 +124,7 @@ const PromoCode = ({ onDiscount }: Props) => {
                 onClick={check}
                 disabled={!code.trim() || status === "checking"}
                 className="px-3 py-2.5 text-xs font-semibold transition-all disabled:opacity-40 shrink-0"
-                style={{ background: "hsl(350 85% 45%)", color: "white", borderLeft: "1px solid hsl(350 85% 35%)" }}
+                style={{ background: "hsl(262 95% 55%)", color: "white", borderLeft: "1px solid hsl(262 95% 45%)" }}
               >
                 {status === "checking" ? <Loader2 size={12} className="animate-spin" /> : "Apply"}
               </button>
@@ -132,7 +132,7 @@ const PromoCode = ({ onDiscount }: Props) => {
           )}
         </AnimatePresence>
         {status === "invalid" && (
-          <p className="text-[10px]" style={{ color: "hsl(350 85% 60%)" }}>Invalid or expired code.</p>
+          <p className="text-[10px]" style={{ color: "hsl(262 95% 76%)" }}>Invalid or expired code.</p>
         )}
       </div>
     );

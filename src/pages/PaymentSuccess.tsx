@@ -129,7 +129,7 @@ const PaymentSuccess = () => {
 
             {isMock && !isFree && (
               <div className="mt-4 rounded-sm px-3 py-2 text-xs"
-                style={{ background: "hsl(38 90% 8%)", border: "1px solid hsl(38 90% 22%)", color: "hsl(38 90% 55%)" }}>
+                style={{ background: "hsl(262 95% 8%)", border: "1px solid hsl(262 95% 22%)", color: "hsl(262 95% 70%)" }}>
                 Dev mode — mock payment
               </div>
             )}
@@ -148,7 +148,7 @@ const PaymentSuccess = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, ease }}
             className="glass-surface rounded-sm p-6"
-            style={{ border: "1px solid hsl(350 85% 25%)" }}
+            style={{ border: "1px solid hsl(262 95% 25%)" }}
           >
             <div className="flex items-center gap-2 mb-4">
               {/* Pulsing dot */}
@@ -174,9 +174,9 @@ const PaymentSuccess = () => {
                       background: step.done
                         ? "hsl(142 60% 15%)"
                         : step.active
-                        ? "hsl(350 85% 15%)"
+                        ? "hsl(262 95% 15%)"
                         : "hsl(0 0% 10%)",
-                      border: `1px solid ${step.done ? "hsl(142 60% 30%)" : step.active ? "hsl(350 85% 35%)" : "hsl(0 0% 20%)"}`,
+                      border: `1px solid ${step.done ? "hsl(142 60% 30%)" : step.active ? "hsl(262 95% 45%)" : "hsl(0 0% 20%)"}`,
                     }}
                   >
                     {step.done ? (
@@ -186,7 +186,7 @@ const PaymentSuccess = () => {
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
                         className="w-2 h-2 rounded-full border border-t-transparent"
-                        style={{ borderColor: "hsl(350 85% 55%)", borderTopColor: "transparent" }}
+                        style={{ borderColor: "hsl(262 95% 70%)", borderTopColor: "transparent" }}
                       />
                     ) : (
                       <div className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(0 0% 25%)" }} />
@@ -211,7 +211,7 @@ const PaymentSuccess = () => {
             {/* ETA banner */}
             <div
               className="rounded-sm px-4 py-3 flex items-center gap-3"
-              style={{ background: "hsl(350 85% 8%)", border: "1px solid hsl(350 85% 22%)" }}
+              style={{ background: "hsl(262 95% 8%)", border: "1px solid hsl(262 95% 22%)" }}
             >
               <Clock size={14} className="text-primary shrink-0" />
               <div>
@@ -257,7 +257,7 @@ const PaymentSuccess = () => {
             <Link
               to={`/setup-server?${new URLSearchParams({ ...(orderId ? { order: orderId } : {}), ...(serverId ? { server: serverId } : {}) }).toString()}`}
               className="flex-1 h-11 flex items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110"
-              style={{ background: "hsl(350 85% 45%)", color: "white" }}
+              style={{ background: "hsl(262 95% 55%)", color: "white" }}
             >
               <Server size={14} /> Set Up My Server
             </Link>

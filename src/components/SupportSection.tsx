@@ -119,22 +119,22 @@ const SupportSection = () => {
             href="mailto:supportnethernodes@gmail.com"
             className="group relative flex flex-col items-start gap-4 rounded-sm p-6 transition-all duration-300"
             style={{
-              background: "hsl(350 85% 8%)",
-              border: "1px solid hsl(350 85% 20%)",
+              background: "hsl(262 95% 8%)",
+              border: "1px solid hsl(262 95% 20%)",
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = "0 0 32px hsl(350 85% 45% / 0.3)";
-              (e.currentTarget as HTMLElement).style.borderColor = "hsl(350 85% 40%)";
+              (e.currentTarget as HTMLElement).style.boxShadow = "0 0 32px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" ";
+              (e.currentTarget as HTMLElement).style.borderColor = "hsl(262 95% 50%)";
             }}
             onMouseLeave={e => {
               (e.currentTarget as HTMLElement).style.boxShadow = "none";
-              (e.currentTarget as HTMLElement).style.borderColor = "hsl(350 85% 20%)";
+              (e.currentTarget as HTMLElement).style.borderColor = "hsl(262 95% 20%)";
             }}
           >
             {/* Icon */}
             <div
               className="w-12 h-12 rounded-sm flex items-center justify-center"
-              style={{ background: "hsl(350 85% 15% / 0.5)", border: "1px solid hsl(350 85% 30% / 0.5)" }}
+              style={{ background: " "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" ", border: "1px solid  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " }}
             >
               <Mail size={22} className="text-primary" />
             </div>
@@ -151,7 +151,7 @@ const SupportSection = () => {
 
             <div
               className="w-full flex flex-col items-center justify-center h-9 rounded-sm text-xs font-semibold transition-all group-hover:brightness-110"
-              style={{ background: "hsl(350 85% 45%)", color: "white" }}
+              style={{ background: "hsl(262 95% 55%)", color: "white" }}
             >
               supportnethernodes@gmail.com
             </div>

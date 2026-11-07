@@ -289,7 +289,7 @@ const SetupServer = () => {
           <p className="text-foreground font-semibold mb-2">Setup unavailable</p>
           <p className="text-sm text-muted-foreground mb-6">{initError}</p>
           <a href="/dashboard" className="inline-flex items-center gap-2 px-5 py-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110"
-            style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+            style={{ background: "hsl(262 95% 55%)", color: "white" }}>
             Go to Dashboard
           </a>
         </div>
@@ -323,7 +323,7 @@ const SetupServer = () => {
 
       {/* Ambient glow */}
       <div className="fixed top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] pointer-events-none"
-        style={{ background: "radial-gradient(circle, hsl(350 85% 40% / 0.08) 0%, transparent 70%)" }} />
+        style={{ background: "radial-gradient(circle,  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))"  0%, transparent 70%)" }} />
 
       <div className="container mx-auto px-4 max-w-2xl pt-28">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
@@ -361,7 +361,7 @@ const SetupServer = () => {
                 <div
                   className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-300"
                   style={{
-                    background:   step > s ? "hsl(142 60% 15%)" : step === s ? "hsl(350 85% 45%)" : "hsl(0 0% 10%)",
+                    background:   step > s ? "hsl(142 60% 15%)" : step === s ? "hsl(262 95% 55%)" : "hsl(0 0% 10%)",
                     border:       step > s ? "1px solid hsl(142 60% 35%)" : step === s ? "none" : "1px solid hsl(0 0% 20%)",
                     color:        step > s ? "hsl(142 70% 55%)" : "white",
                   }}
@@ -390,9 +390,9 @@ const SetupServer = () => {
                       onClick={() => setServerType(t.id)}
                       className="w-full text-left rounded-sm px-4 py-3.5 transition-all duration-200"
                       style={{
-                        background:  serverType === t.id ? "hsl(350 85% 10%)" : "hsl(0 0% 7%)",
-                        border:      serverType === t.id ? "1px solid hsl(350 85% 45%)" : "1px solid hsl(0 0% 14%)",
-                        boxShadow:   serverType === t.id ? "0 0 16px hsl(350 85% 35% / 0.3)" : "none",
+                        background:  serverType === t.id ? "hsl(262 95% 10%)" : "hsl(0 0% 7%)",
+                        border:      serverType === t.id ? "1px solid hsl(262 95% 55%)" : "1px solid hsl(0 0% 14%)",
+                        boxShadow:   serverType === t.id ? "0 0 16px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " : "none",
                       }}
                     >
                       <div className="flex items-center justify-between">
@@ -402,7 +402,7 @@ const SetupServer = () => {
                         </div>
                         {serverType === t.id && (
                           <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-                            style={{ background: "hsl(350 85% 45%)" }}>
+                            style={{ background: "hsl(262 95% 55%)" }}>
                             <Check size={11} className="text-white" />
                           </div>
                         )}
@@ -415,7 +415,7 @@ const SetupServer = () => {
                   onClick={() => serverType && setStep(2)}
                   disabled={!serverType}
                   className="mt-6 w-full h-11 flex items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-40"
-                  style={{ background: "hsl(350 85% 45%)", color: "white" }}
+                  style={{ background: "hsl(262 95% 55%)", color: "white" }}
                 >
                   Continue <ChevronRight size={14} />
                 </button>
@@ -437,7 +437,7 @@ const SetupServer = () => {
                       maxLength={48}
                       className="w-full rounded-sm px-4 py-3 text-sm text-white bg-transparent outline-none"
                       style={{ border: "1px solid hsl(0 0% 20%)" }}
-                      onFocus={e => (e.currentTarget.style.borderColor = "hsl(350 85% 45%)")}
+                      onFocus={e => (e.currentTarget.style.borderColor = "hsl(262 95% 55%)")}
                       onBlur={e  => (e.currentTarget.style.borderColor = "hsl(0 0% 20%)")}
                     />
                   </div>
@@ -489,7 +489,7 @@ const SetupServer = () => {
                     onClick={() => serverName.trim() && setStep(3)}
                     disabled={!serverName.trim()}
                     className="flex-1 h-11 flex items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-40"
-                    style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+                    style={{ background: "hsl(262 95% 55%)", color: "white" }}>
                     Review <ChevronRight size={14} />
                   </button>
                 </div>
@@ -520,14 +520,14 @@ const SetupServer = () => {
                 </div>
 
                 <div className="rounded-sm px-4 py-3 mb-5 text-xs text-muted-foreground"
-                  style={{ background: "hsl(350 85% 6%)", border: "1px solid hsl(350 85% 20%)" }}>
+                  style={{ background: "hsl(262 95% 6%)", border: "1px solid hsl(262 95% 20%)" }}>
                   Your server will be automatically created and installed. This usually takes 30–60 seconds.
                   You'll be able to start it from your dashboard.
                 </div>
 
                 {submitError && (
                   <div className="rounded-sm px-4 py-3 mb-4 text-xs flex items-center gap-2"
-                    style={{ background: "hsl(350 85% 8%)", border: "1px solid hsl(350 85% 25%)", color: "hsl(350 85% 65%)" }}>
+                    style={{ background: "hsl(262 95% 8%)", border: "1px solid hsl(262 95% 25%)", color: "hsl(262 95% 76%)" }}>
                     <AlertCircle size={13} /> {submitError}
                   </div>
                 )}
@@ -542,7 +542,7 @@ const SetupServer = () => {
                     onClick={handleSubmit}
                     disabled={submitting}
                     className="flex-1 h-11 flex items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-60"
-                    style={{ background: "hsl(350 85% 45%)", color: "white" }}
+                    style={{ background: "hsl(262 95% 55%)", color: "white" }}
                   >
                     {submitting
                       ? <><Loader2 size={14} className="animate-spin" /> Creating server…</>
@@ -604,7 +604,7 @@ const SetupServer = () => {
                   </div>
 
                   {hostnameError && (
-                    <p className="text-[10px] mt-1" style={{ color: "hsl(350 85% 60%)" }}>{hostnameError}</p>
+                    <p className="text-[10px] mt-1" style={{ color: "hsl(262 95% 76%)" }}>{hostnameError}</p>
                   )}
 
                   <p className="text-[10px] text-muted-foreground/40 mt-2">
@@ -622,7 +622,7 @@ const SetupServer = () => {
                     onClick={submitHostname}
                     disabled={hostnameSubmitting || !hostnameAvail || hostname.length < 3}
                     className="flex-1 h-11 flex items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-40"
-                    style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+                    style={{ background: "hsl(262 95% 55%)", color: "white" }}>
                     {hostnameSubmitting
                       ? <><Loader2 size={14} className="animate-spin" /> Setting up…</>
                       : <><Check size={14} /> Claim Address</>

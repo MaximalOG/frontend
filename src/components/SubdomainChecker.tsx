@@ -81,12 +81,12 @@ const SubdomainChecker = () => {
               border: status === "available"
                 ? "1px solid hsl(142 70% 45%)"
                 : status === "taken" || status === "error"
-                ? "1px solid hsl(350 85% 50%)"
+                ? "1px solid hsl(262 95% 65%)"
                 : "1px solid hsl(0 0% 22%)",
               boxShadow: status === "available"
                 ? "0 0 14px hsl(142 70% 40% / 0.3)"
                 : status === "taken" || status === "error"
-                ? "0 0 14px hsl(350 85% 40% / 0.25)"
+                ? "0 0 14px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" "
                 : undefined,
               transition: "border-color 0.25s ease, box-shadow 0.25s ease",
               background: "hsl(0 0% 8%)",
@@ -112,9 +112,9 @@ const SubdomainChecker = () => {
               disabled={status === "checking" || !value.trim()}
               className="h-full px-4 py-3 text-xs font-semibold transition-all disabled:opacity-40 shrink-0"
               style={{
-                background: "hsl(350 85% 45%)",
+                background: "hsl(262 95% 55%)",
                 color: "white",
-                borderLeft: "1px solid hsl(350 85% 35%)",
+                borderLeft: "1px solid hsl(262 95% 45%)",
               }}
             >
               {status === "checking"
@@ -137,7 +137,7 @@ const SubdomainChecker = () => {
                 initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
                 className="mt-3 flex items-center gap-2 text-xs"
-                style={{ color: "hsl(350 85% 60%)" }}
+                style={{ color: "hsl(262 95% 76%)" }}
               >
                 <X className="w-3.5 h-3.5 shrink-0" />
                 Use only letters, numbers, and hyphens (min 3 characters)
@@ -180,7 +180,7 @@ const SubdomainChecker = () => {
                 transition={{ duration: 0.2 }}
                 className="mt-3"
               >
-                <div className="flex items-center gap-2 text-xs mb-2" style={{ color: "hsl(350 85% 60%)" }}>
+                <div className="flex items-center gap-2 text-xs mb-2" style={{ color: "hsl(262 95% 76%)" }}>
                   <X className="w-3.5 h-3.5 shrink-0" />
                   That name is already taken. Try one of these:
                 </div>

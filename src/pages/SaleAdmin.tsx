@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Tag, Save, ToggleLeft, ToggleRight, RefreshCw, Plus, Trash2,
@@ -52,7 +52,7 @@ const EMPTY_CODE: PromoCode = {
   freeType: "lifetime", freeMonths: null,
 };
 
-/* ── tiny helpers ─────────────────────────────────────── */
+/* -- tiny helpers --------------------------------------- */
 const isFree = (c: PromoCode) => c.discountType === "percent" && c.discount >= 100;
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -65,7 +65,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-/* ── plan pill row ──────────────────────────────────────── */
+/* -- plan pill row ---------------------------------------- */
 function PlanPicker({
   value, onChange,
 }: { value: "all" | string[]; onChange: (v: "all" | string[]) => void }) {
@@ -102,7 +102,7 @@ function PlanPicker({
   );
 }
 
-/* ═══════════════════════ MAIN PAGE ═══════════════════════ */
+/* ----------------------- MAIN PAGE ----------------------- */
 export default function SaleAdmin() {
   const [config, setConfig]           = useState<SaleConfig>(DEFAULT);
   const [loading, setLoading]         = useState(true);
@@ -192,11 +192,11 @@ export default function SaleAdmin() {
   );
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: "#0c0a08" }}>
+    <div className="min-h-screen pb-24" style={{ background: "#0D0B13" }}>
       <div className="container mx-auto px-4 max-w-6xl pt-10">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
 
-          {/* ── Page header ── */}
+          {/* -- Page header -- */}
           <div className="mb-8 flex items-center justify-between gap-4 flex-wrap">
             <div>
               <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2.5" style={{ color: "#f1f5f9" }}>
@@ -212,9 +212,9 @@ export default function SaleAdmin() {
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
 
-            {/* ══════════════════════════════════════════
+            {/* ------------------------------------------
                 LEFT: BANNER SALE  (2/5 width)
-            ══════════════════════════════════════════ */}
+            ------------------------------------------ */}
             <div className="lg:col-span-2">
               {canBanner ? (
                 <div className="rounded-2xl overflow-hidden"
@@ -229,7 +229,7 @@ export default function SaleAdmin() {
                           style={{ background: config.enabled ? "#22c55e" : "#475569", boxShadow: config.enabled ? "0 0 6px #22c55e" : "none" }} />
                         Public Banner Sale
                       </h2>
-                      <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>Shown automatically — no code needed</p>
+                      <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>Shown automatically � no code needed</p>
                     </div>
                     <button onClick={() => set("enabled", !config.enabled)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
@@ -260,7 +260,7 @@ export default function SaleAdmin() {
                         <select value={config.discountType} onChange={e => set("discountType", e.target.value as any)}
                           className="w-full bg-transparent text-sm outline-none" style={{ color: "#f1f5f9", background: "transparent" }}>
                           <option value="percent" style={{ background: "#1e1b2e" }}>Percentage (%)</option>
-                          <option value="fixed"   style={{ background: "#1e1b2e" }}>Fixed Amount (₹)</option>
+                          <option value="fixed"   style={{ background: "#1e1b2e" }}>Fixed Amount (?)</option>
                         </select>
                       </Field>
                     </div>
@@ -302,7 +302,7 @@ export default function SaleAdmin() {
                       className="w-full h-9 rounded-xl text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                       style={{ background: "linear-gradient(135deg, #991b1b, #dc2626)", color: "white" }}>
                       {savingBanner ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
-                      {savedBanner ? "Saved!" : savingBanner ? "Saving…" : "Save Banner Settings"}
+                      {savedBanner ? "Saved!" : savingBanner ? "Saving�" : "Save Banner Settings"}
                     </button>
                   </div>
                 </div>
@@ -310,16 +310,16 @@ export default function SaleAdmin() {
                 <div className="rounded-2xl p-5 opacity-50 cursor-not-allowed"
                   style={{ background: "#120f0b", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <p className="text-sm font-bold flex items-center gap-2" style={{ color: "#64748b" }}>
-                    <Shield size={14} /> Banner Sale — No Access
+                    <Shield size={14} /> Banner Sale � No Access
                   </p>
                   <p className="text-xs mt-1" style={{ color: "#334155" }}>You don't have permission to manage the banner sale.</p>
                 </div>
               )}
             </div>
 
-            {/* ══════════════════════════════════════════
+            {/* ------------------------------------------
                 RIGHT: PROMO CODES  (3/5 width)
-            ══════════════════════════════════════════ */}
+            ------------------------------------------ */}
             <div className="lg:col-span-3">
               {canCodes ? (
                 <div className="rounded-2xl overflow-hidden"
@@ -347,7 +347,7 @@ export default function SaleAdmin() {
                     </button>
                   </div>
 
-                  {/* ── Column header row ── */}
+                  {/* -- Column header row -- */}
                   {config.codes.length > 0 && (
                     <div className="grid px-5 py-2 text-[9px] mono uppercase tracking-widest"
                       style={{ gridTemplateColumns: "1fr 130px 80px 70px 32px", gap: "0 12px", color: "#334155", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
@@ -359,7 +359,7 @@ export default function SaleAdmin() {
                     </div>
                   )}
 
-                  {/* ── Code rows ── */}
+                  {/* -- Code rows -- */}
                   {config.codes.length === 0 ? (
                     <div className="py-14 text-center">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3"
@@ -383,7 +383,7 @@ export default function SaleAdmin() {
                             transition={{ delay: i * 0.04 }}
                             style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
 
-                            {/* ── Summary row (always visible) ── */}
+                            {/* -- Summary row (always visible) -- */}
                             <div className="grid items-center px-5 py-3 cursor-pointer group transition-colors"
                               style={{ gridTemplateColumns: "1fr 130px 80px 70px 32px", gap: "0 12px" }}
                               onClick={() => setExpandedCode(isOpen ? null : i)}
@@ -410,8 +410,8 @@ export default function SaleAdmin() {
                                   )}
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-0.5">
-                                  <span className="text-[11px] mono tracking-widest" style={{ color: "#e53935" }}>
-                                    {c.code || <span style={{ color: "#1e293b" }}>—</span>}
+                                  <span className="text-[11px] mono tracking-widest" style={{ color: "#A78BFA" }}>
+                                    {c.code || <span style={{ color: "#1e293b" }}>�</span>}
                                   </span>
                                   {c.code && (
                                     <button onClick={e => { e.stopPropagation(); copyCode(c.code, i); }}
@@ -434,7 +434,7 @@ export default function SaleAdmin() {
 
                               {/* Discount */}
                               <div className="text-xs font-bold mono" style={{ color: free ? "#4ade80" : "#fbbf24" }}>
-                                {free ? "100% off" : c.discountType === "percent" ? `${c.discount}%` : `₹${c.discount}`}
+                                {free ? "100% off" : c.discountType === "percent" ? `${c.discount}%` : `?${c.discount}`}
                               </div>
 
                               {/* Uses */}
@@ -450,7 +450,7 @@ export default function SaleAdmin() {
                               </div>
                             </div>
 
-                            {/* ── Expanded detail panel ── */}
+                            {/* -- Expanded detail panel -- */}
                             <AnimatePresence initial={false}>
                               {isOpen && (
                                 <motion.div
@@ -478,7 +478,7 @@ export default function SaleAdmin() {
                                       </Field>
                                     </div>
 
-                                    {/* Row 2: Discount — only shown if not 100% free */}
+                                    {/* Row 2: Discount � only shown if not 100% free */}
                                     <div className="grid grid-cols-3 gap-3">
                                       <Field label="Discount">
                                         <div className="flex items-center gap-1.5">
@@ -495,17 +495,17 @@ export default function SaleAdmin() {
                                           onChange={e => updateCode(i, "discountType", e.target.value as any)}
                                           className="w-full bg-transparent text-sm outline-none" style={{ color: "#f1f5f9", background: "transparent" }}>
                                           <option value="percent" style={{ background: "#1e1b2e" }}>Percent (%)</option>
-                                          <option value="fixed"   style={{ background: "#1e1b2e" }}>Fixed (₹)</option>
+                                          <option value="fixed"   style={{ background: "#1e1b2e" }}>Fixed (?)</option>
                                         </select>
                                       </Field>
-                                      <Field label="Max Uses (0=∞)">
+                                      <Field label="Max Uses (0=8)">
                                         <input type="number" min={0} value={c.maxUses ?? 0}
                                           onChange={e => updateCode(i, "maxUses", Number(e.target.value))}
                                           className="w-full bg-transparent text-sm outline-none" style={{ color: "#f1f5f9" }} />
                                       </Field>
                                     </div>
 
-                                    {/* Row 3: Free server duration — only visible when 100% discount */}
+                                    {/* Row 3: Free server duration � only visible when 100% discount */}
                                     {free && (
                                       <div className="rounded-xl p-4"
                                         style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.18)" }}>
@@ -537,7 +537,7 @@ export default function SaleAdmin() {
                                           </button>
                                         </div>
 
-                                        {/* Month count input — only when "months" selected */}
+                                        {/* Month count input � only when "months" selected */}
                                         {c.freeType === "months" && (
                                           <motion.div
                                             initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
@@ -561,7 +561,7 @@ export default function SaleAdmin() {
 
                                         {c.freeType === "lifetime" && (
                                           <p className="text-[10px] mt-2.5 text-center" style={{ color: "#334155" }}>
-                                            Server stays free permanently — no future billing
+                                            Server stays free permanently � no future billing
                                           </p>
                                         )}
                                       </div>
@@ -618,9 +618,9 @@ export default function SaleAdmin() {
                   <div className="px-5 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                     <button onClick={() => saveSection("codes")} disabled={savingCodes}
                       className="w-full h-9 rounded-xl text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
-                      style={{ background: "linear-gradient(135deg, #b91c1c, #e53935)", color: "white" }}>
+                      style={{ background: "linear-gradient(135deg, #b91c1c, #A78BFA)", color: "white" }}>
                       {savingCodes ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
-                      {savedCodes ? "Saved!" : savingCodes ? "Saving…" : "Save Promo Codes"}
+                      {savedCodes ? "Saved!" : savingCodes ? "Saving�" : "Save Promo Codes"}
                     </button>
                   </div>
                 </div>
@@ -628,7 +628,7 @@ export default function SaleAdmin() {
                 <div className="rounded-2xl p-5 opacity-50 cursor-not-allowed"
                   style={{ background: "#120f0b", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <p className="text-sm font-bold flex items-center gap-2" style={{ color: "#64748b" }}>
-                    <Shield size={14} /> Promo Codes — No Access
+                    <Shield size={14} /> Promo Codes � No Access
                   </p>
                   <p className="text-xs mt-1" style={{ color: "#334155" }}>You don't have permission to manage promo codes.</p>
                 </div>

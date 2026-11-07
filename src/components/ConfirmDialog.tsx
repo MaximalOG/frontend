@@ -38,9 +38,9 @@ const ConfirmDialog = ({
           className="w-full max-w-sm rounded-sm p-6 space-y-4"
           style={{
             background: "hsl(0 0% 8%)",
-            border: `1px solid ${danger ? "hsl(350 85% 30%)" : "hsl(0 0% 20%)"}`,
+            border: `1px solid ${danger ? "hsl(262 95% 40%)" : "hsl(0 0% 20%)"}`,
             boxShadow: danger
-              ? "0 0 40px hsl(350 85% 20% / 0.5), 0 8px 32px rgba(0,0,0,0.6)"
+              ? "0 0 40px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" , 0 8px 32px rgba(0,0,0,0.6)"
               : "0 8px 32px rgba(0,0,0,0.6)",
           }}
           onMouseDown={e => e.stopPropagation()}
@@ -62,7 +62,7 @@ const ConfirmDialog = ({
               onClick={onConfirm}
               className="px-4 py-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110"
               style={{
-                background: danger ? "hsl(350 85% 45%)" : "hsl(0 0% 20%)",
+                background: danger ? "hsl(262 95% 55%)" : "hsl(0 0% 20%)",
                 color: "white",
               }}
             >

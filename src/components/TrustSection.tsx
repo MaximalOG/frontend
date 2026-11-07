@@ -49,12 +49,12 @@ const TrustSection = () => (
             whileHover={{ y: -4 }}
             className="glass-surface rounded-sm p-6 group cursor-default"
             style={{ border: "1px solid hsl(0 0% 14%)", transition: "border-color 0.2s ease" }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = "hsl(350 85% 35%)")}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = "hsl(262 95% 45%)")}
             onMouseLeave={e => (e.currentTarget.style.borderColor = "hsl(0 0% 14%)")}
           >
             <div
               className="w-10 h-10 rounded-sm flex items-center justify-center mb-4"
-              style={{ background: "hsl(350 85% 10%)", border: "1px solid hsl(350 85% 25%)" }}
+              style={{ background: "hsl(262 95% 10%)", border: "1px solid hsl(262 95% 25%)" }}
             >
               <item.icon className="w-5 h-5 text-primary" />
             </div>

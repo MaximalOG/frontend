@@ -36,7 +36,7 @@ const VerifyEmail = () => {
         <p className="text-sm text-muted-foreground mb-6">{message}</p>
 
         {status === "success" && (
-          <Link to="/login" className="px-5 py-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110" style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+          <Link to="/login" className="px-5 py-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110" style={{ background: "hsl(262 95% 55%)", color: "white" }}>
             Sign In
           </Link>
         )}

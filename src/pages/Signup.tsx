@@ -52,7 +52,7 @@ const Signup = () => {
       <div className="flex-1 flex items-center justify-center px-4 py-16">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }} className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "hsl(350 85% 10%)", border: "1px solid hsl(350 85% 30%)" }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "hsl(262 95% 10%)", border: "1px solid hsl(262 95% 30%)" }}>
               <UserPlus size={20} className="text-primary" />
             </div>
             <h1 className="text-xl font-bold text-foreground tracking-tight">Create your account</h1>
@@ -76,7 +76,7 @@ const Signup = () => {
                   autoComplete={f.auto}
                   className="w-full rounded-sm px-3 py-2.5 text-sm text-foreground bg-transparent outline-none transition-all"
                   style={{ border: "1px solid hsl(0 0% 22%)" }}
-                  onFocus={e => (e.currentTarget.style.borderColor = "hsl(350 85% 45%)")}
+                  onFocus={e => (e.currentTarget.style.borderColor = "hsl(262 95% 55%)")}
                   onBlur={e => (e.currentTarget.style.borderColor = "hsl(0 0% 22%)")}
                 />
               </div>
@@ -84,9 +84,9 @@ const Signup = () => {
 
             <p className="text-[10px] text-muted-foreground/40">Username: 3–20 chars, letters/numbers/underscore only.</p>
 
-            {error && <p className="text-xs" style={{ color: "hsl(350 85% 60%)" }}>{error}</p>}
+            {error && <p className="text-xs" style={{ color: "hsl(262 95% 76%)" }}>{error}</p>}
 
-            <button type="submit" disabled={loading} className="w-full h-10 rounded-sm text-sm font-semibold flex items-center justify-center gap-2 transition-all hover:brightness-110 disabled:opacity-50" style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+            <button type="submit" disabled={loading} className="w-full h-10 rounded-sm text-sm font-semibold flex items-center justify-center gap-2 transition-all hover:brightness-110 disabled:opacity-50" style={{ background: "hsl(262 95% 55%)", color: "white" }}>
               {loading ? <><Loader2 size={14} className="animate-spin" /> Creating account…</> : "Create Account"}
             </button>
 

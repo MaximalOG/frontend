@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -32,7 +32,7 @@ const PRESET_CRONS = [
   { label: "Daily at midnight", cron: "0 0 * * *" },
   { label: "Daily at 6 AM",     cron: "0 6 * * *" },
   { label: "Weekly (Monday)",   cron: "0 0 * * 1" },
-  { label: "Custom…",           cron: "" },
+  { label: "Custom�",           cron: "" },
 ];
 
 const ACTION_CFG = {
@@ -136,7 +136,7 @@ export default function ServerSchedules() {
   };
 
   if (authLoading || loadingServer) return (
-    <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
+    <div className="flex items-center justify-center h-screen" style={{ background: "#0D0B13" }}>
       <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#94a3b8" }} />
     </div>
   );
@@ -243,7 +243,7 @@ export default function ServerSchedules() {
                 style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
               <button onClick={createSchedule} disabled={creating}
                 className="flex-1 h-9 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-40"
-                style={{ background: "linear-gradient(135deg,#b91c1c,#e53935)", color: "white" }}>
+                style={{ background: "linear-gradient(135deg,hsl(262 80% 40%),hsl(262 95% 55%))", color: "white" }}>
                 {creating ? <Loader2 size={12} className="animate-spin mx-auto" /> : "Create Schedule"}
               </button>
             </div>

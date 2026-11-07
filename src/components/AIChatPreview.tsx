@@ -24,7 +24,7 @@ const AIChatPreview = () => {
             viewport={{ once: true }}
             transition={{ delay: 0.1, duration: 0.5, ease }}
             className="glass-surface rounded-sm overflow-hidden mb-6"
-            style={{ border: "1px solid hsl(350 85% 30% / 0.4)" }}
+            style={{ border: "1px solid  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " }}
           >
             {/* Chat header */}
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50" style={{ background: "hsl(0 0% 8%)" }}>
@@ -35,7 +35,7 @@ const AIChatPreview = () => {
             {/* Messages */}
             <div className="p-4 space-y-3">
               <div className="flex justify-end">
-                <div className="px-3 py-2 rounded-sm text-xs text-white max-w-[75%]" style={{ background: "hsl(350 85% 45%)" }}>
+                <div className="px-3 py-2 rounded-sm text-xs text-white max-w-[75%]" style={{ background: "hsl(262 95% 55%)" }}>
                   I want a server for 10 players
                 </div>
               </div>

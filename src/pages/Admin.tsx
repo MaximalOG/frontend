@@ -1,4 +1,4 @@
-﻿import { useEffect } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { Ticket, Tag, Users, LogOut, ChevronRight, Lock, Star, DollarSign } from "lucide-react";
@@ -22,9 +22,9 @@ const Admin = () => {
       icon: Ticket,
       title: "Support Tickets",
       desc: "View and manage customer support tickets, reply to users, and track ticket status.",
-      color: "hsl(350 85% 45%)",
-      border: "hsl(350 85% 30%)",
-      glow: "hsl(350 85% 40% / 0.3)",
+      color: "hsl(262 95% 55%)",
+      border: "hsl(262 95% 40%)",
+      glow: " "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" ",
       allowed: hasPermission("tickets"),
     },
     {
@@ -32,8 +32,8 @@ const Admin = () => {
       icon: Tag,
       title: "Sale Manager",
       desc: "Create public banners or secret promo codes, set discounts, and control sale dates.",
-      color: "hsl(38 92% 45%)",
-      border: "hsl(38 92% 30%)",
+      color: "hsl(262 80% 30%)",
+      border: "hsl(262 95% 40%)",
       glow: "hsl(270 70% 50% / 0.3)",
       allowed: hasPermission("banner_sale") || hasPermission("promo_codes"),
     },
@@ -42,9 +42,18 @@ const Admin = () => {
       icon: Users,
       title: "Staff Management",
       desc: isOwner ? "Add staff members, set permissions, and manage team access." : "Only the owner can manage staff.",
-      color: isOwner ? "hsl(38 90% 55%)" : "hsl(0 0% 35%)",
-      border: isOwner ? "hsl(38 90% 30%)" : "hsl(0 0% 20%)",
-      glow: isOwner ? "hsl(38 90% 50% / 0.3)" : "transparent",
+      color: isOwner ? "hsl(262 95% 70%)" : "hsl(0 0% 35%)",
+      border: isOwner ? " 
+    $m = $args[0].Value
+    $l = [regex]::Match($m, 'hsl\(38 \d+% (\d+)%\)').Groups[1].Value
+    "hsl(262 95% ${l}%)"
+  " : "hsl(0 0% 20%)",
+      glow: isOwner ? "
+    $m = $args[0].Value
+    $l = [regex]::Match($m, '(\d+)%\)').Groups[1].Value
+    $a = [regex]::Match($m, '/ ([\d.]+)\)').Groups[1].Value
+    "hsl(262 95% ${l}% / ${a})"
+  " : "transparent",
       allowed: true,
       ownerOnly: true,
     },
@@ -53,9 +62,18 @@ const Admin = () => {
       icon: Star,
       title: "Customer Feedback",
       desc: "View star ratings and comments submitted after support tickets. Send follow-up questions.",
-      color: "hsl(38 90% 55%)",
-      border: "hsl(38 90% 30%)",
-      glow: "hsl(38 90% 50% / 0.3)",
+      color: "hsl(262 95% 70%)",
+      border: " 
+    $m = $args[0].Value
+    $l = [regex]::Match($m, 'hsl\(38 \d+% (\d+)%\)').Groups[1].Value
+    "hsl(262 95% ${l}%)"
+  ",
+      glow: "
+    $m = $args[0].Value
+    $l = [regex]::Match($m, '(\d+)%\)').Groups[1].Value
+    $a = [regex]::Match($m, '/ ([\d.]+)\)').Groups[1].Value
+    "hsl(262 95% ${l}% / ${a})"
+  ",
       allowed: hasPermission("feedback"),
     },
     {
@@ -86,7 +104,7 @@ const Admin = () => {
             <h1 className="text-3xl font-bold tracking-tighter text-foreground">Admin Panel</h1>
             <p className="text-sm text-muted-foreground mt-1">
               Signed in as <span className="text-foreground font-medium">{user.username}</span>
-              {isOwner && <span className="ml-2 px-1.5 py-0.5 rounded-sm text-[9px] mono uppercase" style={{ background: "hsl(350 85% 15%)", color: "hsl(350 85% 65%)", border: "1px solid hsl(350 85% 30%)" }}>Owner</span>}
+              {isOwner && <span className="ml-2 px-1.5 py-0.5 rounded-sm text-[9px] mono uppercase" style={{ background: "hsl(262 95% 15%)", color: "hsl(262 95% 76%)", border: "1px solid hsl(262 95% 40%)" }}>Owner</span>}
             </p>
           </div>
           <button

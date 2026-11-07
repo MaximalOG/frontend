@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Cpu, HardDrive, Zap, Shield, Target, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import AdBanner from "@/components/AdBanner";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -156,7 +157,7 @@ const About = () => {
                 style={{ border: "1px solid hsl(0 0% 14%)" }}
               >
                 <div className="w-8 h-8 rounded-sm flex items-center justify-center shrink-0 mt-0.5"
-                  style={{ background: "hsl(350 85% 10%)", border: "1px solid hsl(350 85% 20%)" }}>
+                  style={{ background: "hsl(262 95% 10%)", border: "1px solid hsl(262 95% 20%)" }}>
                   <item.icon className="w-4 h-4 text-primary" />
                 </div>
                 <div>
@@ -195,6 +196,7 @@ const About = () => {
         </div>
       </section>
 
+      <AdBanner slot="REPLACE_WITH_SLOT_ID" className="py-6 px-4" />
       <Footer />
     </div>
   );

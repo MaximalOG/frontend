@@ -114,7 +114,7 @@ const Checkout = () => {
             <button
               onClick={() => navigate("/pricing")}
               className="px-5 py-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110"
-              style={{ background: "hsl(350 85% 45%)", color: "white" }}
+              style={{ background: "hsl(262 95% 55%)", color: "white" }}
             >
               Back to Pricing
             </button>
@@ -228,7 +228,7 @@ const Checkout = () => {
           name:             "NetherNodes",
           description:      `${planName} Plan — ₹${order.finalPrice}/month`,
           prefill:          { email },
-          theme:            { color: "#e53935" },
+          theme:            { color: "#A78BFA" },
           modal:            { ondismiss: () => setLoading(false) },
           handler: async (response: any) => {
             try {
@@ -301,7 +301,7 @@ const Checkout = () => {
           ? `${planName} Plan — ₹${order.originalPrice} - ₹${order.discountAmount} discount = ₹${order.finalPrice}`
           : `${planName} Plan — ${plan.ram} RAM`,
         prefill: { email },
-        theme: { color: "#e53935" },
+        theme: { color: "#A78BFA" },
         modal: { ondismiss: () => setLoading(false) },
         handler: async (response: any) => {
           try {
@@ -355,7 +355,7 @@ const Checkout = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               className="glass-surface rounded-sm p-8 max-w-sm w-full mx-4 text-center"
-              style={{ border: "1px solid hsl(350 85% 30%)" }}
+              style={{ border: "1px solid hsl(262 95% 40%)" }}
             >
               <motion.div
                 animate={{ rotate: 360 }}
@@ -402,16 +402,16 @@ const Checkout = () => {
         >
           {/* ── LEFT: Plan Summary ── */}
           <div className="glass-surface rounded-sm p-6 flex flex-col gap-4 relative overflow-hidden"
-            style={{ border: "1px solid hsl(350 85% 35%)", boxShadow: "0 0 30px hsl(350 85% 30% / 0.2)" }}>
+            style={{ border: "1px solid hsl(262 95% 45%)", boxShadow: "0 0 30px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " }}>
 
             {/* Animated border glow */}
             <div className="absolute inset-0 rounded-sm pointer-events-none"
-              style={{ background: "linear-gradient(135deg, hsl(350 85% 30% / 0.08) 0%, transparent 60%)" }} />
+              style={{ background: "linear-gradient(135deg,  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))"  0%, transparent 60%)" }} />
 
             {/* Popular badge */}
             {plan.popular && (
               <div className="absolute top-3 right-3 px-2 py-0.5 rounded-sm text-[9px] font-bold mono uppercase flex items-center gap-1"
-                style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+                style={{ background: "hsl(262 95% 55%)", color: "white" }}>
                 🔥 Most Chosen
               </div>
             )}
@@ -423,7 +423,7 @@ const Checkout = () => {
             </div>
 
             {/* Price with animation */}
-            <div className="rounded-sm px-4 py-3" style={{ background: "hsl(350 85% 10%)", border: "1px solid hsl(350 85% 25%)" }}>
+            <div className="rounded-sm px-4 py-3" style={{ background: "hsl(262 95% 10%)", border: "1px solid hsl(262 95% 25%)" }}>
               <p className="text-[10px] text-muted-foreground/50 mono uppercase tracking-wider mb-1">Price Breakdown</p>
               <div className="flex items-baseline gap-2">
                 <AnimatePresence mode="wait">
@@ -480,7 +480,7 @@ const Checkout = () => {
 
             {/* Scarcity */}
             <div className="rounded-sm px-3 py-2 text-[10px] flex items-center gap-2"
-              style={{ background: "hsl(38 90% 10%)", border: "1px solid hsl(38 90% 25%)", color: "hsl(38 90% 65%)" }}>
+              style={{ background: "hsl(262 95% 10%)", border: "1px solid hsl(262 95% 25%)", color: "hsl(262 95% 76%)" }}>
               <Zap size={11} className="shrink-0" />
               ⚡ Limited slots available — Early Access Phase
             </div>
@@ -507,11 +507,11 @@ const Checkout = () => {
                 readOnly
                 placeholder="your account email"
                 className="w-full rounded-sm px-3 py-2.5 text-sm text-foreground bg-transparent outline-none transition-all"
-                style={{ border: emailError ? "1px solid hsl(350 85% 50%)" : "1px solid hsl(0 0% 22%)" }}
-                onFocus={e => (e.currentTarget.style.borderColor = "hsl(350 85% 45%)")}
-                onBlur={e => (e.currentTarget.style.borderColor = emailError ? "hsl(350 85% 50%)" : "hsl(0 0% 22%)")}
+                style={{ border: emailError ? "1px solid hsl(262 95% 65%)" : "1px solid hsl(0 0% 22%)" }}
+                onFocus={e => (e.currentTarget.style.borderColor = "hsl(262 95% 55%)")}
+                onBlur={e => (e.currentTarget.style.borderColor = emailError ? "hsl(262 95% 65%)" : "hsl(0 0% 22%)")}
               />
-              {emailError && <p className="text-[10px] mt-1" style={{ color: "hsl(350 85% 60%)" }}>{emailError}</p>}
+              {emailError && <p className="text-[10px] mt-1" style={{ color: "hsl(262 95% 76%)" }}>{emailError}</p>}
             </div>
 
             {/* Coupon */}
@@ -541,7 +541,7 @@ const Checkout = () => {
                 ) : (
                   <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                     className="flex rounded-sm overflow-hidden"
-                    style={{ border: couponStatus === "invalid" ? "1px solid hsl(350 85% 40%)" : "1px solid hsl(0 0% 22%)", background: "hsl(0 0% 8%)" }}>
+                    style={{ border: couponStatus === "invalid" ? "1px solid hsl(262 95% 50%)" : "1px solid hsl(0 0% 22%)", background: "hsl(0 0% 8%)" }}>
                     <Tag size={13} className="text-muted-foreground ml-3 self-center shrink-0" />
                     <input value={couponInput}
                       onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponStatus("idle"); }}
@@ -551,20 +551,20 @@ const Checkout = () => {
                     />
                     <button onClick={applyCoupon} disabled={!couponInput.trim() || couponStatus === "checking"}
                       className="px-3 text-xs font-semibold transition-all disabled:opacity-40"
-                      style={{ background: "hsl(350 85% 45%)", color: "white", borderLeft: "1px solid hsl(350 85% 35%)" }}>
+                      style={{ background: "hsl(262 95% 55%)", color: "white", borderLeft: "1px solid hsl(262 95% 45%)" }}>
                       {couponStatus === "checking" ? <Loader2 size={12} className="animate-spin" /> : "Apply"}
                     </button>
                   </motion.div>
                 )}
               </AnimatePresence>
               {couponStatus === "invalid" && (
-                <p className="text-[10px] mt-1" style={{ color: "hsl(350 85% 60%)" }}>Invalid or expired coupon code.</p>
+                <p className="text-[10px] mt-1" style={{ color: "hsl(262 95% 76%)" }}>Invalid or expired coupon code.</p>
               )}
             </div>
 
             {/* Error */}
             {error && (
-              <div className="rounded-sm px-3 py-2 text-xs" style={{ background: "hsl(350 85% 10%)", border: "1px solid hsl(350 85% 30%)", color: "hsl(350 85% 65%)" }}>
+              <div className="rounded-sm px-3 py-2 text-xs" style={{ background: "hsl(262 95% 10%)", border: "1px solid hsl(262 95% 40%)", color: "hsl(262 95% 76%)" }}>
                 {error}
               </div>
             )}
@@ -608,10 +608,10 @@ const Checkout = () => {
                   }
                 } : handlePay}
                 disabled={loading}
-                whileHover={{ scale: 1.02, boxShadow: "0 0 32px hsl(350 85% 50% / 0.6)" }}
+                whileHover={{ scale: 1.02, boxShadow: "0 0 32px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full h-12 rounded-sm font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-                style={{ background: "hsl(350 85% 45%)", color: "white", boxShadow: "0 0 20px hsl(350 85% 40% / 0.4)" }}
+                style={{ background: "hsl(262 95% 55%)", color: "white", boxShadow: "0 0 20px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " }}
               >
                 {loading ? (
                   <><Loader2 size={16} className="animate-spin" /> Setting up your server…</>

@@ -368,14 +368,14 @@ const ChatBot = () => {
               height: isDone ? "auto" : "min(500px, calc(100vh - 120px))",
               maxHeight: "min(560px, calc(100vh - 100px))",
               background: "hsl(0 0% 6%)",
-              border: "1px solid hsl(350, 85%, 40%)",
-              boxShadow: "0 0 30px hsl(350 85% 30% / 0.4), 0 8px 32px rgba(0,0,0,0.6)",
+              border: "1px solid hsl(262, 95%, 50%)",
+              boxShadow: "0 0 30px hsl(262 95% 60% / 0.35), 0 8px 32px rgba(0,0,0,0.6)",
             }}
           >
             {/* Header */}
             <div
               className="flex items-center justify-between px-4 py-3 border-b shrink-0"
-              style={{ borderColor: "hsl(350 85% 30% / 0.4)", background: "hsl(0 0% 8%)" }}
+              style={{ borderColor: "hsl(262 95% 40% / 0.4)", background: "hsl(254 22% 9%)" }}
             >
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
@@ -402,7 +402,7 @@ const ChatBot = () => {
                     className={`max-w-[82%] px-3 py-2 rounded-sm text-xs leading-relaxed ${msg.role === "ai" ? "" : "whitespace-pre-line"}`}
                     style={
                       msg.role === "user"
-                        ? { background: "hsl(350 85% 45%)", color: "white" }
+                        ? { background: "hsl(262 95% 45%)", color: "white" }
                         : msg.isTicket
                         ? { background: "hsl(142 60% 10%)", color: "hsl(142 70% 70%)", border: "1px solid hsl(142 60% 25%)" }
                         : { background: "hsl(0 0% 12%)", color: "hsl(0 0% 85%)", border: "1px solid hsl(0 0% 18%)" }
@@ -424,7 +424,7 @@ const ChatBot = () => {
                         to="/pricing"
                         onClick={() => sessionStorage.setItem("nn_recommended_plan", msg.recommendedPlan!)}
                         className="px-3 py-1.5 rounded-sm text-[11px] font-medium text-white transition-all hover:brightness-110"
-                        style={{ background: "hsl(350 85% 45%)", border: "1px solid hsl(350 85% 55%)", boxShadow: "0 0 10px hsl(350 85% 40% / 0.4)" }}
+                        style={{ background: "hsl(262 95% 45%)", border: "1px solid hsl(262 95% 60%)", boxShadow: "0 0 10px hsl(262 95% 60% / 0.4)" }}
                       >
                         Start {msg.recommendedPlan}{msg.ramRequired ? ` (${msg.ramRequired})` : ""}
                       </Link>
@@ -492,10 +492,10 @@ const ChatBot = () => {
                               className="transition-colors"
                               style={{
                                 fill: star <= (feedbackHover || feedbackRating)
-                                  ? "hsl(38 90% 55%)"
+                                  ? "hsl(262 95% 76%)"
                                   : "transparent",
                                 color: star <= (feedbackHover || feedbackRating)
-                                  ? "hsl(38 90% 55%)"
+                                  ? "hsl(262 95% 76%)"
                                   : "hsl(0 0% 30%)",
                               }}
                             />
@@ -517,7 +517,7 @@ const ChatBot = () => {
                       rows={2}
                       className="w-full rounded-sm px-3 py-2 text-xs text-white placeholder:text-muted-foreground/40 bg-transparent outline-none resize-none"
                       style={{ border: "1px solid hsl(0 0% 20%)" }}
-                      onFocus={e => (e.currentTarget.style.borderColor = "hsl(350 85% 40%)")}
+                      onFocus={e => (e.currentTarget.style.borderColor = "hsl(262 95% 55%)")}
                       onBlur={e => (e.currentTarget.style.borderColor = "hsl(0 0% 20%)")}
                     />
 
@@ -525,7 +525,7 @@ const ChatBot = () => {
                       onClick={submitFeedback}
                       disabled={feedbackRating === 0 || feedbackSubmitting}
                       className="w-full h-8 rounded-sm text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-40"
-                      style={{ background: "hsl(350 85% 45%)", color: "white" }}
+                      style={{ background: "hsl(262 95% 55%)", color: "white" }}
                     >
                       {feedbackSubmitting ? "Submitting…" : "Submit Feedback"}
                     </button>
@@ -556,8 +556,8 @@ const ChatBot = () => {
                 <div
                   className="px-3 py-3 border-t flex gap-2 items-center shrink-0"
                   style={{
-                    borderColor: escalation !== "none" ? "hsl(142 60% 25% / 0.6)" : "hsl(350 85% 30% / 0.4)",
-                    background: "hsl(0 0% 8%)",
+                    borderColor: escalation !== "none" ? "hsl(142 60% 25% / 0.6)" : "hsl(262 95% 55% / 0.35)",
+                    background: "hsl(254 22% 9%)",
                   }}
                 >
                   <input ref={fileInputRef} type="file" accept="image/*,.txt,.log,.yml,.yaml,.json,.properties,.cfg,.conf,.toml" onChange={handleFileSelect} className="hidden" />
@@ -609,8 +609,8 @@ const ChatBot = () => {
             style={{
               position: "absolute", inset: -5, borderRadius: "50%",
               border: "2px solid transparent",
-              borderTopColor: "hsl(350 85% 60%)",
-              borderRightColor: "hsl(38 92% 50%)",
+              borderTopColor: "hsl(262 95% 76%)",
+              borderRightColor: "hsl(262 60% 55%)",
               pointerEvents: "none",
             }}
           />
@@ -619,12 +619,12 @@ const ChatBot = () => {
           <motion.div
             animate={{ scale: [1, 1.4, 1], opacity: [0.45, 0, 0.45] }}
             transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-            style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "hsl(350 85% 50% / 0.25)", pointerEvents: "none" }}
+            style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "hsl(262 95% 76% / 0.2)", pointerEvents: "none" }}
           />
         )}
         <motion.button
           onClick={() => setOpen(v => !v)}
-          whileHover={{ scale: 1.1, boxShadow: "0 0 36px hsl(350 85% 55% / 0.9), 0 0 64px hsl(350 85% 40% / 0.45)" }}
+          whileHover={{ scale: 1.1, boxShadow: "0 0 36px hsl(262 95% 76% / 0.9), 0 0 64px hsl(262 95% 60% / 0.45)" }}
           whileTap={{ scale: 0.92 }}
           animate={!open ? { y: [0, -4, 0] } : { y: 0 }}
           transition={!open ? { y: { duration: 3, repeat: Infinity, ease: "easeInOut" } } : {}}
@@ -634,10 +634,10 @@ const ChatBot = () => {
             cursor: "pointer", border: "none", padding: 0,
             background: open
               ? "radial-gradient(circle at 35% 35%, hsl(0 0% 18%), hsl(0 0% 8%))"
-              : "radial-gradient(circle at 35% 35%, hsl(350 85% 62%), hsl(350 85% 36%))",
+              : "radial-gradient(circle at 35% 35%, hsl(262 95% 76%), hsl(262 80% 50%))",
             boxShadow: open
-              ? "0 0 20px hsl(350 85% 40% / 0.5), inset 0 1px 0 rgba(255,255,255,0.12)"
-              : "0 0 24px hsl(350 85% 50% / 0.7), 0 0 48px hsl(350 85% 40% / 0.35), inset 0 1px 0 rgba(255,255,255,0.2)",
+              ? "0 0 20px hsl(262 95% 60% / 0.5), inset 0 1px 0 rgba(255,255,255,0.12)"
+              : "0 0 24px hsl(262 95% 76% / 0.7), 0 0 48px hsl(262 95% 60% / 0.35), inset 0 1px 0 rgba(255,255,255,0.2)",
           }}
         >
           <div style={{ position: "absolute", top: "18%", left: "20%", width: "28%", height: "28%", borderRadius: "50%", background: "rgba(255,255,255,0.32)", filter: "blur(2px)", pointerEvents: "none" }} />

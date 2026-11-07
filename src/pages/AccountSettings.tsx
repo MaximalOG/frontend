@@ -108,7 +108,7 @@ const AccountSettings = () => {
             <p className="text-[9px] mono uppercase tracking-widest text-muted-foreground/40 mb-3">Your Account</p>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-                style={{ background: "hsl(350 85% 25%)", color: "hsl(350 85% 70%)" }}>
+                style={{ background: "hsl(262 95% 25%)", color: "hsl(262 95% 76%)" }}>
                 {user?.name?.charAt(0)?.toUpperCase()}
               </div>
               <div>
@@ -161,7 +161,7 @@ const AccountSettings = () => {
                   </p>
                   <button onClick={handleUnlink} disabled={unlinking}
                     className="flex items-center gap-2 px-4 py-2 rounded-sm text-xs font-medium transition-all hover:brightness-110 disabled:opacity-50"
-                    style={{ background: "hsl(350 85% 10%)", color: "hsl(350 85% 55%)", border: "1px solid hsl(350 85% 22%)" }}>
+                    style={{ background: "hsl(262 95% 10%)", color: "hsl(262 95% 70%)", border: "1px solid hsl(262 95% 22%)" }}>
                     {unlinking ? <Loader2 size={12} className="animate-spin" /> : <Unlink size={12} />}
                     Unlink Discord
                   </button>
@@ -220,7 +220,7 @@ const AccountSettings = () => {
                         </div>
                         {linkError && (
                           <div className="flex items-center gap-1.5 mt-2 text-xs"
-                            style={{ color: "hsl(350 85% 60%)" }}>
+                            style={{ color: "hsl(262 95% 76%)" }}>
                             <AlertCircle size={11} /> {linkError}
                           </div>
                         )}

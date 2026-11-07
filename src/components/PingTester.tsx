@@ -8,9 +8,9 @@ type PingStatus = "idle" | "testing" | "done" | "error";
 
 function getPingColor(ms: number): string {
   if (ms < 60)  return "hsl(142 70% 55%)";  // green — excellent
-  if (ms < 120) return "hsl(38 90% 55%)";   // yellow — good
-  if (ms < 200) return "hsl(38 70% 50%)";   // orange — fair
-  return "hsl(350 85% 55%)";                // red — high
+  if (ms < 120) return "hsl(262 95% 70%)";   // yellow — good
+  if (ms < 200) return "hsl(262 95% 65%)";   // orange — fair
+  return "hsl(262 95% 70%)";                // red — high
 }
 
 function getPingLabel(ms: number): string {
@@ -113,7 +113,7 @@ const PingTester = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex items-center gap-1.5 text-xs"
-              style={{ color: "hsl(350 85% 55%)" }}
+              style={{ color: "hsl(262 95% 70%)" }}
             >
               <WifiOff size={13} />
               Could not reach server

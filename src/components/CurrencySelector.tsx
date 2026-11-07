@@ -53,8 +53,8 @@ const CurrencySelector = ({ currency, onChange }: Props) => {
               onClick={() => { onChange(c); setOpen(false); }}
               className="w-full flex items-center gap-2 px-3 py-2 text-xs transition-all text-left"
               style={{
-                background: c === currency ? "hsl(350 85% 15%)" : "transparent",
-                color: c === currency ? "hsl(350 85% 65%)" : "hsl(0 0% 70%)",
+                background: c === currency ? "hsl(262 95% 15%)" : "transparent",
+                color: c === currency ? "hsl(262 95% 76%)" : "hsl(0 0% 70%)",
               }}
               onMouseEnter={e => { if (c !== currency) (e.currentTarget as HTMLElement).style.background = "hsl(0 0% 12%)"; }}
               onMouseLeave={e => { if (c !== currency) (e.currentTarget as HTMLElement).style.background = "transparent"; }}

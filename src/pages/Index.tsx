@@ -10,12 +10,15 @@ import AISection from "@/components/AISection";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import AIChatPreview from "@/components/AIChatPreview";
+import AdBanner from "@/components/AdBanner";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <HeroSection />
+      {/* Ad — shown only to non-paid / not-logged-in visitors */}
+      <AdBanner slot="REPLACE_WITH_SLOT_ID" className="py-4 px-4" />
       <FeaturesSection />
       <WhyChooseSection />
       <HowItWorks />
@@ -28,6 +31,7 @@ const Index = () => {
       <Footer />
     </div>
   );
+};
 };
 
 export default Index;

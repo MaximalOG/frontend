@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -32,7 +32,7 @@ function formatSize(b: number): string {
 
 function formatDate(iso: string): string {
   try { return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }); }
-  catch { return "—"; }
+  catch { return "�"; }
 }
 
 const TEXT_EXTS = new Set([
@@ -43,7 +43,7 @@ const TEXT_EXTS = new Set([
 const isEditable = (name: string) =>
   TEXT_EXTS.has(name.split(".").pop()?.toLowerCase() ?? "");
 
-// ── Syntax highlighting ───────────────────────────────────────────────────────
+// -- Syntax highlighting -------------------------------------------------------
 
 function escHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -79,7 +79,7 @@ const C = {
 
 function sp(style: string, text: string) { return `<span style="${style}">${text}</span>`; }
 
-// ── Shared helpers ────────────────────────────────────────────────────────────
+// -- Shared helpers ------------------------------------------------------------
 
 function colorKVValue(raw: string): string {
   const v = raw.trim();
@@ -90,7 +90,7 @@ function colorKVValue(raw: string): string {
   return sp(C.valStr, escHtml(raw));
 }
 
-// ── properties / cfg / ini / env / conf ──────────────────────────────────────
+// -- properties / cfg / ini / env / conf --------------------------------------
 
 function highlightProperties(text: string): string {
   return text.split("\n").map(line => {
@@ -108,7 +108,7 @@ function highlightProperties(text: string): string {
   }).join("\n");
 }
 
-// ── YAML / yml ────────────────────────────────────────────────────────────────
+// -- YAML / yml ----------------------------------------------------------------
 
 function highlightYaml(text: string): string {
   return text.split("\n").map(line => {
@@ -138,7 +138,7 @@ function highlightYaml(text: string): string {
   }).join("\n");
 }
 
-// ── TOML ──────────────────────────────────────────────────────────────────────
+// -- TOML ----------------------------------------------------------------------
 
 function highlightToml(text: string): string {
   return text.split("\n").map(line => {
@@ -161,10 +161,10 @@ function highlightToml(text: string): string {
   }).join("\n");
 }
 
-// ── JSON ──────────────────────────────────────────────────────────────────────
+// -- JSON ----------------------------------------------------------------------
 
 function highlightJson(text: string): string {
-  // Token-by-token pass — simple but effective
+  // Token-by-token pass � simple but effective
   let out = "";
   let i = 0;
   while (i < text.length) {
@@ -196,13 +196,13 @@ function highlightJson(text: string): string {
     if (text.startsWith("null",  i)) { out += sp(C.null_,     "null");  i += 4; continue; }
     // Punctuation
     if ("{}[]:,".includes(ch)) { out += sp(C.punct, escHtml(ch)); i++; continue; }
-    // Newline / whitespace — preserve as-is
+    // Newline / whitespace � preserve as-is
     out += escHtml(ch); i++;
   }
   return out;
 }
 
-// ── XML / HTML ────────────────────────────────────────────────────────────────
+// -- XML / HTML ----------------------------------------------------------------
 
 function highlightXml(text: string): string {
   return text
@@ -223,7 +223,7 @@ function highlightXml(text: string): string {
     .replace(/\x00LT\x00/g, "&lt;").replace(/\x00GT\x00/g, "&gt;");
 }
 
-// ── Shell / bash ──────────────────────────────────────────────────────────────
+// -- Shell / bash --------------------------------------------------------------
 
 const SH_KEYWORDS = new Set(["if","then","else","elif","fi","for","while","do","done",
   "case","esac","in","function","return","exit","echo","export","source","cd","set",
@@ -251,7 +251,7 @@ function highlightShell(text: string): string {
   }).join("\n");
 }
 
-// ── Plain text / log / md / txt ───────────────────────────────────────────────
+// -- Plain text / log / md / txt -----------------------------------------------
 
 function highlightLog(text: string): string {
   return text.split("\n").map(line => {
@@ -291,7 +291,7 @@ function highlightMarkdown(text: string): string {
   }).join("\n");
 }
 
-// ── Dispatcher ────────────────────────────────────────────────────────────────
+// -- Dispatcher ----------------------------------------------------------------
 
 function highlight(text: string, ext: string): string {
   switch (ext) {
@@ -321,13 +321,13 @@ function highlight(text: string, ext: string): string {
     case "md":
     case "markdown":
       return highlightMarkdown(text);
-    // txt / java / py / ts / js / css — plain with escaping
+    // txt / java / py / ts / js / css � plain with escaping
     default:
       return text.split("\n").map(l => escHtml(l) || "").join("\n");
   }
 }
 
-// ── Highlight editor — scroll-synced overlay ─────────────────────────────────
+// -- Highlight editor � scroll-synced overlay ---------------------------------
 // The textarea is the scroll driver (it has the real scrollbar).
 // The <pre> sits behind it and its scroll position is kept in sync via onScroll.
 // This prevents the two layers drifting apart and eliminates the ghost-text glitch.
@@ -345,7 +345,7 @@ const HighlightEditor = ({
 
   return (
     <div className="flex-1 relative overflow-hidden" style={{ minHeight: 300 }}>
-      {/* Highlighted backdrop — scroll is driven by the textarea below */}
+      {/* Highlighted backdrop � scroll is driven by the textarea below */}
       <pre
         ref={preRef}
         aria-hidden="true"
@@ -357,7 +357,7 @@ const HighlightEditor = ({
         }}
         dangerouslySetInnerHTML={{ __html: highlight(content, ext) + "\n" }}
       />
-      {/* Textarea — the only scrollable element; text is transparent so the pre shows through */}
+      {/* Textarea � the only scrollable element; text is transparent so the pre shows through */}
       <textarea
         value={content}
         onChange={e => onChange(e.target.value)}
@@ -500,7 +500,7 @@ const ServerFiles = () => {
   };
 
   if (authLoading || loadingServer) return (
-    <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
+    <div className="flex items-center justify-center h-screen" style={{ background: "#0D0B13" }}>
       <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#94a3b8" }} />
     </div>
   );
@@ -510,7 +510,7 @@ const ServerFiles = () => {
     return a.attributes.name.localeCompare(b.attributes.name);
   });
 
-  /* ── The files page needs full-height flex layout inside the shell.
+  /* -- The files page needs full-height flex layout inside the shell.
      ServerPageShell provides the sidebar + mobile drawer; the children
      slot gets the scrollable content area. We break out of the normal
      padding by using a negative-margin trick on the inner container.    */
@@ -527,7 +527,7 @@ const ServerFiles = () => {
           const BINARY  = new Set(["png","gif","webp","ico","jpg","jpeg","jar","zip"]);
           const blocked = Array.from(list).filter(f => !ALLOWED.has(f.name.split(".").pop()?.toLowerCase() ?? ""));
           if (blocked.length > 0) {
-            setError(`Cannot upload: ${blocked.map(f => f.name).join(", ")} — file type not allowed.`);
+            setError(`Cannot upload: ${blocked.map(f => f.name).join(", ")} � file type not allowed.`);
             e.target.value = ""; return;
           }
           setUploading(true);
@@ -558,7 +558,7 @@ const ServerFiles = () => {
         }}
       />
 
-      {/* Full-height file browser — nether background */}
+      {/* Full-height file browser � nether background */}
       <div className="flex flex-col overflow-hidden relative rounded-xl"
         style={{ height: "calc(100vh - 120px)", minHeight: 400 }}>
 
@@ -645,7 +645,7 @@ const ServerFiles = () => {
               {loading ? (
                 <div className="flex items-center justify-center py-12" style={{ color: "#475569" }}>
                   <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  <span className="text-sm">Loading…</span>
+                  <span className="text-sm">Loading�</span>
                 </div>
               ) : sorted.length === 0 ? (
                 <div className="text-center py-12">
@@ -672,7 +672,7 @@ const ServerFiles = () => {
                       </button>
                     </div>
                     <span className="hidden sm:block col-span-2 text-right mono" style={{ color: "#334155" }}>
-                      {attr.is_file ? formatSize(attr.size) : "—"}
+                      {attr.is_file ? formatSize(attr.size) : "�"}
                     </span>
                     <span className="hidden sm:block col-span-3 text-right" style={{ color: "#334155" }}>
                       {formatDate(attr.modified_at)}
@@ -701,7 +701,7 @@ const ServerFiles = () => {
         </div>
       </div>
 
-      {/* ── File editor modal ── */}
+      {/* -- File editor modal -- */}
       <AnimatePresence>
         {editingFile && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -763,7 +763,7 @@ const ServerFiles = () => {
         )}
       </AnimatePresence>
 
-      {/* ── Delete confirm modal ── */}
+      {/* -- Delete confirm modal -- */}
       <AnimatePresence>
         {deleteTarget && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -773,7 +773,7 @@ const ServerFiles = () => {
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "linear-gradient(135deg,#141008,hsl(38 92% 45%))", border: "1px solid rgba(239,68,68,0.25)" }}>
+              style={{ background: "linear-gradient(135deg,#191522,hsl(262 80% 30%))", border: "1px solid rgba(239,68,68,0.25)" }}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>

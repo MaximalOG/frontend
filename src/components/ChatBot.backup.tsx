@@ -246,7 +246,7 @@ const ChatBot = () => {
                     className="max-w-[82%] px-3 py-2 rounded-sm text-xs leading-relaxed whitespace-pre-line"
                     style={
                       msg.role === "user"
-                        ? { background: "hsl(350 85% 45%)", color: "white" }
+                        ? { background: "hsl(262 95% 55%)", color: "white" }
                         : msg.isTicket
                         ? { background: "hsl(142 60% 10%)", color: "hsl(142 70% 70%)", border: "1px solid hsl(142 60% 25%)" }
                         : { background: "hsl(0 0% 12%)", color: "hsl(0 0% 85%)", border: "1px solid hsl(0 0% 18%)" }
@@ -267,7 +267,7 @@ const ChatBot = () => {
                         to="/pricing"
                         onClick={() => sessionStorage.setItem("nn_recommended_plan", msg.recommendedPlan!)}
                         className="px-3 py-1.5 rounded-sm text-[11px] font-medium text-white transition-all hover:brightness-110"
-                        style={{ background: "hsl(350 85% 45%)", border: "1px solid hsl(350 85% 55%)", boxShadow: "0 0 10px hsl(350 85% 40% / 0.4)" }}
+                        style={{ background: "hsl(262 95% 55%)", border: "1px solid hsl(262 95% 70%)", boxShadow: "0 0 10px hsl(350 85% 40% / 0.4)" }}
                       >
                         Start {msg.recommendedPlan}{msg.ramRequired ? ` (${msg.ramRequired})` : ""}
                       </Link>
@@ -336,8 +336,8 @@ const ChatBot = () => {
         whileTap={{ scale: 0.92 }}
         className="w-12 h-12 rounded-sm flex items-center justify-center transition-all"
         style={{
-          background: open ? "hsl(0 0% 10%)" : "hsl(350 85% 45%)",
-          border: "1px solid hsl(350 85% 50%)",
+          background: open ? "hsl(0 0% 10%)" : "hsl(262 95% 55%)",
+          border: "1px solid hsl(262 95% 65%)",
           boxShadow: "0 0 20px hsl(350 85% 40% / 0.5)",
         }}
         aria-label="Toggle AI chat"

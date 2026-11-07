@@ -1,10 +1,10 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, FolderOpen, Terminal, Activity } from "lucide-react";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
-// ── Tab content components ────────────────────────────────────────────────────
+// -- Tab content components ----------------------------------------------------
 
 const StartStopTab = () => (
   <div>
@@ -22,7 +22,7 @@ const StartStopTab = () => (
       ))}
     </div>
     <div className="bg-muted/20 rounded-sm p-4">
-      <div className="text-xs text-muted-foreground mono mb-3">RESOURCE USAGE — LAST 24H</div>
+      <div className="text-xs text-muted-foreground mono mb-3">RESOURCE USAGE � LAST 24H</div>
       <div className="flex items-end gap-1 h-24">
         {[35,42,28,55,48,62,45,38,52,65,58,42,35,48,55,62,70,58,45,38,42,35,28,23].map((h,i) => (
           <div key={i} className="flex-1 rounded-t-sm bg-primary/60 transition-all hover:bg-primary" style={{ height: `${h}%` }} />
@@ -55,7 +55,7 @@ const ConsoleTab = () => {
       ))}
       <div className="flex gap-2 mt-1">
         <span className="text-primary">{">"}</span>
-        <span className="animate-pulse text-primary">▊</span>
+        <span className="animate-pulse text-primary">?</span>
       </div>
     </div>
   );
@@ -63,10 +63,10 @@ const ConsoleTab = () => {
 
 const FileManagerTab = () => {
   const files = [
-    { name: "world",           type: "dir",  size: "—",       modified: "Today 17:42" },
-    { name: "world_nether",    type: "dir",  size: "—",       modified: "Today 17:42" },
-    { name: "plugins",         type: "dir",  size: "—",       modified: "Today 17:40" },
-    { name: "logs",            type: "dir",  size: "—",       modified: "Today 17:46" },
+    { name: "world",           type: "dir",  size: "�",       modified: "Today 17:42" },
+    { name: "world_nether",    type: "dir",  size: "�",       modified: "Today 17:42" },
+    { name: "plugins",         type: "dir",  size: "�",       modified: "Today 17:40" },
+    { name: "logs",            type: "dir",  size: "�",       modified: "Today 17:46" },
     { name: "server.jar",      type: "file", size: "47.2 MB", modified: "Yesterday" },
     { name: "server.properties",type:"file", size: "2.1 KB",  modified: "Today 17:40" },
     { name: "bukkit.yml",      type: "file", size: "1.4 KB",  modified: "Today 17:40" },
@@ -83,7 +83,7 @@ const FileManagerTab = () => {
           <div key={i} className="grid grid-cols-3 gap-2 px-3 py-1.5 text-xs hover:bg-muted/20 transition-colors border-b border-border/10 last:border-0">
             <span className="flex items-center gap-1.5">
               <span className={f.type === "dir" ? "text-secondary" : "text-muted-foreground/60"}>
-                {f.type === "dir" ? "📁" : "📄"}
+                {f.type === "dir" ? "??" : "??"}
               </span>
               <span className={f.type === "dir" ? "text-secondary" : "text-foreground/80"}>{f.name}</span>
             </span>
@@ -98,11 +98,11 @@ const FileManagerTab = () => {
 
 const ResourcesTab = () => {
   const bars = [
-    { label: "CPU Usage",    value: 23, max: 100, unit: "%",  color: "hsl(350 85% 50%)" },
-    { label: "Memory",       value: 1.8, max: 4,  unit: "GB", color: "hsl(38 92% 50%)" },
+    { label: "CPU Usage",    value: 23, max: 100, unit: "%",  color: "hsl(262 95% 65%)" },
+    { label: "Memory",       value: 1.8, max: 4,  unit: "GB", color: "hsl(262 95% 65%)" },
     { label: "Disk I/O",     value: 42,  max: 100, unit: "MB/s", color: "hsl(200 70% 55%)" },
     { label: "Network In",   value: 18,  max: 100, unit: "Mbps", color: "hsl(142 70% 50%)" },
-    { label: "Network Out",  value: 7,   max: 100, unit: "Mbps", color: "hsl(38 90% 55%)" },
+    { label: "Network Out",  value: 7,   max: 100, unit: "Mbps", color: "hsl(262 95% 70%)" },
   ];
   return (
     <div className="space-y-3">
@@ -141,7 +141,7 @@ const ResourcesTab = () => {
   );
 };
 
-// ── Main component ────────────────────────────────────────────────────────────
+// -- Main component ------------------------------------------------------------
 
 const TABS = [
   { id: "start",    icon: Play,       label: "Start / Stop" },

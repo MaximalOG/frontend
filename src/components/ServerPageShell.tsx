@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ServerPageShell
  * Shared layout wrapper for all server management pages.
  * Provides the desktop left-sidebar + mobile hamburger drawer pattern.
@@ -19,7 +19,7 @@ interface Props {
   children: React.ReactNode;
   /** Page title shown in the mobile header */
   title?: string;
-  /** Optional delete button handler — only shown if provided */
+  /** Optional delete button handler � only shown if provided */
   onDelete?: () => void;
   /** Extra content to render below the nav in the sidebar */
   sidebarExtra?: React.ReactNode;
@@ -52,9 +52,9 @@ export default function ServerPageShell({
   );
 
   return (
-    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#0c0a08" }}>
+    <div className="flex overflow-hidden" style={{ height: "100vh", background: "#0D0B13" }}>
 
-      {/* ── Mobile drawer backdrop ── */}
+      {/* -- Mobile drawer backdrop -- */}
       <AnimatePresence>
         {drawerOpen && (
           <>
@@ -83,13 +83,13 @@ export default function ServerPageShell({
         )}
       </AnimatePresence>
 
-      {/* ── Desktop sidebar ── */}
+      {/* -- Desktop sidebar -- */}
       <div className="hidden md:flex flex-col h-full overflow-y-auto shrink-0 px-4 py-5"
         style={{ width: 236, background: "#100e0b", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
         {sidebarContent}
       </div>
 
-      {/* ── Main content ── */}
+      {/* -- Main content -- */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
         {/* Mobile header strip */}
@@ -110,7 +110,7 @@ export default function ServerPageShell({
                 color: server.status === "running" ? "#4ade80" : "#64748b",
                 border: `1px solid ${server.status === "running" ? "rgba(74,222,128,0.2)" : "rgba(100,116,139,0.2)"}`,
               }}>
-              {server.status === "running" ? "● Online" : "● Offline"}
+              {server.status === "running" ? "? Online" : "? Offline"}
             </span>
           )}
         </div>

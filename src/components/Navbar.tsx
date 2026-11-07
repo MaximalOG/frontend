@@ -60,12 +60,12 @@ const Navbar = () => {
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="pointer-events-auto flex items-center gap-0.5 px-3 py-2.5 rounded-full"
           style={{
-            background: scrolled ? "hsl(0 0% 7% / 0.97)" : "hsl(0 0% 7% / 0.8)",
+            background: scrolled ? "hsl(254 22% 9% / 0.97)" : "hsl(254 22% 9% / 0.8)",
             backdropFilter: "blur(20px)",
-            border: "1px solid hsl(0 0% 18%)",
+            border: "1px solid hsl(254 18% 20%)",
             boxShadow: scrolled
-              ? "0 0 0 1px hsl(350 85% 40% / 0.18), 0 12px 40px rgba(0,0,0,0.55)"
-              : "0 0 0 1px hsl(0 0% 22% / 0.4), 0 6px 20px rgba(0,0,0,0.35)",
+              ? "0 0 0 1px hsl(262 95% 76% / 0.18), 0 12px 40px rgba(0,0,0,0.55)"
+              : "0 0 0 1px hsl(254 18% 22% / 0.4), 0 6px 20px rgba(0,0,0,0.35)",
             transition: "background 0.3s, box-shadow 0.3s",
           }}
         >
@@ -76,17 +76,14 @@ const Navbar = () => {
           >
             <div
               className="w-7 h-7 rounded-md overflow-hidden shrink-0"
-              style={{ boxShadow: "0 0 10px hsl(350 85% 50% / 0.5)" }}
+              style={{ boxShadow: "0 0 10px hsl(262 95% 76% / 0.4)" }}
             >
               <img src="/NetherNodes.jpg" alt="NetherNodes" className="w-full h-full object-cover" />
             </div>
             <span className="font-bold text-base text-white tracking-tight">NetherNodes</span>
           </Link>
 
-          {/* Divider */}
-          <div className="w-px h-5 mx-1.5 shrink-0" style={{ background: "hsl(0 0% 22%)" }} />
-
-          {/* Nav links */}
+          <div className="w-px h-5 mx-1.5 shrink-0" style={{ background: "hsl(254 18% 22%)" }} />
           {navLinks.map((link) => {
             const active = pathname === link.to;
             return (
@@ -102,7 +99,7 @@ const Navbar = () => {
                   <motion.span
                     layoutId="nav-pill"
                     className="absolute inset-0 rounded-full"
-                    style={{ background: "hsl(0 0% 15%)", zIndex: -1 }}
+                    style={{ background: "hsl(254 22% 16%)", zIndex: -1 }}
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}
@@ -112,7 +109,7 @@ const Navbar = () => {
           })}
 
           {/* Divider */}
-          <div className="w-px h-5 mx-1.5 shrink-0" style={{ background: "hsl(0 0% 22%)" }} />
+          <div className="w-px h-5 mx-1.5 shrink-0" style={{ background: "hsl(254 18% 22%)" }} />
 
           {/* Currency picker */}
           <div
@@ -144,8 +141,8 @@ const Navbar = () => {
                   transition={{ duration: 0.15 }}
                   className="absolute right-0 mt-2 rounded-sm overflow-hidden"
                   style={{
-                    background: "hsl(0 0% 8%)",
-                    border: "1px solid hsl(0 0% 18%)",
+                    background: "hsl(254 22% 9%)",
+                    border: "1px solid hsl(254 18% 20%)",
                     boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
                     minWidth: 130,
                     zIndex: 100,
@@ -157,10 +154,10 @@ const Navbar = () => {
                       onClick={() => { setCurrency(c); setCurrencyOpen(false); }}
                       className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs text-left transition-colors"
                       style={{
-                        background: c === currency ? "hsl(350 85% 12%)" : "transparent",
-                        color: c === currency ? "hsl(350 85% 65%)" : "hsl(0 0% 65%)",
+                        background: c === currency ? "hsl(262 95% 12%)" : "transparent",
+                        color: c === currency ? "hsl(262 95% 76%)" : "hsl(0 0% 65%)",
                       }}
-                      onMouseEnter={e => { if (c !== currency) (e.currentTarget as HTMLElement).style.background = "hsl(0 0% 12%)"; }}
+                      onMouseEnter={e => { if (c !== currency) (e.currentTarget as HTMLElement).style.background = "hsl(254 22% 14%)"; }}
                       onMouseLeave={e => { if (c !== currency) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                     >
                       <span className="text-base leading-none">{CURRENCY_FLAGS[c]}</span>
@@ -174,7 +171,7 @@ const Navbar = () => {
           </div>
 
           {/* Divider */}
-          <div className="w-px h-5 mx-1.5 shrink-0" style={{ background: "hsl(0 0% 22%)" }} />
+          <div className="w-px h-5 mx-1.5 shrink-0" style={{ background: "hsl(254 18% 22%)" }} />
 
           {/* Auth */}
           {user ? (
@@ -185,7 +182,7 @@ const Navbar = () => {
               >
                 <div
                   className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
-                  style={{ background: "hsl(350 85% 45%)", color: "white" }}
+                  style={{ background: "hsl(262 95% 60%)", color: "white" }}
                 >
                   {user.name.charAt(0).toUpperCase()}
                 </div>
@@ -208,7 +205,7 @@ const Navbar = () => {
                     exit={{ opacity: 0, y: -6, scale: 0.97 }}
                     transition={{ duration: 0.15 }}
                     className="absolute right-0 mt-2 w-44 rounded-sm overflow-hidden"
-                    style={{ background: "hsl(0 0% 8%)", border: "1px solid hsl(0 0% 18%)", zIndex: 100 }}
+                    style={{ background: "hsl(254 22% 9%)", border: "1px solid hsl(254 18% 20%)", zIndex: 100 }}
                   >
                     <div className="px-3 py-2.5 border-b" style={{ borderColor: "hsl(0 0% 14%)" }}>
                       <p className="text-xs font-semibold text-foreground truncate">{user.name}</p>
@@ -260,9 +257,9 @@ const Navbar = () => {
                 to="/pricing"
                 className="flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-semibold transition-all hover:brightness-110"
                 style={{
-                  background: "hsl(350 85% 45%)",
+                  background: "hsl(262 95% 60%)",
                   color: "white",
-                  boxShadow: "0 0 18px hsl(350 85% 45% / 0.4)",
+                  boxShadow: "0 0 18px hsl(262 95% 76% / 0.4)",
                 }}
               >
                 <Zap size={13} />
@@ -279,8 +276,8 @@ const Navbar = () => {
         style={{
           top: bannerHeight,
           transition: "top 0.3s ease, box-shadow 0.3s, border-color 0.3s",
-          boxShadow: scrolled ? "0 4px 32px hsl(350 85% 30% / 0.25)" : undefined,
-          borderBottom: scrolled ? "1px solid hsl(350 85% 30% / 0.2)" : undefined,
+          boxShadow: scrolled ? "0 4px 32px hsl(262 95% 60% / 0.2)" : undefined,
+          borderBottom: scrolled ? "1px solid hsl(262 95% 76% / 0.15)" : undefined,
         }}
       >
         <div className="flex items-center justify-between h-16 px-4">

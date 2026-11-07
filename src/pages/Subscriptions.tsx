@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -10,7 +10,7 @@ import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// -- Types ---------------------------------------------------------------------
 
 interface Subscription {
   id: string;
@@ -39,15 +39,15 @@ interface PaymentHistoryEntry {
   recordedAt: string;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// -- Helpers -------------------------------------------------------------------
 
 function fmtDate(iso: string | null) {
-  if (!iso) return "—";
+  if (!iso) return "�";
   try {
     return new Date(iso).toLocaleDateString("en-IN", {
       day: "2-digit", month: "short", year: "numeric",
     });
-  } catch { return "—"; }
+  } catch { return "�"; }
 }
 
 function daysUntil(iso: string | null): number | null {
@@ -64,7 +64,7 @@ const STATUS_STYLES: Record<string, { label: string; color: string; bg: string; 
   cancelled:       { label: "Cancelled",       color: "#64748b", bg: "rgba(100,116,139,0.08)",  border: "rgba(100,116,139,0.25)" },
 };
 
-// ── Razorpay SDK loader ───────────────────────────────────────────────────────
+// -- Razorpay SDK loader -------------------------------------------------------
 
 function loadRazorpay(): Promise<boolean> {
   return new Promise(resolve => {
@@ -77,7 +77,7 @@ function loadRazorpay(): Promise<boolean> {
   });
 }
 
-// ── Subscription Card ─────────────────────────────────────────────────────────
+// -- Subscription Card ---------------------------------------------------------
 
 function SubCard({
   sub, token, onRefresh,
@@ -113,7 +113,7 @@ function SubCard({
     setExpanded(v => !v);
   };
 
-  // ── Early payment ─────────────────────────────────────────────────────────
+  // -- Early payment ---------------------------------------------------------
 
   const handleEarlyPay = async () => {
     setPaying(true); setPayErr(""); setPayMsg("");
@@ -136,9 +136,9 @@ function SubCard({
           amount:      orderData.amount,
           currency:    "INR",
           name:        "NetherNodes",
-          description: `Early Renewal — ${sub.planName} Plan`,
+          description: `Early Renewal � ${sub.planName} Plan`,
           prefill:     {},
-          theme:       { color: "#e53935" },
+          theme:       { color: "#A78BFA" },
           handler: async (response: any) => {
             try {
               const verifyRes = await apiFetch(
@@ -156,7 +156,7 @@ function SubCard({
               let vData: any = {};
               try { vData = await verifyRes.json(); } catch {}
               if (!verifyRes.ok) { setPayErr(vData.error || "Payment verification failed."); reject(new Error(vData.error)); return; }
-              setPayMsg(`✓ Paid! Subscription extended to ${fmtDate(vData.newPeriodEnd)}.`);
+              setPayMsg(`? Paid! Subscription extended to ${fmtDate(vData.newPeriodEnd)}.`);
               onRefresh();
               resolve();
             } catch (e: any) { reject(e); }
@@ -170,7 +170,7 @@ function SubCard({
     } finally { setPaying(false); }
   };
 
-  // ── Cancel ────────────────────────────────────────────────────────────────
+  // -- Cancel ----------------------------------------------------------------
 
   const handleCancel = async () => {
     setCancelling(true); setCancelErr("");
@@ -232,7 +232,7 @@ function SubCard({
             <div className="flex flex-wrap gap-4 mt-3">
               <div>
                 <p className="text-[9px] mono uppercase tracking-widest mb-0.5" style={{ color: "#334155" }}>Monthly</p>
-                <p className="text-sm font-bold" style={{ color: "#e2e8f0" }}>₹{sub.amountInr?.toLocaleString("en-IN")}</p>
+                <p className="text-sm font-bold" style={{ color: "#e2e8f0" }}>?{sub.amountInr?.toLocaleString("en-IN")}</p>
               </div>
               {sub.currentPeriodEnd && (
                 <div>
@@ -273,7 +273,7 @@ function SubCard({
                 className="flex items-center gap-1.5 px-4 py-3 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-40 active:scale-95"
                 style={{ background: "linear-gradient(135deg,#1d4ed8,#3b82f6)", color: "white" }}>
                 {paying ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-                {paying ? "Processing…" : "Pay Early"}
+                {paying ? "Processing�" : "Pay Early"}
               </button>
             )}
             {canCancel && (
@@ -319,7 +319,7 @@ function SubCard({
             <div className="px-5 pb-4">
               {loadingHist ? (
                 <div className="flex items-center gap-2 py-4 text-xs" style={{ color: "#475569" }}>
-                  <Loader2 size={12} className="animate-spin" /> Loading history…
+                  <Loader2 size={12} className="animate-spin" /> Loading history�
                 </div>
               ) : history.length === 0 ? (
                 <p className="text-xs py-4" style={{ color: "#334155" }}>No payment events yet.</p>
@@ -342,7 +342,7 @@ function SubCard({
                       </div>
                       <div className="flex items-center gap-3">
                         {h.amountInr != null && (
-                          <span className="text-xs font-semibold" style={{ color: "#e2e8f0" }}>₹{h.amountInr.toLocaleString("en-IN")}</span>
+                          <span className="text-xs font-semibold" style={{ color: "#e2e8f0" }}>?{h.amountInr.toLocaleString("en-IN")}</span>
                         )}
                         <span className="text-[10px]" style={{ color: "#475569" }}>
                           <Clock size={8} className="inline mr-1 opacity-50" />
@@ -368,7 +368,7 @@ function SubCard({
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "linear-gradient(135deg,#141008,hsl(38 92% 45%))", border: "1px solid rgba(239,68,68,0.25)" }}>
+              style={{ background: "linear-gradient(135deg,#191522,hsl(262 80% 30%))", border: "1px solid rgba(239,68,68,0.25)" }}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
@@ -376,7 +376,7 @@ function SubCard({
                 </div>
                 <div>
                   <p className="text-sm font-bold" style={{ color: "#f1f5f9" }}>Cancel subscription?</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>{sub.planName} — {sub.serverName}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: "#475569" }}>{sub.planName} � {sub.serverName}</p>
                 </div>
               </div>
               <div className="rounded-xl px-3 py-2.5 mb-4 text-xs"
@@ -392,7 +392,7 @@ function SubCard({
                   className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-30"
                   style={{ background: "linear-gradient(135deg,#991b1b,#dc2626)", color: "white" }}>
                   {cancelling ? <Loader2 size={12} className="animate-spin" /> : <Ban size={12} />}
-                  {cancelling ? "Cancelling…" : "Cancel Subscription"}
+                  {cancelling ? "Cancelling�" : "Cancel Subscription"}
                 </button>
               </div>
             </motion.div>
@@ -403,7 +403,7 @@ function SubCard({
   );
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// -- Main page -----------------------------------------------------------------
 
 export default function Subscriptions() {
   const { user, loading: authLoading, token, logout } = useAuth();
@@ -473,7 +473,7 @@ export default function Subscriptions() {
           {loading ? (
             <div className="text-center py-16 text-muted-foreground text-sm">
               <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-3" />
-              Loading subscriptions…
+              Loading subscriptions�
             </div>
           ) : subs.length === 0 ? (
             <div className="rounded-sm p-10 text-center" style={{ border: "1px solid hsl(0 0% 16%)" }}>
@@ -482,7 +482,7 @@ export default function Subscriptions() {
               <p className="text-xs text-muted-foreground mb-5">Purchase a plan to get started.</p>
               <Link to="/pricing"
                 className="inline-flex items-center gap-2 px-5 py-2 rounded-sm text-sm font-semibold transition-all hover:brightness-110"
-                style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+                style={{ background: "hsl(262 95% 55%)", color: "white" }}>
                 View Plans
               </Link>
             </div>
@@ -540,7 +540,7 @@ export default function Subscriptions() {
                 </p>
                 <p className="text-[11px] leading-relaxed" style={{ color: "#64748b" }}>
                   Paying early extends your subscription by one full billing cycle (30 days) <em>from your current period end date</em>, not from today.
-                  So if your server is active until July 7 and you pay early on June 19, it extends to August 7 — you're paying for the July cycle in advance.
+                  So if your server is active until July 7 and you pay early on June 19, it extends to August 7 � you're paying for the July cycle in advance.
                   Your automatic subscription charge for that cycle will still process and extend it further.
                 </p>
               </div>

@@ -194,7 +194,7 @@ const PricingSection = () => {
                 className="px-4 py-2 rounded-sm text-xs font-medium transition-all"
                 style={
                   selected === t.id
-                    ? { background: "hsl(350 85% 45%)", color: "white", border: "1px solid hsl(350 85% 55%)", boxShadow: "0 0 12px hsl(350 85% 40% / 0.4)" }
+                    ? { background: "hsl(262 95% 55%)", color: "white", border: "1px solid hsl(262 95% 70%)", boxShadow: "0 0 12px hsl(350 85% 40% / 0.4)" }
                     : { background: "hsl(0 0% 10%)", color: "hsl(0 0% 65%)", border: "1px solid hsl(0 0% 20%)" }
                 }
               >
@@ -219,7 +219,7 @@ const PricingSection = () => {
           <button
             onClick={() => window.dispatchEvent(new CustomEvent("open-chatbot"))}
             className="px-3 py-1.5 rounded-sm text-xs font-medium text-primary transition-all hover:brightness-125"
-            style={{ border: "1px solid hsl(350 85% 35%)", background: "hsl(350 85% 10%)" }}
+            style={{ border: "1px solid hsl(262 95% 45%)", background: "hsl(262 95% 10%)" }}
           >
             Ask NetherNodes AI
           </button>
@@ -241,7 +241,7 @@ const PricingSection = () => {
                 className={`rounded-sm p-5 relative flex flex-col ${isPopular ? "bg-card" : "glass-surface"}`}
                 style={{
                   border: isHighlighted
-                    ? "1px solid hsl(350 85% 60%)"
+                    ? "1px solid hsl(262 95% 76%)"
                     : isPopular
                     ? "1px solid hsl(350, 85%, 50%)"
                     : "1px solid hsl(0 0% 18%)",
@@ -257,7 +257,7 @@ const PricingSection = () => {
                 {(plan.popularLabel || isHighlighted) && (
                   <div
                     className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 text-[10px] font-semibold rounded-sm mono uppercase tracking-wider whitespace-nowrap"
-                    style={{ background: "hsl(350 85% 45%)", color: "white" }}
+                    style={{ background: "hsl(262 95% 55%)", color: "white" }}
                   >
                     {isHighlighted ? "Recommended" : plan.popularLabel}
                   </div>
@@ -298,7 +298,7 @@ const PricingSection = () => {
                 <div className="mb-3">
                   <p className="text-[10px] text-muted-foreground mb-1">Optimized for</p>
                   <div className="h-1 rounded-full bg-muted/60 overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: plan.perfWidth, background: "hsl(350 85% 50%)" }} />
+                    <div className="h-full rounded-full" style={{ width: plan.perfWidth, background: "hsl(262 95% 65%)" }} />
                   </div>
                 </div>
 

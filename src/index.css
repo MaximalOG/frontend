@@ -6,48 +6,54 @@
 
 @layer base {
   :root {
-    /* ── Fire palette: warm near-black + red primary + amber accent ── */
-    --background: 20 8% 4%;        /* #0c0a08 warm near-black */
-    --foreground: 30 15% 96%;      /* #f5f0e8 warm white */
+    /* ── Nether Violet brand palette ── */
+    --background: 252 24% 7%;          /* #0D0B13 */
+    --foreground: 270 40% 96%;         /* #F5F1FC */
 
-    --card: 22 10% 7%;             /* #141210 warm dark card */
-    --card-foreground: 30 15% 96%;
+    --card: 254 22% 11%;               /* #191522 */
+    --card-foreground: 270 40% 96%;
 
-    --popover: 22 10% 7%;
-    --popover-foreground: 30 15% 96%;
+    --popover: 254 22% 11%;
+    --popover-foreground: 270 40% 96%;
 
-    --primary: 350 85% 50%;        /* #e53935 NetherNodes red */
-    --primary-foreground: 0 0% 100%;
+    --primary: 262 95% 76%;            /* #A78BFA violet accent */
+    --primary-foreground: 252 24% 7%;
 
-    --secondary: 221 83% 74%;     /* #818cf8 slate-violet */
-    --secondary-foreground: 20 8% 4%;
+    --secondary: 254 22% 18%;
+    --secondary-foreground: 270 40% 96%;
 
-    --muted: 22 8% 13%;            /* #231f1b warm muted */
-    --muted-foreground: 28 12% 52%; /* #9a8878 warm grey */
+    --muted: 254 20% 15%;
+    --muted-foreground: 262 20% 55%;
 
-    --accent: 38 92% 50%;          /* amber accent replaces purple */
-    --accent-foreground: 20 8% 4%;
+    --accent: 262 95% 76%;             /* same as primary — violet */
+    --accent-foreground: 252 24% 7%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 24 10% 14%;          /* #271f1a warm dark border */
-    --input: 22 8% 13%;
-    --ring: 350 85% 50%;           /* red focus ring */
+    --border: 254 18% 18%;
+    --input: 254 20% 15%;
+    --ring: 262 95% 76%;
 
     --radius: 0.25rem;
 
-    --sidebar-background: 20 10% 6%; /* #141008 warm sidebar */
-    --sidebar-foreground: 30 15% 96%;
-    --sidebar-primary: 350 85% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 22 8% 13%;
-    --sidebar-accent-foreground: 30 15% 96%;
-    --sidebar-border: 24 10% 14%;
-    --sidebar-ring: 350 85% 50%;
+    --sidebar-background: 252 24% 8%;
+    --sidebar-foreground: 270 40% 96%;
+    --sidebar-primary: 262 95% 76%;
+    --sidebar-primary-foreground: 252 24% 7%;
+    --sidebar-accent: 254 20% 15%;
+    --sidebar-accent-foreground: 270 40% 96%;
+    --sidebar-border: 254 18% 18%;
+    --sidebar-ring: 262 95% 76%;
 
-    --nether-glow: 0 0 20px hsla(350, 85%, 50%, 0.3);
-    --indigo-glow: 0 0 20px hsla(221, 83%, 74%, 0.2);
+    /* Brand hex vars — use these directly when hsl() wrapping isn't possible */
+    --color-background: #0D0B13;
+    --color-surface: #191522;
+    --color-accent-hex: #A78BFA;
+    --color-text: #F5F1FC;
+
+    --nether-glow: 0 0 20px hsla(262, 95%, 76%, 0.3);
+    --violet-glow: 0 0 20px hsla(262, 95%, 76%, 0.25);
   }
 }
 
@@ -72,50 +78,51 @@
     box-shadow: var(--nether-glow);
   }
 
-  .amber-glow {
-    box-shadow: var(--amber-glow);
+  .violet-glow {
+    box-shadow: var(--violet-glow);
   }
 
-  /* legacy alias kept for backward compat */
+  /* legacy aliases */
   .portal-glow {
-    box-shadow: var(--amber-glow);
+    box-shadow: var(--violet-glow);
+  }
+  .amber-glow {
+    box-shadow: var(--violet-glow);
   }
 
   .nether-border {
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(167, 139, 250, 0.12);
   }
 
   .nether-border-hover {
     @apply transition-colors duration-200;
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(167, 139, 250, 0.12);
   }
 
   .nether-border-hover:hover {
-    border-color: hsl(350, 85%, 50%);
+    border-color: hsl(262, 95%, 76%);
   }
 
   .glass-surface {
-    background: rgba(255, 240, 220, 0.025);
+    background: rgba(167, 139, 250, 0.04);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 220, 180, 0.07);
+    border: 1px solid rgba(167, 139, 250, 0.1);
   }
 
   .glow-text-primary {
-    text-shadow: 0 0 20px hsla(350, 85%, 50%, 0.5);
+    text-shadow: 0 0 20px hsla(262, 95%, 76%, 0.5);
   }
 
-  /* amber glow replaces purple secondary glow */
   .glow-text-secondary {
-    text-shadow: 0 0 20px hsla(38, 92%, 50%, 0.4);
+    text-shadow: 0 0 20px hsla(262, 95%, 76%, 0.35);
   }
 
-  /* warm radial instead of purple portal */
   .gradient-portal {
-    background: radial-gradient(circle at center, hsla(38, 92%, 50%, 0.1), transparent 70%);
+    background: radial-gradient(circle at center, hsla(262, 95%, 76%, 0.1), transparent 70%);
   }
 
   .gradient-nether {
-    background: radial-gradient(circle at center, hsla(350, 85%, 50%, 0.1), transparent 70%);
+    background: radial-gradient(circle at center, hsla(262, 95%, 76%, 0.08), transparent 70%);
   }
 
   .mono {
@@ -133,7 +140,6 @@
 .float      { animation: float 6s ease-in-out infinite; }
 .float-slow { animation: float 9s ease-in-out infinite; }
 
-/* Depth shimmer on primary buttons — removed */
 .nether-glow {
   position: relative;
   overflow: hidden;

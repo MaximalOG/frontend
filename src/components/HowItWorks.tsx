@@ -35,7 +35,7 @@ const HowItWorks = () => (
             whileInView={{ scaleX: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.3, ease }}
-            style={{ transformOrigin: "left", height: "1px", background: "linear-gradient(90deg, hsl(350 85% 40% / 0.6), hsl(270 70% 55% / 0.6))" }}
+            style={{ transformOrigin: "left", height: "1px", background: "linear-gradient(90deg,  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" , hsl(270 70% 55% / 0.6))" }}
           />
         </div>
 
@@ -56,7 +56,7 @@ const HowItWorks = () => (
               {/* Icon circle */}
               <div
                 className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5"
-                style={{ background: "hsl(350 85% 10%)", border: "1px solid hsl(350 85% 25%)" }}
+                style={{ background: "hsl(262 95% 10%)", border: "1px solid hsl(262 95% 25%)" }}
               >
                 <s.icon className="w-6 h-6 text-primary group-hover:drop-shadow-[0_0_8px_hsla(350,85%,50%,0.6)] transition-all" />
               </div>

@@ -358,7 +358,7 @@ const PricingSection = () => {
                   <span
                     key={s.id}
                     className="px-2 py-0.5 rounded-sm text-[10px] mono flex items-center gap-1"
-                    style={{ background: "hsl(350 85% 15%)", color: "hsl(350 85% 70%)", border: "1px solid hsl(350 85% 30%)" }}
+                    style={{ background: "hsl(262 95% 15%)", color: "hsl(262 95% 76%)", border: "1px solid hsl(262 95% 40%)" }}
                   >
                     {(answers as Record<string, string>)[s.id]}
                   </span>
@@ -442,7 +442,7 @@ const PricingSection = () => {
           <button
             onClick={() => window.dispatchEvent(new CustomEvent("open-chatbot"))}
             className="px-3 py-1.5 rounded-sm text-xs font-medium text-primary transition-all hover:brightness-125"
-            style={{ border: "1px solid hsl(350 85% 35%)", background: "hsl(350 85% 10%)" }}
+            style={{ border: "1px solid hsl(262 95% 45%)", background: "hsl(262 95% 10%)" }}
           >
             Ask NetherNodes AI
           </button>
@@ -483,35 +483,35 @@ const PricingSection = () => {
                   onClick={() => toggleExpand(plan.name)}
                   style={{
                     border: isExpanded
-                      ? "1px solid hsl(350 85% 60%)"
+                      ? "1px solid hsl(262 95% 76%)"
                       : isHighlighted
-                      ? "1px solid hsl(350 85% 55%)"
+                      ? "1px solid hsl(262 95% 70%)"
                       : isPopular
-                      ? "1px solid hsl(350, 85%, 50%)"
+                      ? "1px solid hsl(262, 95%, 65%)"
                       : "1px solid hsl(0 0% 18%)",
                     borderRadius: "0.25rem",
                     boxShadow: isExpanded
-                      ? "0 12px 48px hsl(350 85% 40% / 0.6)"
+                      ? "0 12px 48px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" "
                       : isHighlighted
-                      ? "0 0 24px hsl(350 85% 45% / 0.35)"
+                      ? "0 0 24px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" "
                       : isPopular
-                      ? "0 0 16px hsl(350 85% 40% / 0.2)"
+                      ? "0 0 16px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" "
                       : undefined,
                     transition: "box-shadow 0.25s ease, border-color 0.25s ease",
                   }}
                   onMouseEnter={e => {
-                    (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 32px hsl(350 85% 50% / 0.55)";
-                    (e.currentTarget as HTMLElement).style.borderColor = "hsl(350 85% 55%)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 32px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" ";
+                    (e.currentTarget as HTMLElement).style.borderColor = "hsl(262 95% 70%)";
                   }}
                   onMouseLeave={e => {
                     (e.currentTarget as HTMLElement).style.boxShadow = isExpanded
-                      ? "0 12px 48px hsl(350 85% 40% / 0.6)"
-                      : isHighlighted ? "0 0 24px hsl(350 85% 45% / 0.35)"
-                      : isPopular ? "0 0 16px hsl(350 85% 40% / 0.2)" : "";
+                      ? "0 12px 48px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" "
+                      : isHighlighted ? "0 0 24px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" "
+                      : isPopular ? "0 0 16px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" " : "";
                     (e.currentTarget as HTMLElement).style.borderColor = isExpanded
-                      ? "hsl(350 85% 60%)"
-                      : isHighlighted ? "hsl(350 85% 55%)"
-                      : isPopular ? "hsl(350, 85%, 50%)" : "hsl(0 0% 18%)";
+                      ? "hsl(262 95% 76%)"
+                      : isHighlighted ? "hsl(262 95% 70%)"
+                      : isPopular ? "hsl(262, 95%, 65%)" : "hsl(0 0% 18%)";
                   }}
                 >
                   {/* Card content — always visible */}
@@ -519,7 +519,7 @@ const PricingSection = () => {
                     {(plan.popularLabel || isHighlighted) && (
                       <div
                         className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 text-xs font-bold rounded-sm mono uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5"
-                        style={{ background: "hsl(350 85% 45%)", color: "white" }}
+                        style={{ background: "hsl(262 95% 55%)", color: "white" }}
                       >
                         {isHighlighted ? "Recommended" : plan.popularLabel}
                         {isPopular && !isHighlighted && (
@@ -587,7 +587,7 @@ const PricingSection = () => {
                     <div className="mb-3">
                       <p className="text-[10px] text-muted-foreground mb-1">Performance</p>
                       <div className="h-1 rounded-full bg-muted/60 overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: plan.perfWidth, background: "hsl(350 85% 50%)" }} />
+                        <div className="h-full rounded-full" style={{ width: plan.perfWidth, background: "hsl(262 95% 65%)" }} />
                       </div>
                     </div>
 
@@ -639,10 +639,10 @@ const PricingSection = () => {
                         right: 0,
                         zIndex: 50,
                         background: isPopular ? "hsl(260 12% 7%)" : "hsl(0 0% 7%)",
-                        border: "1px solid hsl(350 85% 60%)",
+                        border: "1px solid hsl(262 95% 76%)",
                         borderTop: "none",
                         borderRadius: "0 0 0.25rem 0.25rem",
-                        boxShadow: "0 20px 60px hsl(350 85% 30% / 0.6), 0 4px 20px rgba(0,0,0,0.8)",
+                        boxShadow: "0 20px 60px  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))" , 0 4px 20px rgba(0,0,0,0.8)",
                         padding: "16px",
                       }}
                     >
@@ -650,7 +650,7 @@ const PricingSection = () => {
                         <div className="mb-2">
                           <span
                             className="px-2 py-0.5 rounded-sm text-[9px] font-semibold mono uppercase tracking-wider"
-                            style={{ background: "hsl(350 85% 20%)", color: "hsl(350 85% 70%)", border: "1px solid hsl(350 85% 35%)" }}
+                            style={{ background: "hsl(262 95% 20%)", color: "hsl(262 95% 76%)", border: "1px solid hsl(262 95% 45%)" }}
                           >{tier.badge}</span>
                         </div>
                       )}
@@ -680,7 +680,7 @@ const PricingSection = () => {
                         </div>
                       </div>
 
-                      <div className="rounded-sm px-2.5 py-1.5 mb-3" style={{ background: "hsl(350 85% 10%)", border: "1px solid hsl(350 85% 25%)" }}>
+                      <div className="rounded-sm px-2.5 py-1.5 mb-3" style={{ background: "hsl(262 95% 10%)", border: "1px solid hsl(262 95% 25%)" }}>
                         <p className="text-[10px] text-primary/80">{tier.hook}</p>
                       </div>
 

@@ -85,7 +85,7 @@ const SaleBanner = () => {
           style={{
             position: "absolute",
             inset: 0,
-            background: "linear-gradient(90deg, hsl(350 85% 18%), hsl(270 70% 22%), hsl(350 85% 18%), hsl(270 70% 22%))",
+            background: "linear-gradient(90deg, hsl(262 80% 20%), hsl(270 70% 25%), hsl(262 80% 20%), hsl(270 70% 25%))",
             backgroundSize: "300% 100%",
             animation: "saleGradient 5s ease infinite",
           }}
@@ -107,7 +107,7 @@ const SaleBanner = () => {
           position: "absolute",
           bottom: 0, left: 0, right: 0,
           height: 1,
-          background: "linear-gradient(90deg, transparent, hsl(350 85% 55% / 0.8), hsl(270 70% 60% / 0.8), transparent)",
+          background: "linear-gradient(90deg, transparent, hsl(262 95% 76% / 0.8), hsl(270 70% 65% / 0.8), transparent)",
         }} />
 
         {/* Content */}
@@ -128,9 +128,9 @@ const SaleBanner = () => {
               transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
               className="px-3 py-1 rounded-sm text-base font-black mono"
               style={{
-                background: "hsl(350 85% 45%)",
+                background: "hsl(262 95% 55%)",
                 color: "white",
-                boxShadow: "0 0 16px hsl(350 85% 50% / 0.6)",
+                boxShadow: "0 0 16px hsl(262 95% 76% / 0.6)",
                 letterSpacing: "0.05em",
               }}
             >

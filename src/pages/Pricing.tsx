@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import PricingSection from "@/components/PricingSection";
 import SubdomainChecker from "@/components/SubdomainChecker";
 import Footer from "@/components/Footer";
+import AdBanner from "@/components/AdBanner";
 
 // Fixed-position particle canvas — uses window dimensions, never resizes on scroll
 const PricingParticles = () => {
@@ -21,7 +22,7 @@ const PricingParticles = () => {
     }[] = [];
 
     const COLORS = [
-      "hsl(350,85%,50%)", "hsl(350,85%,40%)",
+      "hsl(262,95%,76%)", "hsl(262,95%,60%)",
       "hsl(270,70%,55%)", "hsl(270,70%,45%)",
     ];
 
@@ -125,15 +126,16 @@ const Pricing = () => {
 
       {/* Static ambient orbs — CSS only, no JS animation */}
       <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
-        <div style={{ position: "absolute", top: "10%", left: "5%", width: 500, height: 500, background: "radial-gradient(circle, hsl(350 85% 45% / 0.1) 0%, transparent 70%)", filter: "blur(40px)" }} />
+        <div style={{ position: "absolute", top: "10%", left: "5%", width: 500, height: 500, background: "radial-gradient(circle,  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))"  0%, transparent 70%)", filter: "blur(40px)" }} />
         <div style={{ position: "absolute", top: "40%", right: "0%", width: 600, height: 600, background: "radial-gradient(circle, hsl(270 70% 55% / 0.08) 0%, transparent 70%)", filter: "blur(50px)" }} />
-        <div style={{ position: "absolute", bottom: "10%", left: "30%", width: 400, height: 400, background: "radial-gradient(circle, hsl(350 85% 40% / 0.07) 0%, transparent 70%)", filter: "blur(35px)" }} />
-        <div style={{ position: "absolute", top: 64, left: 0, right: 0, height: 1, background: "linear-gradient(90deg, transparent, hsl(350 85% 50% / 0.3) 30%, hsl(270 70% 55% / 0.3) 70%, transparent)" }} />
+        <div style={{ position: "absolute", bottom: "10%", left: "30%", width: 400, height: 400, background: "radial-gradient(circle,  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))"  0%, transparent 70%)", filter: "blur(35px)" }} />
+        <div style={{ position: "absolute", top: 64, left: 0, right: 0, height: 1, background: "linear-gradient(90deg, transparent,  "hsl(262 95% $($args[0].Groups[1].Value)% / $($args[0].Groups[2].Value))"  30%, hsl(270 70% 55% / 0.3) 70%, transparent)" }} />
       </div>
 
       {/* Content */}
       <div className="relative" style={{ zIndex: 2 }}>
         <PricingSection />
+        <AdBanner slot="REPLACE_WITH_SLOT_ID" className="py-4 px-4" />
         <Footer />
       </div>
     </div>

@@ -33,7 +33,7 @@ const Login = () => {
       <div className="flex-1 flex items-center justify-center px-4 py-16">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }} className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "hsl(350 85% 10%)", border: "1px solid hsl(350 85% 30%)" }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "hsl(262 95% 10%)", border: "1px solid hsl(262 95% 30%)" }}>
               <LogIn size={20} className="text-primary" />
             </div>
             <h1 className="text-xl font-bold text-foreground tracking-tight">Welcome back</h1>
@@ -46,7 +46,7 @@ const Login = () => {
               <input type="text" value={identifier} onChange={e => setIdentifier(e.target.value)} placeholder="you@example.com or steve_mc" autoComplete="username"
                 className="w-full rounded-sm px-3 py-2.5 text-sm text-foreground bg-transparent outline-none transition-all"
                 style={{ border: "1px solid hsl(0 0% 22%)" }}
-                onFocus={e => (e.currentTarget.style.borderColor = "hsl(350 85% 45%)")}
+                onFocus={e => (e.currentTarget.style.borderColor = "hsl(262 95% 55%)")}
                 onBlur={e => (e.currentTarget.style.borderColor = "hsl(0 0% 22%)")} />
             </div>
             <div>
@@ -57,12 +57,12 @@ const Login = () => {
               <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" autoComplete="current-password"
                 className="w-full rounded-sm px-3 py-2.5 text-sm text-foreground bg-transparent outline-none transition-all"
                 style={{ border: "1px solid hsl(0 0% 22%)" }}
-                onFocus={e => (e.currentTarget.style.borderColor = "hsl(350 85% 45%)")}
+                onFocus={e => (e.currentTarget.style.borderColor = "hsl(262 95% 55%)")}
                 onBlur={e => (e.currentTarget.style.borderColor = "hsl(0 0% 22%)")} />
             </div>
 
             {error && (
-              <div className="rounded-sm px-3 py-2 text-xs" style={{ background: "hsl(350 85% 8%)", border: "1px solid hsl(350 85% 25%)", color: "hsl(350 85% 65%)" }}>
+              <div className="rounded-sm px-3 py-2 text-xs" style={{ background: "hsl(262 95% 8%)", border: "1px solid hsl(262 95% 25%)", color: "hsl(262 95% 76%)" }}>
                 {error}
                 {error.includes("verify your email") && (
                   <Link to="/resend-verification" className="block mt-1 underline text-primary/80">Resend verification email</Link>
@@ -70,7 +70,7 @@ const Login = () => {
               </div>
             )}
 
-            <button type="submit" disabled={loading} className="w-full h-10 rounded-sm text-sm font-semibold flex items-center justify-center gap-2 transition-all hover:brightness-110 disabled:opacity-50" style={{ background: "hsl(350 85% 45%)", color: "white" }}>
+            <button type="submit" disabled={loading} className="w-full h-10 rounded-sm text-sm font-semibold flex items-center justify-center gap-2 transition-all hover:brightness-110 disabled:opacity-50" style={{ background: "hsl(262 95% 55%)", color: "white" }}>
               {loading ? <><Loader2 size={14} className="animate-spin" /> Signing in…</> : "Sign In"}
             </button>
 

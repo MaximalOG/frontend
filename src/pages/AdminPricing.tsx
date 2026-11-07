@@ -1,6 +1,6 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { DollarSign, Save, RotateCcw, ArrowLeft, Star, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { DollarSign, Save, RotateCcw, ArrowLeft, Star, CheckCircle, AlertCircle, Loader2, Cpu, HardDrive, MemoryStick } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
@@ -15,10 +15,22 @@ interface PlanSpec {
   popular?: boolean;
 }
 
+interface PlanEdit {
+  priceInr: string;
+  popular: boolean;
+  ram: string;
+  cpu: string;
+  ssd: string;
+}
+
 const TIER_COLOR: Record<string, string> = {
   Entry:     "hsl(200 70% 55%)",
-  Community: "hsl(38 92% 50%)",
-  Advanced:  "hsl(350 85% 60%)",
+  Community: " 
+    $m = $args[0].Value
+    $l = [regex]::Match($m, 'hsl\(38 \d+% (\d+)%\)').Groups[1].Value
+    "hsl(262 95% ${l}%)"
+  ",
+  Advanced:  "hsl(262 95% 76%)",
 };
 
 const AdminPricing = () => {
@@ -26,7 +38,7 @@ const AdminPricing = () => {
   const navigate = useNavigate();
 
   const [plans, setPlans]     = useState<Record<string, PlanSpec>>({});
-  const [edits, setEdits]     = useState<Record<string, { priceInr: string; popular: boolean }>>({});
+  const [edits, setEdits]     = useState<Record<string, PlanEdit>>({});
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [saving, setSaving]   = useState(false);
   const [saved, setSaved]     = useState(false);
@@ -47,10 +59,15 @@ const AdminPricing = () => {
         });
         const data = await res.json();
         setPlans(data);
-        // Init edits from current values
-        const initial: Record<string, { priceInr: string; popular: boolean }> = {};
+        const initial: Record<string, PlanEdit> = {};
         for (const [name, spec] of Object.entries(data)) {
-          initial[name] = { priceInr: String(spec.priceInr), popular: spec.popular ?? false };
+          initial[name] = {
+            priceInr: String(spec.priceInr),
+            popular: spec.popular ?? false,
+            ram: spec.ram,
+            cpu: spec.cpu,
+            ssd: spec.ssd,
+          };
         }
         setEdits(initial);
       } catch { setError("Failed to load plan prices."); }
@@ -62,12 +79,20 @@ const AdminPricing = () => {
     setError("");
     setSaving(true);
     try {
-      // Build only the changed fields
-      const updates: Record<string, { priceInr: number; popular: boolean }> = {};
+      const updates: Record<string, { priceInr: number; popular: boolean; ram: string; cpu: string; ssd: string }> = {};
       for (const [name, edit] of Object.entries(edits)) {
         const price = Number(edit.priceInr);
-        if (isNaN(price) || price < 0) { setError(`Invalid price for ${name}`); return; }
-        updates[name] = { priceInr: price, popular: edit.popular };
+        if (isNaN(price) || price < 0) { setError(`Invalid price for ${name}`); setSaving(false); return; }
+        if (!edit.ram.trim())          { setError(`RAM cannot be empty for ${name}`); setSaving(false); return; }
+        if (!edit.cpu.trim())          { setError(`CPU cannot be empty for ${name}`); setSaving(false); return; }
+        if (!edit.ssd.trim())          { setError(`SSD cannot be empty for ${name}`); setSaving(false); return; }
+        updates[name] = {
+          priceInr: price,
+          popular: edit.popular,
+          ram: edit.ram.trim(),
+          cpu: edit.cpu.trim(),
+          ssd: edit.ssd.trim(),
+        };
       }
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/plans`, {
@@ -88,19 +113,35 @@ const AdminPricing = () => {
   };
 
   const resetPlan = (name: string) => {
-    setEdits(prev => ({ ...prev, [name]: { priceInr: String(plans[name]?.priceInr ?? 0), popular: plans[name]?.popular ?? false } }));
+    const p = plans[name];
+    if (!p) return;
+    setEdits(prev => ({
+      ...prev,
+      [name]: { priceInr: String(p.priceInr), popular: p.popular ?? false, ram: p.ram, cpu: p.cpu, ssd: p.ssd },
+    }));
   };
 
-  const hasChanges = Object.entries(edits).some(([name, edit]) =>
-    Number(edit.priceInr) !== plans[name]?.priceInr ||
-    edit.popular !== (plans[name]?.popular ?? false)
-  );
+  const setField = (name: string, field: keyof PlanEdit, value: string | boolean) => {
+    setEdits(prev => ({ ...prev, [name]: { ...prev[name], [field]: value } }));
+  };
+
+  const hasChanges = Object.entries(edits).some(([name, edit]) => {
+    const p = plans[name];
+    if (!p) return false;
+    return (
+      Number(edit.priceInr) !== p.priceInr ||
+      edit.popular !== (p.popular ?? false) ||
+      edit.ram !== p.ram ||
+      edit.cpu !== p.cpu ||
+      edit.ssd !== p.ssd
+    );
+  });
 
   if (loading || !user) return null;
 
   return (
     <div className="min-h-screen bg-background pb-16">
-      <div className="container mx-auto px-4 max-w-3xl pt-12">
+      <div className="container mx-auto px-4 max-w-4xl pt-12">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease }}>
 
           {/* Header */}
@@ -111,9 +152,9 @@ const AdminPricing = () => {
             <span className="text-muted-foreground/30">/</span>
             <div className="flex items-center gap-2">
               <DollarSign size={16} className="text-primary" />
-              <h1 className="text-xl font-bold text-foreground tracking-tight">Plan Pricing</h1>
+              <h1 className="text-xl font-bold text-foreground tracking-tight">Plan Pricing &amp; Specs</h1>
               <span className="px-2 py-0.5 rounded-sm text-[9px] mono uppercase font-semibold"
-                style={{ background: "hsl(350 85% 15%)", color: "hsl(350 85% 65%)", border: "1px solid hsl(350 85% 30%)" }}>
+                style={{ background: "hsl(262 95% 15%)", color: "hsl(262 95% 76%)", border: "1px solid hsl(262 95% 40%)" }}>
                 Owner Only
               </span>
             </div>
@@ -131,22 +172,23 @@ const AdminPricing = () => {
                 onClick={handleSave}
                 disabled={saving || !hasChanges}
                 className="flex items-center gap-2 px-4 py-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-40"
-                style={{ background: "hsl(350 85% 45%)", color: "white" }}
+                style={{ background: "hsl(262 95% 55%)", color: "white" }}
               >
                 {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                {saving ? "Saving…" : "Save All Changes"}
+                {saving ? "Saving�" : "Save All Changes"}
               </button>
             </div>
           </div>
 
           <p className="text-xs text-muted-foreground mb-6">
-            Changes take effect immediately — no restart required. Set a price to <strong className="text-foreground">0</strong> to make a plan free.
+            Changes take effect immediately � no restart required. Set a price to <strong className="text-foreground">0</strong> to make a plan free.
+            Spec changes update the website pricing page and the AI assistant instantly.
             The <Star size={10} className="inline text-yellow-400 mx-0.5" /> popular badge highlights a plan on the pricing page.
           </p>
 
           {error && (
             <div className="rounded-sm px-4 py-3 mb-5 text-xs flex items-center gap-2"
-              style={{ background: "hsl(350 85% 8%)", border: "1px solid hsl(350 85% 25%)", color: "hsl(350 85% 65%)" }}>
+              style={{ background: "hsl(262 95% 8%)", border: "1px solid hsl(262 95% 25%)", color: "hsl(262 95% 76%)" }}>
               <AlertCircle size={13} /> {error}
             </div>
           )}
@@ -157,19 +199,20 @@ const AdminPricing = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {/* Column headers */}
-              <div className="grid grid-cols-12 px-4 py-2 text-[9px] mono uppercase tracking-wider text-muted-foreground/40">
-                <span className="col-span-3">Plan</span>
-                <span className="col-span-3">Specs</span>
-                <span className="col-span-2">Tier</span>
-                <span className="col-span-3">Price (₹/mo)</span>
-                <span className="col-span-1 text-center">Popular</span>
-              </div>
-
               {Object.entries(plans).map(([name, spec], i) => {
-                const edit = edits[name] ?? { priceInr: String(spec.priceInr), popular: spec.popular ?? false };
-                const changed = Number(edit.priceInr) !== spec.priceInr || edit.popular !== (spec.popular ?? false);
+                const edit = edits[name] ?? { priceInr: String(spec.priceInr), popular: spec.popular ?? false, ram: spec.ram, cpu: spec.cpu, ssd: spec.ssd };
+                const changed =
+                  Number(edit.priceInr) !== spec.priceInr ||
+                  edit.popular !== (spec.popular ?? false) ||
+                  edit.ram !== spec.ram ||
+                  edit.cpu !== spec.cpu ||
+                  edit.ssd !== spec.ssd;
                 const tierColor = TIER_COLOR[spec.tier] ?? "hsl(0 0% 50%)";
+
+                const inputStyle = (isChanged: boolean) => ({
+                  border: `1px solid ${isChanged ? "hsl(262 95% 45%)" : "hsl(0 0% 20%)"}`,
+                  background: "hsl(0 0% 8%)",
+                });
 
                 return (
                   <motion.div
@@ -177,16 +220,16 @@ const AdminPricing = () => {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04, duration: 0.3, ease }}
-                    className="grid grid-cols-12 px-4 py-3.5 rounded-sm items-center gap-2"
+                    className="rounded-sm px-4 py-4"
                     style={{
-                      background: changed ? "hsl(350 85% 5%)" : "hsl(0 0% 6%)",
-                      border: `1px solid ${changed ? "hsl(350 85% 25%)" : "hsl(0 0% 14%)"}`,
+                      background: changed ? "hsl(262 95% 5%)" : "hsl(0 0% 6%)",
+                      border: `1px solid ${changed ? "hsl(262 95% 25%)" : "hsl(0 0% 14%)"}`,
                       transition: "background 0.2s, border-color 0.2s",
                     }}
                   >
-                    {/* Plan name */}
-                    <div className="col-span-3 flex items-center gap-2">
-                      <span className="text-sm font-bold text-foreground">{name}</span>
+                    {/* Top row: name + tier + popular + reset */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-sm font-bold text-foreground w-16 shrink-0">{name}</span>
                       {changed && (
                         <motion.span
                           initial={{ opacity: 0, scale: 0 }}
@@ -194,64 +237,120 @@ const AdminPricing = () => {
                           className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"
                         />
                       )}
-                    </div>
-
-                    {/* Specs */}
-                    <div className="col-span-3 text-[10px] text-muted-foreground/50 mono leading-relaxed">
-                      <div>{spec.ram} RAM</div>
-                      <div>{spec.ssd} SSD</div>
-                    </div>
-
-                    {/* Tier */}
-                    <div className="col-span-2">
                       <span className="px-2 py-0.5 rounded-sm text-[9px] font-semibold mono"
                         style={{ background: `${tierColor}18`, color: tierColor, border: `1px solid ${tierColor}35` }}>
                         {spec.tier}
                       </span>
-                    </div>
-
-                    {/* Price input */}
-                    <div className="col-span-3 flex items-center gap-1.5">
-                      <span className="text-muted-foreground/40 text-sm">₹</span>
-                      <input
-                        type="number"
-                        min={0}
-                        step={1}
-                        value={edit.priceInr}
-                        onChange={e => setEdits(prev => ({ ...prev, [name]: { ...prev[name], priceInr: e.target.value } }))}
-                        className="w-full rounded-sm px-2.5 py-1.5 text-sm font-bold text-foreground bg-transparent outline-none mono"
-                        style={{
-                          border: `1px solid ${changed ? "hsl(350 85% 35%)" : "hsl(0 0% 20%)"}`,
-                          background: "hsl(0 0% 8%)",
-                        }}
-                        onFocus={e => (e.currentTarget.style.borderColor = "hsl(350 85% 45%)")}
-                        onBlur={e => (e.currentTarget.style.borderColor = changed ? "hsl(350 85% 35%)" : "hsl(0 0% 20%)")}
-                      />
-                      {changed && (
-                        <button onClick={() => resetPlan(name)}
-                          title="Reset to saved value"
-                          className="text-muted-foreground/30 hover:text-muted-foreground transition-colors shrink-0">
-                          <RotateCcw size={12} />
+                      <div className="ml-auto flex items-center gap-3">
+                        <button
+                          onClick={() => setField(name, "popular", !edit.popular)}
+                          title="Toggle popular badge"
+                          className="flex items-center gap-1 text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                        >
+                          <Star
+                            size={14}
+                            style={{
+                              color: edit.popular ? " 
+    $m = $args[0].Value
+    $l = [regex]::Match($m, 'hsl\(38 \d+% (\d+)%\)').Groups[1].Value
+    "hsl(262 95% ${l}%)"
+  " : "hsl(0 0% 30%)",
+                              fill: edit.popular ? " 
+    $m = $args[0].Value
+    $l = [regex]::Match($m, 'hsl\(38 \d+% (\d+)%\)').Groups[1].Value
+    "hsl(262 95% ${l}%)"
+  " : "transparent",
+                              transition: "color 0.15s, fill 0.15s",
+                            }}
+                          />
+                          <span className="hidden sm:inline">Popular</span>
                         </button>
-                      )}
+                        {changed && (
+                          <button onClick={() => resetPlan(name)}
+                            title="Reset to saved value"
+                            className="flex items-center gap-1 text-[10px] text-muted-foreground/30 hover:text-muted-foreground transition-colors">
+                            <RotateCcw size={11} />
+                            <span className="hidden sm:inline">Reset</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Popular toggle */}
-                    <div className="col-span-1 flex justify-center">
-                      <button
-                        onClick={() => setEdits(prev => ({ ...prev, [name]: { ...prev[name], popular: !prev[name]?.popular } }))}
-                        title="Toggle popular badge"
-                        className="transition-all hover:scale-110"
-                      >
-                        <Star
-                          size={16}
-                          className="transition-colors"
-                          style={{
-                            color: edit.popular ? "hsl(38 90% 58%)" : "hsl(0 0% 25%)",
-                            fill: edit.popular ? "hsl(38 90% 58%)" : "transparent",
-                          }}
+                    {/* Input grid: RAM | CPU | SSD | Price */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+
+                      {/* RAM */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[9px] mono uppercase tracking-wider text-muted-foreground/40 flex items-center gap-1">
+                          <MemoryStick size={9} /> RAM
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 4GB"
+                          value={edit.ram}
+                          onChange={e => setField(name, "ram", e.target.value)}
+                          className="rounded-sm px-2.5 py-1.5 text-sm font-semibold text-foreground outline-none mono w-full"
+                          style={inputStyle(edit.ram !== spec.ram)}
+                          onFocus={e => (e.currentTarget.style.borderColor = "hsl(262 95% 55%)")}
+                          onBlur={e => (e.currentTarget.style.borderColor = edit.ram !== spec.ram ? "hsl(262 95% 45%)" : "hsl(0 0% 20%)")}
                         />
-                      </button>
+                      </div>
+
+                      {/* CPU */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[9px] mono uppercase tracking-wider text-muted-foreground/40 flex items-center gap-1">
+                          <Cpu size={9} /> CPU
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 200%"
+                          value={edit.cpu}
+                          onChange={e => setField(name, "cpu", e.target.value)}
+                          className="rounded-sm px-2.5 py-1.5 text-sm font-semibold text-foreground outline-none mono w-full"
+                          style={inputStyle(edit.cpu !== spec.cpu)}
+                          onFocus={e => (e.currentTarget.style.borderColor = "hsl(262 95% 55%)")}
+                          onBlur={e => (e.currentTarget.style.borderColor = edit.cpu !== spec.cpu ? "hsl(262 95% 45%)" : "hsl(0 0% 20%)")}
+                        />
+                      </div>
+
+                      {/* SSD */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[9px] mono uppercase tracking-wider text-muted-foreground/40 flex items-center gap-1">
+                          <HardDrive size={9} /> SSD
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 25GB"
+                          value={edit.ssd}
+                          onChange={e => setField(name, "ssd", e.target.value)}
+                          className="rounded-sm px-2.5 py-1.5 text-sm font-semibold text-foreground outline-none mono w-full"
+                          style={inputStyle(edit.ssd !== spec.ssd)}
+                          onFocus={e => (e.currentTarget.style.borderColor = "hsl(262 95% 55%)")}
+                          onBlur={e => (e.currentTarget.style.borderColor = edit.ssd !== spec.ssd ? "hsl(262 95% 45%)" : "hsl(0 0% 20%)")}
+                        />
+                      </div>
+
+                      {/* Price */}
+                      <div className="flex flex-col gap-1">
+                        <label className="text-[9px] mono uppercase tracking-wider text-muted-foreground/40 flex items-center gap-1">
+                          <DollarSign size={9} /> Price (?/mo)
+                        </label>
+                        <div className="flex items-center gap-1">
+                          <span className="text-muted-foreground/40 text-sm shrink-0">?</span>
+                          <input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={edit.priceInr}
+                            onChange={e => setField(name, "priceInr", e.target.value)}
+                            className="rounded-sm px-2.5 py-1.5 text-sm font-bold text-foreground outline-none mono w-full"
+                            style={inputStyle(Number(edit.priceInr) !== spec.priceInr)}
+                            onFocus={e => (e.currentTarget.style.borderColor = "hsl(262 95% 55%)")}
+                            onBlur={e => (e.currentTarget.style.borderColor = Number(edit.priceInr) !== spec.priceInr ? "hsl(262 95% 45%)" : "hsl(0 0% 20%)")}
+                          />
+                        </div>
+                      </div>
+
                     </div>
                   </motion.div>
                 );
@@ -265,7 +364,7 @@ const AdminPricing = () => {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               className="mt-6 flex items-center justify-between rounded-sm px-5 py-3.5"
-              style={{ background: "hsl(350 85% 8%)", border: "1px solid hsl(350 85% 25%)" }}
+              style={{ background: "hsl(262 95% 8%)", border: "1px solid hsl(262 95% 25%)" }}
             >
               <p className="text-xs text-muted-foreground">
                 You have unsaved changes. They won't take effect until you save.
@@ -274,10 +373,10 @@ const AdminPricing = () => {
                 onClick={handleSave}
                 disabled={saving}
                 className="flex items-center gap-2 px-5 py-2 rounded-sm text-xs font-semibold transition-all hover:brightness-110 disabled:opacity-50"
-                style={{ background: "hsl(350 85% 45%)", color: "white" }}
+                style={{ background: "hsl(262 95% 55%)", color: "white" }}
               >
                 {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                {saving ? "Saving…" : "Save Changes"}
+                {saving ? "Saving�" : "Save Changes"}
               </button>
             </motion.div>
           )}

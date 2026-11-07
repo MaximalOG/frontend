@@ -22,7 +22,7 @@ interface FeedbackEntry {
 const ease = [0.16, 1, 0.3, 1] as const;
 
 const STAR_LABEL = ["", "Poor", "Fair", "Good", "Great", "Excellent"];
-const STAR_COLOR = ["", "hsl(350 85% 55%)", "hsl(38 90% 55%)", "hsl(38 90% 55%)", "hsl(142 70% 55%)", "hsl(142 70% 55%)"];
+const STAR_COLOR = ["", "hsl(262 95% 70%)", "hsl(262 95% 70%)", "hsl(262 95% 70%)", "hsl(142 70% 55%)", "hsl(142 70% 55%)"];
 
 function Stars({ rating }: { rating: number }) {
   return (
@@ -32,8 +32,8 @@ function Stars({ rating }: { rating: number }) {
           key={s}
           size={13}
           style={{
-            fill: s <= rating ? "hsl(38 90% 55%)" : "transparent",
-            color: s <= rating ? "hsl(38 90% 55%)" : "hsl(0 0% 25%)",
+            fill: s <= rating ? "hsl(262 95% 70%)" : "transparent",
+            color: s <= rating ? "hsl(262 95% 70%)" : "hsl(0 0% 25%)",
           }}
         />
       ))}
@@ -133,7 +133,7 @@ const AdminFeedback = () => {
                   onClick={() => setShowClearConfirm(true)}
                   disabled={clearing}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs transition-colors disabled:opacity-50"
-                  style={{ border: "1px solid hsl(350 85% 30%)", color: clearing ? "hsl(350 85% 40%)" : "hsl(350 85% 60%)" }}
+                  style={{ border: "1px solid hsl(262 95% 40%)", color: clearing ? "hsl(262 95% 50%)" : "hsl(262 95% 76%)" }}
                 >
                   <Trash2 size={12} />
                   {clearing ? "Clearing…" : `Clear All (${feedback.length})`}
@@ -175,7 +175,7 @@ const AdminFeedback = () => {
                         className="h-full rounded-full transition-all"
                         style={{
                           width: feedback.length ? `${(dist[r - 1] / feedback.length) * 100}%` : "0%",
-                          background: "hsl(38 90% 55%)",
+                          background: "hsl(262 95% 70%)",
                         }}
                       />
                     </div>
@@ -262,9 +262,9 @@ const AdminFeedback = () => {
                           <div className="space-y-2">
                             {fb.replies.map((r, idx) => (
                               <div key={idx} className="rounded-sm px-3 py-2 text-xs ml-4"
-                                style={{ background: "hsl(350 85% 10%)", border: "1px solid hsl(350 85% 25%)" }}>
+                                style={{ background: "hsl(262 95% 10%)", border: "1px solid hsl(262 95% 25%)" }}>
                                 <div className="flex justify-between mb-1">
-                                  <span className="text-[9px] font-semibold uppercase mono" style={{ color: "hsl(350 85% 60%)" }}>You (Support)</span>
+                                  <span className="text-[9px] font-semibold uppercase mono" style={{ color: "hsl(262 95% 76%)" }}>You (Support)</span>
                                   <span className="text-[9px] text-muted-foreground/40">{new Date(r.timestamp).toLocaleString()}</span>
                                 </div>
                                 <p className="text-foreground/80 whitespace-pre-wrap">{r.message}</p>
@@ -297,7 +297,7 @@ const AdminFeedback = () => {
                               onClick={() => sendReply(fb)}
                               disabled={!replyText[fb.id]?.trim() || replySending[fb.id]}
                               className="flex items-center gap-1.5 px-3 py-1 rounded-sm text-[11px] font-medium transition-all hover:brightness-110 disabled:opacity-40"
-                              style={{ background: "hsl(350 85% 45%)", color: "white" }}
+                              style={{ background: "hsl(262 95% 55%)", color: "white" }}
                             >
                               <Send size={11} />
                               {replySending[fb.id] ? "Saving…" : "Save Reply"}

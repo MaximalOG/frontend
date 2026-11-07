@@ -1,4 +1,4 @@
-﻿import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Terminal, FolderOpen, Users, ArrowLeft,
   Play, Square, RotateCcw, Loader2, Package, Settings2,
@@ -71,7 +71,7 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
   return (
     <aside className="flex flex-col h-full select-none" style={{ width: 204, minWidth: 204 }}>
 
-      {/* ── Back link ── */}
+      {/* -- Back link -- */}
       <Link to="/dashboard"
         className="flex items-center gap-2 mb-5 px-1 text-xs font-medium transition-colors"
         style={{ color: "#475569" }}
@@ -80,11 +80,11 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
         <ArrowLeft size={12} /> Back to Dashboard
       </Link>
 
-      {/* ── Server identity card ── */}
+      {/* -- Server identity card -- */}
       <div className="mb-5 rounded-xl p-3 relative overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, rgba(229,57,53,0.08) 0%, rgba(59,130,246,0.04) 100%)",
-          border: "1px solid rgba(229,57,53,0.18)",
+          background: "linear-gradient(135deg, rgba(167,139,250,0.08) 0%, rgba(167,139,250,0.04) 100%)",
+          border: "1px solid rgba(167,139,250,0.18)",
         }}>
         {/* subtle glow blob */}
         <div className="absolute -top-4 -left-4 w-16 h-16 rounded-full pointer-events-none"
@@ -118,7 +118,7 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
           <span className="ml-auto text-[9px] mono" style={{ color: "#334155" }}>{server.ram} RAM</span>
         </div>
 
-        {/* ── Power controls — inside the card, always visible ── */}
+        {/* -- Power controls � inside the card, always visible -- */}
         <div className="relative grid grid-cols-3 gap-1.5">
           <button
             onClick={() => onPower("start")}
@@ -164,7 +164,7 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
         </div>
       </div>
 
-      {/* ── Nav sections ── */}
+      {/* -- Nav sections -- */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-0.5">
         {NAV_SECTIONS.map(section => (
           <div key={section.label}>
@@ -181,10 +181,10 @@ export default function ServerSidebar({ server, onPower, powerLoading }: Props) 
                     className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all"
                     style={{
                       background: active
-                        ? "linear-gradient(90deg, rgba(229,57,53,0.18), rgba(229,57,53,0.06))"
+                        ? "linear-gradient(90deg, rgba(167,139,250,0.18), rgba(167,139,250,0.06))"
                         : "transparent",
                       color:  active ? "#fcd34d" : "#64748b",
-                      border: active ? "1px solid rgba(229,57,53,0.25)" : "1px solid transparent",
+                      border: active ? "1px solid rgba(167,139,250,0.25)" : "1px solid transparent",
                     }}
                     onMouseEnter={e => {
                       if (!active) {

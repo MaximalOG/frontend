@@ -1,4 +1,4 @@
-ï»¿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -190,7 +190,7 @@ const ServerUsers = () => {
     perms.includes(perm) ? perms.filter(p => p !== perm) : [...perms, perm];
 
   if (authLoading || loadingServer) return (
-    <div className="flex items-center justify-center h-screen" style={{ background: "#0c0a08" }}>
+    <div className="flex items-center justify-center h-screen" style={{ background: "#0D0B13" }}>
       <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#94a3b8" }} />
     </div>
   );
@@ -212,7 +212,7 @@ const ServerUsers = () => {
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: "rgba(229,57,53,0.12)", border: "1px solid rgba(229,57,53,0.25)" }}>
+              style={{ background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.25)" }}>
               <Shield size={16} style={{ color: "#38bdf8" }} />
             </div>
             <div>
@@ -222,7 +222,7 @@ const ServerUsers = () => {
           </div>
           <button onClick={() => { setShowAdd(true); setAddError(""); setAddEmail(""); setAddPerms(DEFAULT_PERMS); }}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90"
-            style={{ background: "rgba(229,57,53,0.15)", color: "#fcd34d", border: "1px solid rgba(229,57,53,0.25)" }}>
+            style={{ background: "rgba(167,139,250,0.15)", color: "#fcd34d", border: "1px solid rgba(167,139,250,0.25)" }}>
             <UserPlus size={13} /> Invite User
           </button>
         </div>
@@ -232,9 +232,9 @@ const ServerUsers = () => {
           {showAdd && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }} className="rounded-2xl overflow-hidden mb-4"
-              style={{ border: "1px solid rgba(229,57,53,0.25)" }}>
+              style={{ border: "1px solid rgba(167,139,250,0.25)" }}>
               <div className="px-5 py-4 space-y-4"
-                style={{ background: "linear-gradient(135deg,rgba(229,57,53,0.07),rgba(59,130,246,0.03))" }}>
+                style={{ background: "linear-gradient(135deg,rgba(167,139,250,0.07),rgba(59,130,246,0.03))" }}>
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold flex items-center gap-2" style={{ color: "#f1f5f9" }}>
                     <UserPlus size={14} style={{ color: "#38bdf8" }} /> Invite a user
@@ -289,8 +289,8 @@ const ServerUsers = () => {
                     style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
                   <button onClick={addUser} disabled={adding || !addEmail.trim()}
                     className="flex-1 h-9 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-40"
-                    style={{ background: "linear-gradient(135deg,#b91c1c,#e53935)", color: "white" }}>
-                    {adding ? <><Loader2 size={12} className="animate-spin" /> Sendingâ€¦</> : <><UserPlus size={12} /> Send Invite</>}
+                    style={{ background: "linear-gradient(135deg,hsl(262 80% 40%),hsl(262 95% 55%))", color: "white" }}>
+                    {adding ? <><Loader2 size={12} className="animate-spin" /> Sending…</> : <><UserPlus size={12} /> Send Invite</>}
                   </button>
                 </div>
               </div>
@@ -301,7 +301,7 @@ const ServerUsers = () => {
         {/* User table */}
         <div className="rounded-2xl overflow-hidden"
           style={{ border: "1px solid rgba(255,255,255,0.07)", background: "#100e0b" }}>
-          {/* Column headers â€” hide permissions col on mobile */}
+          {/* Column headers — hide permissions col on mobile */}
           <div className="grid px-4 py-2 text-[9px] mono uppercase tracking-widest"
             style={{ gridTemplateColumns: "1fr auto", gap: "0 12px", background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.05)", color: "#334155" }}>
             <span>User</span>
@@ -312,7 +312,7 @@ const ServerUsers = () => {
           {loading ? (
             <div className="flex items-center justify-center py-12" style={{ color: "#475569" }}>
               <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              <span className="text-sm">Loading usersâ€¦</span>
+              <span className="text-sm">Loading users…</span>
             </div>
           ) : subusers.length === 0 ? (
             <div className="text-center py-12">
@@ -331,7 +331,7 @@ const ServerUsers = () => {
                 {/* User info + permissions stacked */}
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
-                    style={{ background: "rgba(229,57,53,0.2)", color: "#fcd34d" }}>
+                    style={{ background: "rgba(167,139,250,0.2)", color: "#fcd34d" }}>
                     {(u.nnAccount?.name || u.email).charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
@@ -391,10 +391,10 @@ const ServerUsers = () => {
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="rounded-2xl w-full max-w-lg overflow-hidden"
-              style={{ background: "linear-gradient(135deg,#141008,#120f0b)", border: "1px solid rgba(229,57,53,0.25)", maxHeight: "85vh" }}
+              style={{ background: "linear-gradient(135deg,#1e1b2e,#1b172e)", border: "1px solid rgba(167,139,250,0.25)", maxHeight: "85vh" }}
               onClick={e => e.stopPropagation()}>
               <div className="sticky top-0 flex items-center justify-between px-5 py-4"
-                style={{ background: "#141008", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                style={{ background: "#191522", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                 <div>
                   <p className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Edit Permissions</p>
                   <p className="text-[10px] mono mt-0.5" style={{ color: "#475569" }}>{editTarget.email}</p>
@@ -436,8 +436,8 @@ const ServerUsers = () => {
                     style={{ border: "1px solid rgba(255,255,255,0.08)", color: "#64748b" }}>Cancel</button>
                   <button onClick={savePermissions} disabled={saving}
                     className="flex-1 h-10 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90 disabled:opacity-50"
-                    style={{ background: "linear-gradient(135deg,#b91c1c,#e53935)", color: "white" }}>
-                    {saving ? <><Loader2 size={12} className="animate-spin" /> Savingâ€¦</> : <><Check size={12} /> Save Permissions</>}
+                    style={{ background: "linear-gradient(135deg,hsl(262 80% 40%),hsl(262 95% 55%))", color: "white" }}>
+                    {saving ? <><Loader2 size={12} className="animate-spin" /> Saving…</> : <><Check size={12} /> Save Permissions</>}
                   </button>
                 </div>
               </div>
@@ -456,7 +456,7 @@ const ServerUsers = () => {
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}
-              style={{ background: "linear-gradient(135deg,#141008,hsl(38 92% 45%))", border: "1px solid rgba(239,68,68,0.25)" }}>
+              style={{ background: "linear-gradient(135deg,#191522,hsl(262 80% 30%))", border: "1px solid rgba(239,68,68,0.25)" }}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>

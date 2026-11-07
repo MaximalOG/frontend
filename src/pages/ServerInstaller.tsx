@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -44,11 +44,11 @@ const CATEGORY_COLORS: Record<string, string> = {
   utility:       "hsl(200 70% 55%)",
   optimization:  "hsl(142 65% 50%)",
   adventure:     "hsl(270 60% 60%)",
-  decoration:    "hsl(38 90% 58%)",
+  decoration:    "hsl(262 95% 72%)",
   library:       "hsl(0 0% 55%)",
   magic:         "hsl(300 60% 60%)",
   technology:    "hsl(195 80% 55%)",
-  food:          "hsl(38 80% 55%)",
+  food:          "hsl(262 80% 70%)",
   mobs:          "hsl(0 60% 55%)",
 };
 
@@ -160,7 +160,7 @@ function ProjectCard({
         }}
       >
         {installing
-          ? <><Loader2 size={11} className="animate-spin" /> Installing…</>
+          ? <><Loader2 size={11} className="animate-spin" /> Installing�</>
           : installed
           ? <><Check size={11} /> Installed</>
           : <><Download size={11} /> Install</>
@@ -271,11 +271,11 @@ const ServerInstaller = () => {
       });
       const data = await res.json();
       if (!res.ok) { setInstallError(data.error || "Install failed."); return; }
-      setInstallSuccess(`✓ ${data.projectName} installed to /${data.directory}`);
+      setInstallSuccess(`? ${data.projectName} installed to /${data.directory}`);
       setTimeout(() => setInstallSuccess(""), 4000);
     } catch (err: any) {
       if (err?.name === "AbortError") {
-        setInstallError("Install timed out — the file may be very large. Check the Files tab to see if it was uploaded.");
+        setInstallError("Install timed out � the file may be very large. Check the Files tab to see if it was uploaded.");
       } else {
         setInstallError(err?.message || "Network error during install. Please try again.");
       }
@@ -308,7 +308,7 @@ const ServerInstaller = () => {
   return (
     <div className="h-screen bg-background flex overflow-hidden">
 
-      {/* ── Mobile drawer ── */}
+      {/* -- Mobile drawer -- */}
       <AnimatePresence>
         {drawerOpen && (
           <>
@@ -344,21 +344,21 @@ const ServerInstaller = () => {
         <div className="px-4 sm:px-6 pt-4 sm:pt-5 pb-4 shrink-0"
           style={{ borderBottom: "1px solid hsl(0 0% 12%)", background: "hsl(0 0% 5%)" }}>
           <div className="flex items-center gap-3 mb-4">
-            {/* Hamburger — mobile only */}
+            {/* Hamburger � mobile only */}
             <button onClick={() => setDrawerOpen(true)}
               className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl shrink-0"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid hsl(0 0% 15%)" }}>
               <Menu size={16} style={{ color: "#94a3b8" }} />
             </button>
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: "hsl(38 60% 15%)", border: "1px solid hsl(38 60% 28%)" }}>
+              style={{ background: "hsl(262 60% 15%)", border: "1px solid hsl(262 60% 28%)" }}>
               <Package size={18} style={{ color: "hsl(270 60% 65%)" }} />
             </div>
             <div>
               <h1 className="text-base font-bold text-foreground">Plugin & Mod Installer</h1>
               <p className="text-[10px] text-muted-foreground/50">
                 {server?.serverType ? `${server.serverType}` : "server"}
-                {server?.mcVersion ? ` · ${server.mcVersion}` : ""} — Modrinth
+                {server?.mcVersion ? ` � ${server.mcVersion}` : ""} � Modrinth
               </p>
             </div>
             {/* Tabs */}
@@ -392,7 +392,7 @@ const ServerInstaller = () => {
                 <Search size={14} className="text-muted-foreground/40 shrink-0" />
                 <input type="text" value={query}
                   onChange={e => handleSearch(e.target.value)}
-                  placeholder="Search plugins and mods…"
+                  placeholder="Search plugins and mods�"
                   className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/30 outline-none py-2.5"
                 />
                 {query && (
@@ -426,9 +426,9 @@ const ServerInstaller = () => {
             <motion.div initial={{ opacity:0, y:-8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-8 }}
               className="mx-6 mt-3 px-4 py-2.5 rounded-xl text-xs flex items-center gap-2"
               style={{
-                background: installError ? "hsl(350 85% 8%)" : "hsl(142 60% 8%)",
-                border:     installError ? "1px solid hsl(350 85% 25%)" : "1px solid hsl(142 60% 22%)",
-                color:      installError ? "hsl(350 85% 65%)" : "hsl(142 65% 52%)",
+                background: installError ? "hsl(262 95% 8%)" : "hsl(142 60% 8%)",
+                border:     installError ? "1px solid hsl(262 95% 25%)" : "1px solid hsl(142 60% 22%)",
+                color:      installError ? "hsl(262 95% 76%)" : "hsl(142 65% 52%)",
               }}>
               {installError ? <AlertCircle size={12} /> : <Check size={12} />}
               {installError || installSuccess}
@@ -522,7 +522,7 @@ const ServerInstaller = () => {
                   <Package className="w-10 h-10 mx-auto mb-3 text-muted-foreground/20" />
                   <p className="text-sm text-muted-foreground/50">No plugins or mods installed yet</p>
                   <button onClick={() => setTab("search")} className="mt-3 text-xs text-amber-400 hover:text-amber-300 transition-colors">
-                    Browse the installer →
+                    Browse the installer ?
                   </button>
                 </div>
               ) : (
@@ -557,7 +557,7 @@ const ServerInstaller = () => {
                     {installed!.history.slice(-10).reverse().map((h, i) => (
                       <div key={i} className="flex items-center gap-2 text-[10px] text-muted-foreground/40 mono">
                         <span className={h.action === "install" ? "text-green-400/60" : "text-red-400/60"}>
-                          {h.action === "install" ? "+" : "−"}
+                          {h.action === "install" ? "+" : "-"}
                         </span>
                         <span className="truncate">{h.projectName ?? h.filename}</span>
                         <span className="ml-auto shrink-0">
