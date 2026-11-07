@@ -247,14 +247,14 @@ const PricingSection = () => {
   const { currency, formatPrice } = useCurrency();
 
   // Live prices from the backend — owner can update these via admin panel
-  const [livePrices, setLivePrices] = useState<Record<string, { priceInr: number; popular?: boolean }>>({});
+  const [livePlansData, setLivePlansData] = useState<Record<string, { priceInr: number; popular?: boolean; ram?: string; cpu?: string; ssd?: string }>>({});
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/plans`)
       .then(r => r.json())
-      .then((data: { name: string; priceInr: number; popular?: boolean }[]) => {
-        const map: Record<string, { priceInr: number; popular?: boolean }> = {};
-        data.forEach(p => { map[p.name] = { priceInr: p.priceInr, popular: p.popular }; });
-        setLivePrices(map);
+      .then((data: { name: string; priceInr: number; popular?: boolean; ram?: string; cpu?: string; ssd?: string }[]) => {
+        const map: Record<string, { priceInr: number; popular?: boolean; ram?: string; cpu?: string; ssd?: string }> = {};
+        data.forEach(p => { map[p.name] = { priceInr: p.priceInr, popular: p.popular, ram: p.ram, cpu: p.cpu, ssd: p.ssd }; });
+        setLivePlansData(map);
       })
       .catch(() => {}); // silently fall back to hardcoded values
   }, []);
@@ -280,9 +280,9 @@ const PricingSection = () => {
       .catch(() => {});
   }, [user, token]);
 
-  // Merge live prices into the static plans array
+  // Merge live prices + specs into the static plans array
   const livePlans = plans.map(p => {
-    const live = livePrices[p.name];
+    const live = livePlansData[p.name];
     if (!live) return p;
     const newPriceInr = live.priceInr;
     const newPrice = newPriceInr === 0 ? "Free" : `₹${newPriceInr.toLocaleString("en-IN")}`;
@@ -296,6 +296,9 @@ const PricingSection = () => {
       btnLabel: newBtnLabel,
       popular: live.popular ?? p.popular,
       popularLabel: (live.popular ?? p.popular) ? (p.popularLabel ?? "Most Chosen") : null,
+      ram: live.ram ?? p.ram,
+      cpu: live.cpu ?? p.cpu,
+      ssd: live.ssd ?? p.ssd,
     };
   });
 
