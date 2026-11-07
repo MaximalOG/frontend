@@ -1109,63 +1109,6 @@ export default function ServerConsole() {
         </div>
       </div>
 
-            {/* Left: avatar + name + address */}
-            <div className="flex items-center gap-3 min-w-0">
-              <button onClick={() => setMobileNavOpen(true)}
-                className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg shrink-0"
-                style={{ background: "#231d35", border }}>
-                <Menu size={14} style={{ color: mutedText }} />
-              </button>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold"
-                style={{ background: "#231d35", border, color: headingText }}>
-                {server?.name?.charAt(0)?.toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold" style={{ color: headingText, fontSize: 15 }}>{server?.name}</span>
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold"
-                    style={{ background: st.bg, color: st.color }}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${isRunning ? "animate-pulse" : ""}`}
-                      style={{ background: st.color }} />
-                    {st.label}
-                  </span>
-                  {server?.plan && (
-                    <span className="text-[11px] font-medium" style={{ color: mutedText }}>
-                      {server.plan}
-                    </span>
-                  )}
-                  {server?.mcVersion && (
-                    <span className="hidden sm:inline text-[11px]" style={{ color: mutedText }}>
-                      {server.serverType} {server.mcVersion}
-                    </span>
-                  )}
-                </div>
-                {displayAddr && (
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[12px]" style={{ color: mutedText }}>{displayAddr}</span>
-                    <button onClick={() => copyAddr(displayAddr)}
-                      className="text-[11px]" style={{ color: mutedText }}>
-                      {copied ? <Check size={11} style={{ color: "#22c55e" }} /> : <Copy size={11} />}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Right: power buttons */}
-            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-              <PowerBtn label="Start" signal="start" icon={Play} color="#22c55e"
-                disabled={isRunning || server?.status === "starting"} loading={powerLoading === "start"} onPower={sendPower} />
-              <PowerBtn label="Restart" signal="restart" icon={RotateCcw} color="#0ea5e9"
-                disabled={!isRunning} loading={powerLoading === "restart"} onPower={sendPower} />
-              <PowerBtn label="Stop" signal="stop" icon={Square} color="#ef4444"
-                disabled={!isRunning} loading={powerLoading === "stop"} onPower={sendPower} />
-              <PowerBtn label="Kill" signal="kill" icon={X} color="#ef4444"
-                disabled={false} loading={powerLoading === "kill"} onPower={sendPower} variant="ghost" />
-            </div>
-          </div>
-        </div>
-
       {/* -- MODALS ------------------------------------------------------ */}
 
       {/* Create Backup */}
