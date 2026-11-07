@@ -135,7 +135,6 @@ const Pricing = () => {
       {/* Content */}
       <div className="relative" style={{ zIndex: 2 }}>
         <PricingSection />
-        <AdBanner slot="REPLACE_WITH_SLOT_ID" className="py-4 px-4" />
         <Footer />
       </div>
     </div>

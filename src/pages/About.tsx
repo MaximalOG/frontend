@@ -63,6 +63,9 @@ const About = () => {
         </div>
       </section>
 
+      {/* Ad — after Designed for Gamers hero, before Our Story */}
+      <AdBanner slot="8781006477" className="py-4 px-4" />
+
       {/* ── Story ── */}
       <section className="py-20 relative">
         <div className="container mx-auto px-4 max-w-3xl">

@@ -4,6 +4,7 @@ import { Check, Rocket, Cpu, HardDrive, MemoryStick, Users, Globe, ChevronDown }
 import { Link } from "react-router-dom";
 import PromoCode, { type DiscountInfo } from "./PromoCode";
 import CheckoutButton from "./CheckoutButton";
+import AdBanner from "./AdBanner";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useAuth } from "@/hooks/useAuth";
 import { apiFetch } from "@/lib/api";
@@ -453,6 +454,9 @@ const PricingSection = () => {
           <PromoCode onDiscount={setDiscount} />
         </div>
 
+        {/* Ad — after AI CTA, before plan cards */}
+        <AdBanner slot="5833223597" className="mb-8 px-4" />
+
         {/* Plan grid */}
         <div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto"
@@ -729,6 +733,10 @@ const PricingSection = () => {
             Early users will get priority access to new regions when they launch.
           </p>
         </motion.div>
+
+        {/* Ad — after more locations card */}
+        <AdBanner slot="7794181684" className="mt-8 px-4" />
+
       </div>
     </section>
   );

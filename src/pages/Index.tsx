@@ -17,8 +17,6 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <HeroSection />
-      {/* Ad — shown only to non-paid / not-logged-in visitors */}
-      <AdBanner slot="REPLACE_WITH_SLOT_ID" className="py-4 px-4" />
       <FeaturesSection />
       <WhyChooseSection />
       <HowItWorks />
@@ -27,6 +25,8 @@ const Index = () => {
       <DashboardPreview />
       <AISection />
       <AIChatPreview />
+      {/* Ad — shown only to non-paid / not-logged-in visitors */}
+      <AdBanner slot="6346414825" className="py-4 px-4" />
       <CTASection />
       <Footer />
     </div>
