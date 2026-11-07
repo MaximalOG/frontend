@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Star } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -60,9 +60,20 @@ function ReviewCard({ review }: { review: Review }) {
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
+// Card width + gap
+const CARD_W = 296;
+// Pixels per second scroll speed
+const SPEED = 60;
+
 const TestimonialsSection = () => {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [reviews, setReviews]   = useState<Review[]>([]);
+  const [loaded, setLoaded]     = useState(false);
+  const [offset, setOffset]     = useState(0);       // current translateX in px (starts at 0 = right edge)
+  const [visible, setVisible]   = useState(true);    // true = scrolling, false = gap pause
+  const rafRef    = useRef<number>(0);
+  const lastRef   = useRef<number>(0);
+  const pauseRef  = useRef(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/reviews`)
@@ -71,29 +82,57 @@ const TestimonialsSection = () => {
       .catch(() => { setReviews([]); setLoaded(true); });
   }, []);
 
-  if (loaded && reviews.length === 0) return null;
+  useEffect(() => {
+    if (!loaded || reviews.length === 0) return;
 
-  // Card width (280) + gap (16) = 296px per card
-  // CSS animation translates exactly one full set width so the loop is seamless
-  const cardW = 296;
-  const totalW = reviews.length * cardW;
+    const totalW = reviews.length * CARD_W; // full strip width
+    const viewW  = wrapperRef.current?.offsetWidth ?? window.innerWidth;
+
+    // Start with all cards just off the right edge
+    let pos = viewW;
+    setOffset(pos);
+    setVisible(true);
+
+    const tick = (ts: number) => {
+      if (lastRef.current === 0) lastRef.current = ts;
+      const dt = (ts - lastRef.current) / 1000; // seconds
+      lastRef.current = ts;
+
+      if (!pauseRef.current) {
+        pos -= SPEED * dt;
+
+        // All cards have gone fully off the left edge
+        if (pos + totalW < 0) {
+          // Hide track, wait 1s, then restart from right
+          setVisible(false);
+          setTimeout(() => {
+            pos = viewW;
+            setOffset(pos);
+            setVisible(true);
+            lastRef.current = 0;
+            rafRef.current = requestAnimationFrame(tick);
+          }, 1000);
+          return;
+        }
+
+        setOffset(pos);
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [loaded, reviews]);
+
+  // Pause on hover
+  const handleEnter = () => { pauseRef.current = true; };
+  const handleLeave = () => { pauseRef.current = false; };
+
+  if (loaded && reviews.length === 0) return null;
 
   return (
     <section className="py-24 relative overflow-hidden">
-      {/* Inject keyframes dynamically so totalW is known */}
-      <style>{`
-        @keyframes marquee-scroll {
-          0%   { transform: translateX(0); }
-          100% { transform: translateX(-${totalW}px); }
-        }
-        .marquee-track {
-          animation: marquee-scroll ${reviews.length * 4}s linear infinite;
-        }
-        .marquee-track:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
-
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -111,8 +150,14 @@ const TestimonialsSection = () => {
         </motion.div>
       </div>
 
-      {/* Full-width marquee */}
-      <div className="relative w-full overflow-hidden">
+      {/* Marquee viewport */}
+      <div
+        ref={wrapperRef}
+        className="relative w-full overflow-hidden"
+        style={{ height: 200 }}
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
+      >
         {/* Left fade */}
         <div
           className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
@@ -124,22 +169,18 @@ const TestimonialsSection = () => {
           style={{ background: "linear-gradient(to left, hsl(252 24% 7%), transparent)" }}
         />
 
-        {/*
-          Two identical sets side by side.
-          Animation moves exactly one set width to the left, then instantly
-          resets to 0 — because set 2 is identical to set 1, the jump is invisible.
-        */}
+        {/* Single set of cards — no duplicates */}
         <div
-          className="marquee-track flex gap-4 w-max py-2 px-4"
-          style={{ willChange: "transform" }}
+          className="flex gap-4 absolute top-2"
+          style={{
+            transform: `translateX(${offset}px)`,
+            opacity: visible ? 1 : 0,
+            transition: "opacity 0.3s ease",
+            willChange: "transform",
+          }}
         >
-          {/* Set 1 */}
           {reviews.map((review) => (
-            <ReviewCard key={`a-${review.id}`} review={review} />
-          ))}
-          {/* Set 2 — identical copy for seamless loop */}
-          {reviews.map((review) => (
-            <ReviewCard key={`b-${review.id}`} review={review} />
+            <ReviewCard key={review.id} review={review} />
           ))}
         </div>
       </div>
