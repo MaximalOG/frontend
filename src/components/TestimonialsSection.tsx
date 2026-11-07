@@ -59,21 +59,30 @@ function ReviewCard({ review }: { review: Review }) {
 }
 
 const ease = [0.16, 1, 0.3, 1] as const;
-
-// Card width + gap
-const CARD_W = 336;
-// Pixels per second scroll speed
-const SPEED = 60;
+const CARD_W = 336; // 320px card + 16px gap
+const SPEED  = 60;  // px/second
 
 const TestimonialsSection = () => {
-  const [reviews, setReviews]   = useState<Review[]>([]);
-  const [loaded, setLoaded]     = useState(false);
-  const [offset, setOffset]     = useState(0);       // current translateX in px (starts at 0 = right edge)
-  const [visible, setVisible]   = useState(true);    // true = scrolling, false = gap pause
-  const rafRef    = useRef<number>(0);
-  const lastRef   = useRef<number>(0);
-  const pauseRef  = useRef(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loaded, setLoaded]   = useState(false);
+  const [posA, setPosA]       = useState(0);
+  const [posB, setPosB]       = useState(0);
+  const [showB, setShowB]     = useState(false);
+
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const rafRef     = useRef<number>(0);
+  const pauseRef   = useRef(false);
+
+  // Mutable state that the RAF loop reads/writes directly (avoids stale closure)
+  const s = useRef({
+    posA:        0,
+    posB:        0,
+    showB:       false,
+    totalW:      0,
+    viewW:       0,
+    triggeredB:  false,
+    firstLoop:   true,   // true only for the very first pass
+  });
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/reviews`)
@@ -85,37 +94,64 @@ const TestimonialsSection = () => {
   useEffect(() => {
     if (!loaded || reviews.length === 0) return;
 
-    const totalW = reviews.length * CARD_W; // full strip width
+    const totalW = reviews.length * CARD_W;
     const viewW  = wrapperRef.current?.offsetWidth ?? window.innerWidth;
 
-    // Start centred — offset so the strip is centred in the viewport
-    let pos = (viewW - totalW) / 2;
-    setOffset(pos);
-    setVisible(true);
+    // First time: start centred
+    const startPos = (viewW - totalW) / 2;
+
+    s.current = {
+      posA:       startPos,
+      posB:       viewW,
+      showB:      false,
+      totalW,
+      viewW,
+      triggeredB: false,
+      firstLoop:  true,
+    };
+
+    setPosA(startPos);
+    setPosB(viewW);
+    setShowB(false);
+
+    let last = 0;
 
     const tick = (ts: number) => {
-      if (lastRef.current === 0) lastRef.current = ts;
-      const dt = (ts - lastRef.current) / 1000; // seconds
-      lastRef.current = ts;
+      if (last === 0) last = ts;
+      const dt = Math.min((ts - last) / 1000, 0.05);
+      last = ts;
 
       if (!pauseRef.current) {
-        pos -= SPEED * dt;
+        const st = s.current;
 
-        // All cards have gone fully off the left edge
-        if (pos + totalW < 0) {
-          // Hide track, wait 1s, then restart centred
-          setVisible(false);
-          setTimeout(() => {
-            pos = (viewW - totalW) / 2;
-            setOffset(pos);
-            setVisible(true);
-            lastRef.current = 0;
-            rafRef.current = requestAnimationFrame(tick);
-          }, 1000);
-          return;
+        // Scroll track A
+        st.posA -= SPEED * dt;
+
+        // Scroll track B if active
+        if (st.showB) st.posB -= SPEED * dt;
+
+        // When 3rd-last card of A is 50% past the left edge → spawn B from right
+        // 3rd-last card's left edge = posA + totalW - 3*CARD_W
+        // 50% gone means that edge + CARD_W/2 < 0
+        if (!st.triggeredB && (st.posA + st.totalW - 3 * CARD_W + CARD_W / 2) < 0) {
+          st.posB        = st.viewW; // always start B from right edge (never centred)
+          st.showB       = true;
+          st.triggeredB  = true;
+          st.firstLoop   = false;
+          setShowB(true);
         }
 
-        setOffset(pos);
+        // When A is fully off-screen, B becomes the new A
+        if (st.posA + st.totalW < 0) {
+          st.posA       = st.posB;
+          st.posB       = st.viewW;
+          st.showB      = false;
+          st.triggeredB = false;
+          setShowB(false);
+        }
+
+        setPosA(st.posA);
+        if (st.showB) setPosB(st.posB);
       }
 
       rafRef.current = requestAnimationFrame(tick);
@@ -124,10 +160,6 @@ const TestimonialsSection = () => {
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
   }, [loaded, reviews]);
-
-  // Pause on hover
-  const handleEnter = () => { pauseRef.current = true; };
-  const handleLeave = () => { pauseRef.current = false; };
 
   if (loaded && reviews.length === 0) return null;
 
@@ -150,13 +182,12 @@ const TestimonialsSection = () => {
         </motion.div>
       </div>
 
-      {/* Marquee viewport */}
       <div
         ref={wrapperRef}
         className="relative w-full overflow-hidden"
         style={{ height: 220 }}
-        onMouseEnter={handleEnter}
-        onMouseLeave={handleLeave}
+        onMouseEnter={() => { pauseRef.current = true; }}
+        onMouseLeave={() => { pauseRef.current = false; }}
       >
         {/* Left fade */}
         <div
@@ -169,20 +200,23 @@ const TestimonialsSection = () => {
           style={{ background: "linear-gradient(to left, hsl(252 24% 7%), transparent)" }}
         />
 
-        {/* Single set of cards — no duplicates */}
+        {/* Track A */}
         <div
           className="flex gap-4 absolute top-2"
-          style={{
-            transform: `translateX(${offset}px)`,
-            opacity: visible ? 1 : 0,
-            transition: "opacity 0.3s ease",
-            willChange: "transform",
-          }}
+          style={{ transform: `translateX(${posA}px)`, willChange: "transform" }}
         >
-          {reviews.map((review) => (
-            <ReviewCard key={review.id} review={review} />
-          ))}
+          {reviews.map((r) => <ReviewCard key={`a-${r.id}`} review={r} />)}
         </div>
+
+        {/* Track B — only rendered when active */}
+        {showB && (
+          <div
+            className="flex gap-4 absolute top-2"
+            style={{ transform: `translateX(${posB}px)`, willChange: "transform" }}
+          >
+            {reviews.map((r) => <ReviewCard key={`b-${r.id}`} review={r} />)}
+          </div>
+        )}
       </div>
     </section>
   );
